@@ -1,6 +1,6 @@
-NAME =  webserv
+NAME =  webServ
 
-SRCS = src/*.cpp
+SRCS = src/srcClasses/*.cpp  src/srcCode/*.cpp
 
 CC = g++
 

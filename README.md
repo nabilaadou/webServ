@@ -1,2 +1,2 @@
-# webserv
+# webServ
 web server
