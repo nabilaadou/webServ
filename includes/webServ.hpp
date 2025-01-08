@@ -1,21 +1,17 @@
 #ifndef webServ_HPP
 #define webServ_HPP
 
+using namespace std;
+
 #include <iostream>
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <netinet/in.h>  // For sockaddr_in, htons, etc.
-#include <arpa/inet.h>   // For inet_pton, inet_addr, etc.
-#include <sys/socket.h>  // For socket, AF_INET, etc.
-#include <unistd.h>      // For close()
-#include <fcntl.h>
 #include <cstring>
 #include <vector>
 #include <algorithm>
+#include "wrapperFunc.hpp"
+
 
 #define BUFFER_SIZE 1024
 #define MAX_EVENTS 10
-using namespace std;
 
 class webServ {
     private:
