@@ -13,17 +13,19 @@ void webServ::handelClient(int& i) {
         ft_close(clientFd);
         return ;
     }
-
     // print client requeset
     buffer[bytesRead] = 0;
-    // cout << "Received request: " << buffer << endl;
-    
+    cout << "------->Received request: " << buffer << endl;
+
+    // prsing request
+
+
     string body = GET(getFile(buffer));
     string response = "HTTP/1.1 " + toString(statusCode) +
                         " OK\r\n" + fileType + "Content-Length: " +
                         toString(body.size()) + string("\r\n\r\n") + body;
 
-    send(clientFd, response.c_str(), strlen(response.c_str()), MSG_DONTWAIT);
-    // cout << "Response sent to client:\n" << response << endl;
+    send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
+    // cout << "----------->Response sent to client:\n" << response << endl;
     ft_close(clientFd);
 }
