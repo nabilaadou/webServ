@@ -21,7 +21,7 @@ vector<int> webServ::getPorts() {
     return (ports);
 }
 
-void webServ::startSocket(int port) {
+void webServ::startSocket(const int& port) {
     int fd = ft_socket(AF_INET, SOCK_STREAM, 0); // create a socket
 
     ft_setsockopt(fd, SOL_SOCKET, SO_REUSEADDR); // configure socket options, see man setsockopt
@@ -40,6 +40,7 @@ void webServ::startSocket(int port) {
 
 // initialize 1 socket for each port
 void webServ::createSockets() {
+    extensions = getSupportedeExtensions();
     vector<int> ports = getPorts();
     for (int port = 0; port < (int)ports.size(); ++port) {
         startSocket(ports[port]);
@@ -59,7 +60,6 @@ void webServ::startEpoll() {
 }
 
 void webServ::reqResp() {
-    char buffer[BUFFER_SIZE];
     int nfds;
 
     cout << "Server listening on port XX..." << endl;
@@ -94,27 +94,25 @@ void webServ::reqResp() {
                     ft_close(clientFd);
                     continue;
                 }
-            }              // client socket activity
+            }
             else {
-                clientFd = events[i].data.fd;
-                int bytesRead = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
-                if (bytesRead < 0) {
-                    cerr << "Recv failed" << endl;
-                    ft_close(clientFd);
-                    continue;
-                } else if (bytesRead == 0) {
-                    cout << "Client disconnected!" << endl;
-                    ft_close(clientFd);
-                    continue;
-                }
-                // print client requeset
-                // buffer[20] = 0;
-                // cout << "Received request: " << buffer << endl;
-                const char* response = "HTTP/1.1 200 OK\r\nContent-Type: text/plain\r\nContent-Length: 13\r\n\r\nHello, world!";
-                send(clientFd, response, strlen(response), MSG_DONTWAIT);
-                cout << "Response sent to client!" << endl;
-                ft_close(clientFd);
+                // client socket activity
+                handelClient(i);
             }
         }
     }
+}
+
+string webServ::GET(const string& requestedFile) {
+    std::fstream fileStream(requestedFile.c_str());
+    if (!fileStream.is_open()) {
+        std::cerr << "Could not open the file: " << requestedFile + "\n";
+        statusCode = 404;
+        return "";
+    }
+
+    std::stringstream buffer;
+    buffer << fileStream.rdbuf();
+    statusCode = 200;
+    return buffer.str();
 }
