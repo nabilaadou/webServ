@@ -83,17 +83,43 @@ string webServ::getFile(string str) {
 }
 
 #include <string>
-string webServ::getBody(string str) {
-    istringstream  iss(str);
-    // string              path;
-    string              line;
 
-    cout << "HERE___>" << endl;
-    while (getline(iss, line, '\n')) {
-        cout << line << endl;
+string webServ::getBody(string str) {
+    string  body;
+    size_t  index = 0;
+
+    while (index < str.size()) {
+        if (index + 3 < str.size())
+            break ;
+        else if (str[index] == '\r' && str[index + 1] == '\n' && 
+            str[index + 2] == '\r' && str[index + 3] == '\n') {
+            index += 3;
+            break;
+        }
+        index++;
     }
-    while (getline(iss, line, '\n')) {
-        cout << line << endl;
-    }
-    return ("." + line);
+    body = str.substr(index);
+    return (body);
 }
+
+vector<string> webServ::split_string(const string& str, const string& delimiters) {  
+    vector<string> tokens;  
+    string token;  
+    size_t start = 0;  
+    size_t end;  
+
+    while ((end = str.find_first_of(delimiters, start)) != string::npos) {  
+        if (end > start) {  
+            tokens.push_back(str.substr(start, end - start));
+        }  
+        tokens.push_back(string(1, str[end]));
+        start = end + 1;  
+    }  
+    
+    if (start < str.length()) {  
+        tokens.push_back(str.substr(start));
+    }  
+
+    return tokens;  
+}
+

@@ -24,30 +24,13 @@ void webServ::handelNewConnection(int eventFd) {
     }
 }
 
-ssize_t webServ::ft_recv(int __fd, void *__buf) {
-    char buff[BUFFER_SIZE];
-    ssize_t bytesRead;
-
-    while ((bytesRead = recv(__fd, buff, BUFFER_SIZE, MSG_DONTWAIT)) > 0) {
-        buffer += string(buff);
-    }
-
-    return (bytesRead);
-}
-
 void webServ::handelClient(int& i) {
-    char buffer[BUFFER_SIZE];
     clientFd = events[i].data.fd;
-    int bytesRead = ft_recv(clientFd, buffer);
-    if (bytesRead < 0) {
-        cerr << "Recv failed" << "\n\n";
-        ft_close(clientFd);
-        return ;
-    } else if (bytesRead == 0) {
-        cout << "Client disconnected!" << "\n\n";
-        ft_close(clientFd);
-        return ;
-    }
+    int bytesRead = ft_recv(clientFd);
+    if (bytesRead < 0) { return; } 
+    else if (bytesRead == 0 && buffer.empty()) { return; }
+
+
     // print client requeset
     buffer[bytesRead] = 0;
     if (buffer[0] != 'G')
@@ -57,14 +40,11 @@ void webServ::handelClient(int& i) {
 
 
     string body;
-    // if (buffer[0] == 'G')
-    //     body = GET(getFile(buffer));
-    // else if (buffer[0] == 'p')
-    //     body = POST(getBody(buffer));
-    
-    if (buffer[0] == 'P')
-        POST(getBody(buffer));
-    body = GET(getFile(buffer));
+    if (buffer[0] == 'G')
+        body = GET(getFile(buffer));
+    else if (buffer[0] == 'p')
+        body = POST(getBody(buffer));
+    buffer.clear();
     string response = "HTTP/1.1 " + toString(statusCode) +
                         " OK\r\n" + fileType + "Content-Length: " +
                         toString(body.size()) + string("\r\n\r\n") + body;
@@ -88,7 +68,14 @@ string webServ::GET(const string& requestedFile) {
     return buffer.str();
 }
 
-string webServ::POST(const string& requestedFile) {
+string webServ::POST(string requeste) {
+    string respone;
+    std::vector<string> body = split_string(requeste, "=&");
 
-    return requestedFile;
+    data[body[1]] = body[3];
+    respone = "HTTP/1.1 200 OK\r\n"
+              "Content-Type: text/plain\r\n"
+              "Content-Length: 21\r\n\r\n"
+              "POST request handled.";
+    return respone;
 }

@@ -1,4 +1,5 @@
 #include "wrapperFunc.hpp"
+#include "webServ.hpp"
 
 int ft_socket(int __domain, int __type, int __protocol) {
     int fd = socket(__domain, __type, __protocol);
@@ -77,5 +78,28 @@ int ft_epoll_wait(int __epfd, epoll_event *__events, int __maxevents, int __time
     return nfds;
 }
 
+
+ssize_t webServ::ft_recv(int __fd) {
+    char buff[BUFFER_SIZE];
+    ssize_t bytesRead;
+    ssize_t totalBytesRead = 0;
+
+    while ((bytesRead = recv(__fd, buff, BUFFER_SIZE, MSG_DONTWAIT)) > 0) {
+        buffer.append(buff, bytesRead);
+        totalBytesRead += bytesRead;
+    }
+
+    if (bytesRead == 0) {
+        std::cout << "Connection closed by client\n";
+        ft_close(clientFd);
+        return 0;
+    }
+    else if (bytesRead < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+        std::cerr << "recv() error: " << strerror(errno) << "\n";
+        ft_close(clientFd);
+        return -1;
+    }
+    return totalBytesRead;
+}
 
 

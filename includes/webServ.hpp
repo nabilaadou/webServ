@@ -25,6 +25,7 @@ class webServ {
         int                 epollFd;
 
         u_map               extensions;
+        u_map               data;
 
         int                 statusCode;
         string              fileType;
@@ -44,11 +45,12 @@ class webServ {
         // openFile();                          // open the files (configuration files)
         // readConfigurationFile();             // read and applay configuration file
 
-        vector<int> getPorts();
-        string      getFile(const string str);
-        string      getBody(const string str);
-        u_map       getSupportedeExtensions();
-        ssize_t     ft_recv(int __fd, void *__buf);
+        vector<int>     getPorts();
+        vector<string>  split_string(const string& str, const string& delimiters);
+        string          getFile(string str);
+        string          getBody(string str);
+        u_map           getSupportedeExtensions();
+        ssize_t         ft_recv(int __fd);
 
         void createSockets();
         void startSocket(const int& port);
@@ -60,7 +62,7 @@ class webServ {
 
 
         string GET(const string& requestedFile);
-        string POST(const string& requestedFile);
+        string POST(string requeste);
         // void DELETE()
 };
 
