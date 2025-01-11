@@ -68,51 +68,13 @@ void webServ::reqResp() {
         nfds = ft_epoll_wait(epollFd, events, MAX_EVENTS, -1, serverFd, epollFd);
 
         for (int i = 0; i < nfds; i++) {
-            int eventFd = events[i].data.fd;
-
-            // check if this is a server socket = new connection
-            if (find(serverFd.begin(), serverFd.end(), eventFd) != serverFd.end()) {
-                if ((clientFd = accept(eventFd, NULL, NULL)) == -1) {
-                    cerr << "Accept failed" << endl;
-                    continue;
-                }
-                cout << "New client connected!" << endl;
-
-                // set the client socket to non-blocking mode
-                if (fcntl(clientFd, F_SETFL, O_NONBLOCK) < 0) {
-                    cerr << "Failed to set non-blocking" << endl;
-                    ft_close(clientFd);
-                    continue;
-                }
-
-
-                // add the new client socket to epoll
-                ev.events = EPOLLIN;                        // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
-                ev.data.fd = clientFd;
-                if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
-                    cerr << "epoll_ctl failed for client socket" << clientFd << endl;
-                    ft_close(clientFd);
-                    continue;
-                }
+            if (find(serverFd.begin(), serverFd.end(), events[i].data.fd) != serverFd.end()) {
+                handelNewConnection(events[i].data.fd);
             }
             else {
-                // client socket activity
                 handelClient(i);
             }
         }
     }
 }
 
-string webServ::GET(const string& requestedFile) {
-    std::fstream fileStream(requestedFile.c_str());
-    if (!fileStream.is_open()) {
-        std::cerr << "Could not open the file: " << requestedFile + "\n";
-        statusCode = 404;
-        return "";
-    }
-
-    std::stringstream buffer;
-    buffer << fileStream.rdbuf();
-    statusCode = 200;
-    return buffer.str();
-}

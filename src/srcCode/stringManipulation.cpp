@@ -1,7 +1,7 @@
 #include "webServ.hpp"
 
 string toString(const int& nbr) {
-    std::ostringstream oss;
+    ostringstream oss;
 
     oss << nbr;
     return (oss.str());
@@ -62,14 +62,14 @@ u_map webServ::getSupportedeExtensions() {
 }
 
 string webServ::getFile(string str) {
-    std::istringstream  iss(str);
+    istringstream  iss(str);
     string              path;
     string              ext;
 
     iss >> path;
     iss >> path;
     if (path == "/") {
-        return ("./index.html");
+        return ("./data/index.html");
     }
     size_t size = path.find_last_of(".");
     if (size == string::npos) {
@@ -82,3 +82,14 @@ string webServ::getFile(string str) {
     return ("." + path);
 }
 
+string webServ::getBody(string str) {
+    istringstream  iss(str);
+    string              path;
+    string              ext;
+
+    iss >> path;
+    while (path.empty()) {
+        iss >> path;
+    }
+    return ("." + path);
+}

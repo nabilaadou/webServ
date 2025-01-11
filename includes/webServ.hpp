@@ -44,6 +44,7 @@ class webServ {
 
         vector<int> getPorts();
         string      getFile(const string str);
+        string      getBody(const string str);
         u_map       getSupportedeExtensions();
 
         void createSockets();
@@ -52,10 +53,11 @@ class webServ {
         void reqResp();
 
         void handelClient(int& i);
+        void handelNewConnection(int eventFd);
 
 
         string GET(const string& requestedFile);
-        // void POST()
+        string POST(const string& requestedFile);
         // void DELETE()
 };
 
