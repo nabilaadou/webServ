@@ -29,8 +29,10 @@ class webServ {
         int                 statusCode;
         string              fileType;
 
-        struct epoll_event ev;
-        struct epoll_event events[MAX_EVENTS];
+        string              buffer;
+
+        struct epoll_event  ev;
+        struct epoll_event  events[MAX_EVENTS];
     public:
         // webServ(int fd);
         // webServ(const webServ& other);
@@ -46,6 +48,7 @@ class webServ {
         string      getFile(const string str);
         string      getBody(const string str);
         u_map       getSupportedeExtensions();
+        ssize_t     ft_recv(int __fd, void *__buf);
 
         void createSockets();
         void startSocket(const int& port);

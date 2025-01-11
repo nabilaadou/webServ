@@ -82,14 +82,18 @@ string webServ::getFile(string str) {
     return ("." + path);
 }
 
+#include <string>
 string webServ::getBody(string str) {
     istringstream  iss(str);
-    string              path;
-    string              ext;
+    // string              path;
+    string              line;
 
-    iss >> path;
-    while (path.empty()) {
-        iss >> path;
+    cout << "HERE___>" << endl;
+    while (getline(iss, line, '\n')) {
+        cout << line << endl;
     }
-    return ("." + path);
+    while (getline(iss, line, '\n')) {
+        cout << line << endl;
+    }
+    return ("." + line);
 }

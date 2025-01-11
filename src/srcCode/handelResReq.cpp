@@ -24,10 +24,21 @@ void webServ::handelNewConnection(int eventFd) {
     }
 }
 
+ssize_t webServ::ft_recv(int __fd, void *__buf) {
+    char buff[BUFFER_SIZE];
+    ssize_t bytesRead;
+
+    while ((bytesRead = recv(__fd, buff, BUFFER_SIZE, MSG_DONTWAIT)) > 0) {
+        buffer += string(buff);
+    }
+
+    return (bytesRead);
+}
+
 void webServ::handelClient(int& i) {
     char buffer[BUFFER_SIZE];
     clientFd = events[i].data.fd;
-    int bytesRead = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT);
+    int bytesRead = ft_recv(clientFd, buffer);
     if (bytesRead < 0) {
         cerr << "Recv failed" << "\n\n";
         ft_close(clientFd);
@@ -46,11 +57,14 @@ void webServ::handelClient(int& i) {
 
 
     string body;
-    if (buffer[0] == 'G')
-        body = GET(getFile(buffer));
-    else if (buffer[0] == 'p')
-        body = POST(getBody(buffer));
+    // if (buffer[0] == 'G')
+    //     body = GET(getFile(buffer));
+    // else if (buffer[0] == 'p')
+    //     body = POST(getBody(buffer));
     
+    if (buffer[0] == 'P')
+        POST(getBody(buffer));
+    body = GET(getFile(buffer));
     string response = "HTTP/1.1 " + toString(statusCode) +
                         " OK\r\n" + fileType + "Content-Length: " +
                         toString(body.size()) + string("\r\n\r\n") + body;
@@ -74,3 +88,7 @@ string webServ::GET(const string& requestedFile) {
     return buffer.str();
 }
 
+string webServ::POST(const string& requestedFile) {
+
+    return requestedFile;
+}
