@@ -10,6 +10,7 @@ using namespace std;
 #include <vector>
 #include <map>
 #include <algorithm>
+#include <sys/stat.h>
 #include "wrapperFunc.hpp"
 
 #define BUFFER_SIZE 1024
@@ -19,7 +20,7 @@ typedef map<string, string> u_map;
 
 class webServ {
     private:
-        int                 file;      // the file passed as arguments
+        // int                 file;      // the file passed as arguments
         std::vector<int>    serverFd;
         int                 clientFd;
         int                 epollFd;

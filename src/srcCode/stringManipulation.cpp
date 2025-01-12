@@ -10,6 +10,15 @@ string toString(const int& nbr) {
 u_map webServ::getSupportedeExtensions() {
     u_map ext;
 
+    ext[".html"] = "Content-Type: text/html\r\n";
+    ext[".htm"]  = "Content-Type: text/html\r\n";
+    ext[".css"]  = "Content-Type: text/css\r\n";
+    ext[".js"]   = "Content-Type: text/javascript\r\n";
+    ext[".mjs"]  = "Content-Type: text/javascript\r\n";
+    ext[".csv"]  = "Content-Type: text/csv\r\n";
+    ext[".png"]  = "Content-Type: images/png\r\n";
+    ext[".txt"]  = "Content-Type: text/plan\r\n";
+    ext[".jpg"]  = "Content-Type: images/jpeg\r\n";
     ext[".avi"]   = "Content-Type: video/x-msvideo\r\n";
     ext[".ico"]   = "Content-Type: image/x-icon\r\n";
     ext[".gif"]   = "Content-Type: image/gif\r\n";
@@ -72,17 +81,15 @@ string webServ::getFile(string str) {
         return ("./data/index.html");
     }
     size_t size = path.find_last_of(".");
-    if (size == string::npos) {
-        fileType = "";
-    }
-    else {
+    fileType = "";
+    if (size != string::npos) {
         ext = path.substr(size);
-        fileType = extensions[ext];
+        if (extensions.find(ext) != extensions.end()) {
+            fileType =  extensions[ext];
+        }
     }
     return ("." + path);
 }
-
-#include <string>
 
 string webServ::getBody(string str) {
     string  body;
