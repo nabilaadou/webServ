@@ -22,6 +22,8 @@ void webServ::handelNewConnection(int eventFd) {
         ft_close(clientFd);
         return ;
     }
+    indexMap[clientFd].headerSended = false;
+    indexMap[clientFd].clientFd = clientFd;
 }
 
 void webServ::handelClient(int& i) {

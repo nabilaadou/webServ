@@ -7,8 +7,8 @@ string toString(const int& nbr) {
     return (oss.str());
 }
 
-u_map webServ::getSupportedeExtensions() {
-    u_map ext;
+e_map webServ::getSupportedeExtensions() {
+    e_map ext;
 
     ext[".html"] = "Content-Type: text/html\r\n";
     ext[".htm"]  = "Content-Type: text/html\r\n";

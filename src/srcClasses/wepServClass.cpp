@@ -72,7 +72,13 @@ void webServ::reqResp() {
                 handelNewConnection(events[i].data.fd);
             }
             else {
-                handelClient(i);
+                // handelClient(i);
+
+                handelClientReq(i);
+                handelClientRes_1();
+                handelClientRes_2();
+                handelClientRes_3();
+                cout << "HERE\n";
             }
         }
     }

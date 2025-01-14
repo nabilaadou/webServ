@@ -14,9 +14,25 @@ using namespace std;
 #include "wrapperFunc.hpp"
 
 #define BUFFER_SIZE 1024
-#define MAX_EVENTS 10
+#define MAX_EVENTS  10
 
-typedef map<string, string> u_map;
+struct resReq {
+    // res     r;
+    int         clientFd;
+    string      requestedFile;
+    bool        headerSended;
+    bool        bodySended;
+
+    // resReq(string requestedFile) : fileStream(requestedFile.c_str(), std::ios::binary) {}
+};
+
+typedef map<string, string> e_map;
+typedef map<int, resReq>    r_map;
+
+class res {
+    private:
+    public:
+};
 
 class webServ {
     private:
@@ -25,16 +41,21 @@ class webServ {
         int                 clientFd;
         int                 epollFd;
 
-        u_map               extensions;
-        u_map               data;
+        e_map               extensions;
+        e_map               data;
+        r_map               indexMap;
 
         int                 statusCode;
         string              fileType;
+        string              requestedFile;
 
         string              buffer;
+        string              method;
+
 
         struct epoll_event  ev;
         struct epoll_event  events[MAX_EVENTS];
+
     public:
         // webServ(int fd);
         // webServ(const webServ& other);
@@ -50,13 +71,19 @@ class webServ {
         vector<string>  split_string(const string& str, const string& delimiters);
         string          getFile(string str);
         string          getBody(string str);
-        u_map           getSupportedeExtensions();
+        e_map           getSupportedeExtensions();
         ssize_t         ft_recv(int __fd);
 
         void createSockets();
         void startSocket(const int& port);
         void startEpoll();
         void reqResp();
+
+
+        void handelClientReq(int& i);
+        void handelClientRes_1();
+        void handelClientRes_2();
+        void handelClientRes_3();
 
         void handelClient(int& i);
         void handelNewConnection(int eventFd);
