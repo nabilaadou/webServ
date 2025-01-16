@@ -53,7 +53,7 @@ void webServ::startEpoll() {
 
     struct epoll_event event = {};
     for (int fd = 0; fd < (int)serverFd.size(); ++fd) {
-        event.events = EPOLLIN;       // monitor for incoming connections
+        event.events = EPOLLIN | EPOLLET;       // monitor for incoming connections
         event.data.fd = serverFd[fd]; // associate the file descriptor
         ft_epoll_ctl(epollFd, EPOLL_CTL_ADD, serverFd[fd], &event);
     }
@@ -77,8 +77,6 @@ void webServ::reqResp() {
                 handelClientReq(i);
                 handelClientRes_1();
                 handelClientRes_2();
-                handelClientRes_3();
-                cout << "HERE\n";
             }
         }
     }

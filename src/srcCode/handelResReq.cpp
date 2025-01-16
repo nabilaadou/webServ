@@ -15,7 +15,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
 
     // add the new client socket to epoll
-    ev.events = EPOLLIN;                        // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+    ev.events = EPOLLIN | EPOLLET | EPOLLOUT;                        // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
     ev.data.fd = clientFd;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
         cerr << "epoll_ctl failed for client socket" << clientFd << endl;
@@ -24,6 +24,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
     indexMap[clientFd].headerSended = false;
     indexMap[clientFd].clientFd = clientFd;
+    indexMap[clientFd].bytes_sent = 0;
 }
 
 void webServ::handelClient(int& i) {
@@ -36,7 +37,7 @@ void webServ::handelClient(int& i) {
     // print client requeset
     buffer[bytesRead] = 0;
     // if (buffer[0] != 'G')
-    // cout << "------->Received request:\n" << buffer << "\n\n";
+    cout << "------->Received request:\n" << buffer << "\n\n";
 
     // prsing request
 
