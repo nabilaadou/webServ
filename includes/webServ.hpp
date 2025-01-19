@@ -11,7 +11,6 @@ using namespace std;
 #include <map>
 #include <algorithm>
 #include <sys/stat.h>
-#include <unistd.h>
 #include "wrapperFunc.hpp"
 
 #define BUFFER_SIZE 1024
@@ -20,8 +19,6 @@ using namespace std;
 struct resReq {
     // res     r;
     int         clientFd;
-    int         fileFd;
-    size_t      bytes_sent;
     string      requestedFile;
     bool        headerSended;
 

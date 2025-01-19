@@ -43,7 +43,7 @@ int ft_listen(int __fd, int __n) {
 }
 
 int ft_close(int __fd) {
-    if (__fd < 0 || close(__fd) < 0) {
+    if (close(__fd) < 0) {
         cerr << "close failed" << endl;
     }
     return 0;
