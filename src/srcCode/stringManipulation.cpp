@@ -78,7 +78,7 @@ string webServ::getFile(string str) {
     iss >> path;
     iss >> path;
     if (path == "/") {
-        return ("./data/Upload/file.html");
+        return ("./index.html");
     }
     size_t size = path.find_last_of(".");
     fileType = "";

@@ -11,6 +11,7 @@ using namespace std;
 #include <map>
 #include <algorithm>
 #include <sys/stat.h>
+#include <unistd.h>
 #include "wrapperFunc.hpp"
 
 #define BUFFER_SIZE 1024
@@ -19,6 +20,7 @@ using namespace std;
 struct resReq {
     // res     r;
     int         clientFd;
+    int         fileFd;
     string      requestedFile;
     bool        headerSended;
 
@@ -27,11 +29,6 @@ struct resReq {
 
 typedef map<string, string> e_map;
 typedef map<int, resReq>    r_map;
-
-class res {
-    private:
-    public:
-};
 
 class webServ {
     private:

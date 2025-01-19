@@ -15,7 +15,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
 
     // add the new client socket to epoll
-    ev.events = EPOLLIN;                        // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+    ev.events = EPOLLIN || EPOLLET;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
     ev.data.fd = clientFd;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
         cerr << "epoll_ctl failed for client socket" << clientFd << endl;
@@ -24,6 +24,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
     indexMap[clientFd].headerSended = false;
     indexMap[clientFd].clientFd = clientFd;
+    indexMap[clientFd].fileFd = -1;
 }
 
 void webServ::handelClientReq(int& i) {
@@ -75,6 +76,9 @@ void webServ::handelClientRes_1() {
     }
     else {
         indexMap[clientFd].headerSended = true;
+        indexMap[clientFd].fileFd = open(requestedFile.c_str(), O_RDONLY);
+        if (indexMap[clientFd].fileFd < 0)
+            perror("HERE");
         response =   "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n" +
                             fileType + "Connection: close" + string("\r\n\r\n");
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
@@ -84,16 +88,16 @@ void webServ::handelClientRes_1() {
 void webServ::handelClientRes_2() {
     if (method != "GET" || indexMap[clientFd].headerSended == false)
         return;
-    ifstream fileStream(requestedFile.c_str(), std::ios::binary);
-    const size_t chunkSize = 10000;
+    const ssize_t chunkSize = 10000;
     char buffer[chunkSize+1];
-    int i = 0;
-    while(!fileStream.eof()) {
-        fileStream.read(buffer, chunkSize);
-        streamsize bytesRead = fileStream.gcount();
-
+    while(true) {
+        ssize_t bytesRead = read(indexMap[clientFd].fileFd, buffer, chunkSize);
+        cout << "HERE---> " << bytesRead << endl;
+        if (bytesRead < 0) {
+            perror("ba33");
+            return ;
+        }
         buffer[bytesRead] = '\0';
-        i += bytesRead;
         if (bytesRead > 0) {
             std::ostringstream chunkSizeStream;
             chunkSizeStream << std::hex << bytesRead << "\r\n";
@@ -103,8 +107,11 @@ void webServ::handelClientRes_2() {
             send(clientFd, buffer, bytesRead, MSG_DONTWAIT);
             send(clientFd, "\r\n", 2, MSG_DONTWAIT);
         }
-        if ((size_t)bytesRead < chunkSize) {
+        if ((ssize_t)bytesRead < chunkSize) {
             send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT);
+            ft_close(indexMap[clientFd].fileFd);
+            ft_close(clientFd);
+            return ;
         }
     }
 }
