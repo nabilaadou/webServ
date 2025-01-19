@@ -82,7 +82,7 @@ class webServ {
         void handelClientReq(int& i);
         void handelClientRes_1();
         void handelClientRes_2();
-        void handelClientRes_3();
+        // void handelClientRes_3();
 
         void handelClient(int& i);
         void handelNewConnection(int eventFd);

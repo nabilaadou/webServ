@@ -1,4 +1,3 @@
-#include "wrapperFunc.hpp"
 #include "webServ.hpp"
 
 int ft_socket(int __domain, int __type, int __protocol) {
@@ -90,7 +89,7 @@ ssize_t webServ::ft_recv(int __fd) {
     }
 
     if (bytesRead == 0) {
-        std::cout << "Connection closed by client\n";
+        // std::cout << "Connection closed by client\n";
         ft_close(clientFd);
         return 0;
     }
