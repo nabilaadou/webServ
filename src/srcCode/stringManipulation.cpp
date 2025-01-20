@@ -74,20 +74,22 @@ string webServ::getFile(string str) {
     istringstream  iss(str);
     string              path;
     string              ext;
+    size_t              size;
 
     iss >> path;
     iss >> path;
-    if (path == "/") {
-        return ("./index.html");
-    }
-    size_t size = path.find_last_of(".");
     fileType = "";
+    if (path == "/") {
+        path = "/index.html";
+    }
+    size = path.find_last_of(".");
     if (size != string::npos) {
         ext = path.substr(size);
         if (extensions.find(ext) != extensions.end()) {
             fileType =  extensions[ext];
         }
     }
+    cout << path << endl;
     return ("." + path);
 }
 
