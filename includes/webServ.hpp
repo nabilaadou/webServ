@@ -77,8 +77,8 @@ class webServ {
 
 
         void handelClientReq(int& i);
-        void handelClientRes_1();
-        void handelClientRes_2();
+        void handelClientRes_1(int FD);
+        void handelClientRes_2(int FD);
         // void handelClientRes_3();
 
         void handelClient(int& i);

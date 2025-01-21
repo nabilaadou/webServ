@@ -15,7 +15,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
 
     // add the new client socket to epoll
-    ev.events = EPOLLIN || EPOLLET;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+    ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
     ev.data.fd = clientFd;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
         cerr << "epoll_ctl failed for client socket" << clientFd << endl;
@@ -45,7 +45,7 @@ void webServ::handelClientReq(int& i) {
     buffer.clear();
 }
 
-void webServ::handelClientRes_1() {
+void webServ::handelClientRes_1(int FD) {
     if (method != "GET" || indexMap[clientFd].headerSended == true)
         return;
     indexMap[clientFd].requestedFile = requestedFile;
@@ -73,6 +73,10 @@ void webServ::handelClientRes_1() {
                         "Connection: close" + string("\r\n\r\n");
         response += body;
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
+        ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+        ev.data.fd = FD;
+        epoll_ctl(epollFd, EPOLL_CTL_MOD, FD, &ev);
+        // ft_close(indexMap[clientFd].fileFd);
     }
     else {
         indexMap[clientFd].headerSended = true;
@@ -85,12 +89,12 @@ void webServ::handelClientRes_1() {
     }
 }
 
-void webServ::handelClientRes_2() {
+void webServ::handelClientRes_2(int FD) {
     if (method != "GET" || indexMap[clientFd].headerSended == false)
         return;
     const ssize_t chunkSize = 10000;
     char buffer[chunkSize+1];
-    while(true) {
+    // while(true) {
         ssize_t bytesRead = read(indexMap[clientFd].fileFd, buffer, chunkSize);
         cout << "HERE---> " << bytesRead << endl;
         if (bytesRead < 0) {
@@ -109,11 +113,14 @@ void webServ::handelClientRes_2() {
         }
         if ((ssize_t)bytesRead < chunkSize) {
             send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT);
-            ft_close(indexMap[clientFd].fileFd);
+            ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+            ev.data.fd = FD;
+            epoll_ctl(epollFd, EPOLL_CTL_MOD, FD, &ev);
+            // ft_close(indexMap[clientFd].fileFd);
             ft_close(clientFd);
             return ;
         }
-    }
+    // }
 }
 
 
