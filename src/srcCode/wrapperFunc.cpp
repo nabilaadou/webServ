@@ -78,27 +78,27 @@ int ft_epoll_wait(int __epfd, epoll_event *__events, int __maxevents, int __time
 }
 
 
-ssize_t webServ::ft_recv(int __fd) {
-    char buff[BUFFER_SIZE];
-    ssize_t bytesRead;
-    ssize_t totalBytesRead = 0;
+// ssize_t webServ::ft_recv(int __fd) {
+//     char buff[BUFFER_SIZE];
+//     ssize_t bytesRead;
+//     ssize_t totalBytesRead = 0;
 
-    while ((bytesRead = recv(__fd, buff, BUFFER_SIZE, MSG_DONTWAIT)) > 0) {
-        buffer.append(buff, bytesRead);
-        totalBytesRead += bytesRead;
-    }
+//     while ((bytesRead = recv(__fd, buff, BUFFER_SIZE, MSG_DONTWAIT)) > 0) {
+//         buffer.append(buff, bytesRead);
+//         totalBytesRead += bytesRead;
+//     }
 
-    if (bytesRead == 0) {
-        // std::cout << "Connection closed by client\n";
-        ft_close(__fd, "ft_recv");
-        return 0;
-    }
-    else if (bytesRead < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
-        std::cerr << "recv() error: " << strerror(errno) << "\n";
-        ft_close(__fd, "ft_recv");
-        return -1;
-    }
-    return totalBytesRead;
-}
+//     if (bytesRead == 0) {
+//         // std::cout << "Connection closed by client\n";
+//         ft_close(__fd, "ft_recv");
+//         return 0;
+//     }
+//     else if (bytesRead < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
+//         std::cerr << "recv() error: " << strerror(errno) << "\n";
+//         ft_close(__fd, "ft_recv");
+//         return -1;
+//     }
+//     return totalBytesRead;
+// }
 
 

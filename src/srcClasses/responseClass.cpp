@@ -30,25 +30,25 @@ void webServ::handelNewConnection(int eventFd) {
     cout << "BA##-> " << indexMap[clientFd].clientFd << endl;
 }
 
-void webServ::handelClientReq(int& i) {
-    int bytesRead = ft_recv(events[i].data.fd);
-    if (bytesRead < 0) { return; } 
-    else if (bytesRead == 0 && buffer.empty()) { return; }
+// void webServ::handelClientReq(int& i) {
+//     int bytesRead = ft_recv(events[i].data.fd);
+//     if (bytesRead < 0) { return; } 
+//     else if (bytesRead == 0 && buffer.empty()) { return; }
 
 
-    buffer[bytesRead] = 0;
-    cout << "request------>\n" << buffer << endl;
+//     buffer[bytesRead] = 0;
+//     cout << "request------>\n" << buffer << endl;
 
-    method = "None";
-    if (buffer[0] == 'G') {
-        method = "GET";
-    }
-    indexMap[events[i].data.fd].requestedFile = getFile(buffer);
-    buffer.clear();
-}
+//     method = "None";
+//     if (buffer[0] == 'G') {
+//         method = "GET";
+//     }
+//     indexMap[events[i].data.fd].requestedFile = getFile(buffer);
+//     buffer.clear();
+// }
 
 void webServ::handelClientRes_1(int clientFd) {
-    if (method != "GET" || indexMap[clientFd].headerSended == true)
+    if (indexMap[clientFd].method != "GET" || indexMap[clientFd].headerSended == true)
         return;
     struct stat file_stat;
 
@@ -96,7 +96,7 @@ void webServ::handelClientRes_1(int clientFd) {
 }
 
 void webServ::handelClientRes_2(int clientFd) {
-    if (method != "GET" || clientFd < 0 || indexMap[clientFd].fileFd < 0 || indexMap[clientFd].headerSended == false)
+    if (indexMap[clientFd].method != "GET" || clientFd < 0 || indexMap[clientFd].fileFd < 0 || indexMap[clientFd].headerSended == false)
         return;
     const ssize_t chunkSize = 10000;
     char buffer[chunkSize+1];

@@ -13,8 +13,9 @@ using namespace std;
 #include <sys/stat.h>
 #include <unistd.h>
 #include "wrapperFunc.hpp"
+#include "requestParse.hpp"
 
-#define BUFFER_SIZE 1024
+// #define BUFFER_SIZE 1024
 #define MAX_EVENTS  10
 
 struct resReq {
@@ -23,6 +24,9 @@ struct resReq {
     int         fileFd;
     string      requestedFile;
     bool        headerSended;
+    string      method;
+
+    Request     req;
 
     // resReq(string requestedFile) : fileStream(requestedFile.c_str(), std::ios::binary) {}
 };
@@ -44,7 +48,6 @@ class webServ {
         string              fileType;
 
         string              buffer;
-        string              method;
 
 
         struct epoll_event  ev;
