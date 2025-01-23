@@ -11,7 +11,7 @@ int ft_socket(int __domain, int __type, int __protocol) {
 int ft_setsockopt(int __fd, int __level, int __optname) {
     int opt = 1;
     if (setsockopt(__fd, __level, __optname, &opt, sizeof(opt)) < 0) {
-        ft_close(__fd);
+        ft_close(__fd, "ft_setsockopt");
         throw "setsockopt failed";
     }
     return 0;
@@ -19,7 +19,7 @@ int ft_setsockopt(int __fd, int __level, int __optname) {
 
 int ft_fcntl(int __fd, int __cmd1, int __cmd2) {
     if (fcntl(__fd, __cmd1, __cmd2) < 0) {
-        ft_close(__fd);
+        ft_close(__fd, "ft_fcntl");
         throw "setsockopt failed";
     }
     return 0;
@@ -27,7 +27,7 @@ int ft_fcntl(int __fd, int __cmd1, int __cmd2) {
 
 int ft_bind(int __fd, const sockaddr *__addr, socklen_t __len) {
     if (bind(__fd, __addr, __len) < 0) {
-        ft_close(__fd);
+        ft_close(__fd, "ft_bind");
         throw "Bind failed";
     }
     return 0;
@@ -35,15 +35,15 @@ int ft_bind(int __fd, const sockaddr *__addr, socklen_t __len) {
 
 int ft_listen(int __fd, int __n) {
     if (listen(__fd, __n) < 0) {
-        ft_close(__fd);
+        ft_close(__fd, "ft_listen");
         throw "listen failed";
     }
     return 0;
 }
 
-int ft_close(int __fd) {
+int ft_close(int __fd, string why) {
     if (close(__fd) < 0) {
-        cerr << "close failed" << endl;
+        cerr << "close failed: " << why << endl;
     }
     return 0;
 }
@@ -58,7 +58,7 @@ int ft_epoll_create1(int __flags) {
 
 int ft_epoll_ctl(int __epfd, int __op, int __fd, epoll_event *event) {
     if (epoll_ctl(__epfd, __op, __fd, event) < 0) {
-        ft_close(__epfd);
+        ft_close(__epfd, "ft_epoll_ctl");
         throw "Epoll ctl failed";
     }
     return 0;
@@ -69,9 +69,9 @@ int ft_epoll_wait(int __epfd, epoll_event *__events, int __maxevents, int __time
 
     if ((nfds = epoll_wait(__epfd, __events, __maxevents, __timeout)) == -1) {
         for (int fd = 0; fd < (int)serverFd.size(); ++fd) {
-            ft_close(serverFd[fd]);
+            ft_close(serverFd[fd], "ft_epoll_wait");
         }
-        ft_close(epollFd);
+        ft_close(epollFd, "ft_epoll_wait");
         throw "epoll_wait failed";
     }
     return nfds;
@@ -90,12 +90,12 @@ ssize_t webServ::ft_recv(int __fd) {
 
     if (bytesRead == 0) {
         // std::cout << "Connection closed by client\n";
-        ft_close(clientFd);
+        ft_close(__fd, "ft_recv");
         return 0;
     }
     else if (bytesRead < 0 && (errno != EAGAIN && errno != EWOULDBLOCK)) {
         std::cerr << "recv() error: " << strerror(errno) << "\n";
-        ft_close(clientFd);
+        ft_close(__fd, "ft_recv");
         return -1;
     }
     return totalBytesRead;

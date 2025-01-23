@@ -1,16 +1,18 @@
 #include "webServ.hpp"
 
 void webServ::handelNewConnection(int eventFd) {
+    int clientFd;
+
     if ((clientFd = accept(eventFd, NULL, NULL)) == -1) {
         cerr << "Accept failed" << endl;
         return ;
     }
-    // cout << "New client connected!" << endl;
+    cout << "New client connected!" << endl;
 
     // set the client socket to non-blocking mode
     if (fcntl(clientFd, F_SETFL, O_NONBLOCK) < 0) {
         cerr << "Failed to set non-blocking" << endl;
-        ft_close(clientFd);
+        ft_close(clientFd, "clientFd");
         return ;
     }
 
@@ -19,7 +21,7 @@ void webServ::handelNewConnection(int eventFd) {
     ev.data.fd = clientFd;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
         cerr << "epoll_ctl failed for client socket" << clientFd << endl;
-        ft_close(clientFd);
+        ft_close(clientFd, "clientFd");
         return ;
     }
     indexMap[clientFd].headerSended = false;
@@ -28,8 +30,7 @@ void webServ::handelNewConnection(int eventFd) {
 }
 
 void webServ::handelClientReq(int& i) {
-    clientFd = events[i].data.fd;
-    int bytesRead = ft_recv(clientFd);
+    int bytesRead = ft_recv(events[i].data.fd);
     if (bytesRead < 0) { return; } 
     else if (bytesRead == 0 && buffer.empty()) { return; }
 
@@ -45,7 +46,7 @@ void webServ::handelClientReq(int& i) {
     buffer.clear();
 }
 
-void webServ::handelClientRes_1(int FD) {
+void webServ::handelClientRes_1(int clientFd) {
     if (method != "GET" || indexMap[clientFd].headerSended == true)
         return;
     indexMap[clientFd].requestedFile = requestedFile;
@@ -74,9 +75,13 @@ void webServ::handelClientRes_1(int FD) {
         response += body;
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
         ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
-        ev.data.fd = FD;
-        epoll_ctl(epollFd, EPOLL_CTL_MOD, FD, &ev);
-        // ft_close(indexMap[clientFd].fileFd);
+        ev.data.fd = clientFd;
+        epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
+        fileStream.close();
+        if (clientFd >= 0) {
+            ft_close(clientFd, "clientFd");
+            clientFd = -1;
+        }
     }
     else {
         indexMap[clientFd].headerSended = true;
@@ -89,19 +94,19 @@ void webServ::handelClientRes_1(int FD) {
     }
 }
 
-void webServ::handelClientRes_2(int FD) {
-    if (method != "GET" || indexMap[clientFd].headerSended == false)
+void webServ::handelClientRes_2(int clientFd) {
+    if (method != "GET" || clientFd < 0 || indexMap[clientFd].fileFd < 0 || indexMap[clientFd].headerSended == false)
         return;
     const ssize_t chunkSize = 10000;
     char buffer[chunkSize+1];
     // while(true) {
         ssize_t bytesRead = read(indexMap[clientFd].fileFd, buffer, chunkSize);
         cout << "HERE---> " << bytesRead << endl;
+        buffer[bytesRead] = '\0';
         if (bytesRead < 0) {
             perror("ba33");
             return ;
         }
-        buffer[bytesRead] = '\0';
         if (bytesRead > 0) {
             std::ostringstream chunkSizeStream;
             chunkSizeStream << std::hex << bytesRead << "\r\n";
@@ -111,13 +116,17 @@ void webServ::handelClientRes_2(int FD) {
             send(clientFd, buffer, bytesRead, MSG_DONTWAIT);
             send(clientFd, "\r\n", 2, MSG_DONTWAIT);
         }
-        if ((ssize_t)bytesRead < chunkSize) {
+        if (bytesRead < chunkSize) {
             send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT);
             ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
-            ev.data.fd = FD;
-            epoll_ctl(epollFd, EPOLL_CTL_MOD, FD, &ev);
-            // ft_close(indexMap[clientFd].fileFd);
-            ft_close(clientFd);
+            ev.data.fd = clientFd;
+            epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
+            cout << "BA#######################\n";
+            if (clientFd >= 0) {
+                ft_close(clientFd, "clientFd");
+                clientFd = -1;
+            }
+            ft_close(indexMap[clientFd].fileFd, "fileFd");
             return ;
         }
     // }

@@ -34,7 +34,7 @@ class webServ {
     private:
         // int                 file;      // the file passed as arguments
         std::vector<int>    serverFd;
-        int                 clientFd;
+        // int                 clientFd;
         int                 epollFd;
 
         e_map               extensions;
@@ -81,11 +81,11 @@ class webServ {
         void handelClientRes_2(int FD);
         // void handelClientRes_3();
 
-        void handelClient(int& i);
+        // void handelClient(int& i);
         void handelNewConnection(int eventFd);
 
 
-        string GET(const string& requestedFile);
+        // string GET(const string& requestedFile);
         string POST(string requeste);
         // void DELETE()
 };
