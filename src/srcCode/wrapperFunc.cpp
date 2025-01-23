@@ -42,7 +42,7 @@ int ft_listen(int __fd, int __n) {
 }
 
 int ft_close(int __fd, string why) {
-    if (close(__fd) < 0) {
+    if (__fd < 0 || close(__fd) < 0) {
         cerr << "close failed: " << why << endl;
     }
     return 0;

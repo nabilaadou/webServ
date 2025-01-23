@@ -65,7 +65,7 @@ void webServ::reqResp() {
     cout << "Server listening on port XX..." << endl;
     while (true) {
         // wait for events on the monitored sockets
-        nfds = ft_epoll_wait(epollFd, events, MAX_EVENTS, 10, serverFd, epollFd);
+        nfds = ft_epoll_wait(epollFd, events, MAX_EVENTS, 0, serverFd, epollFd);
 
         // cout << nfds << endl;
         for (int i = 0; i < nfds; i++) {
@@ -75,25 +75,16 @@ void webServ::reqResp() {
             else if(events[i].events & EPOLLIN) 
             {
                 std::cout << "request ............." << std::endl;
-                // char buffer[100] ;
-                // int len = recv(events[i].data.fd , buffer , 100 , 0 );
-
-                // buffer[len] = 0;
                 handelClientReq(i);
-
-                // if(len != 100)
-                // {
-                    // events ev;
-                    ev.events = EPOLLOUT ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
-                    ev.data.fd = events[i].data.fd;
-                    epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
-                // }
+                ev.events = EPOLLOUT ;
+                ev.data.fd = events[i].data.fd;
+                epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
                     
                 std::cout << buffer << std::endl;
             }
             else if(events[i].events & EPOLLOUT) 
             {
-                std::cout << "respond ............." << std::endl;
+                // std::cout << "respond ............." << std::endl;
 
                 handelClientRes_1(events[i].data.fd);
                 handelClientRes_2(events[i].data.fd);

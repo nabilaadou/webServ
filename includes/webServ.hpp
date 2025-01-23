@@ -34,7 +34,6 @@ class webServ {
     private:
         // int                 file;      // the file passed as arguments
         std::vector<int>    serverFd;
-        // int                 clientFd;
         int                 epollFd;
 
         e_map               extensions;
@@ -43,7 +42,6 @@ class webServ {
 
         int                 statusCode;
         string              fileType;
-        string              requestedFile;
 
         string              buffer;
         string              method;
