@@ -89,7 +89,7 @@ string webServ::getFile(string str) {
             fileType =  extensions[ext];
         }
     }
-    cout << path << endl;
+    // cout << path << endl;
     return ("." + path);
 }
 

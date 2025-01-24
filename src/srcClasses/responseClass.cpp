@@ -27,7 +27,7 @@ void webServ::handelNewConnection(int eventFd) {
     indexMap[clientFd].headerSended = false;
     indexMap[clientFd].clientFd = clientFd;
     indexMap[clientFd].fileFd = -1;
-    cout << "BA##-> " << indexMap[clientFd].clientFd << endl;
+    // cout << "BA##-> " << indexMap[clientFd].clientFd << endl;
 }
 
 // void webServ::handelClientReq(int& i) {
@@ -64,7 +64,7 @@ void webServ::handelClientRes_1(int clientFd) {
     }
 
     string response;
-    cout << "HERE\n";
+    // cout << "HERE\n";
     if (file_stat.st_size < 10000) {
         ifstream fileStream(indexMap[clientFd].requestedFile.c_str(), std::ios::binary);
         std::stringstream buffer;
@@ -128,6 +128,7 @@ void webServ::handelClientRes_2(int clientFd) {
             ft_close(clientFd, "clientFd");
             clientFd = -1;
         }
+
         return ;
     }
 }

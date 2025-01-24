@@ -27,12 +27,11 @@ void	Request::parseMessage(int clientFD) {
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.top();
 		if (!(this->*func)(stream))	return;
-		cerr << "HELP" << endl;
 		parseFunctions.pop();
 	}
-	for (const auto& it: startLineComponents)	cerr << it << endl;
-	for (const auto& it : headers)	cerr << it.first << ": " << it.second << endl;
-	cerr << body << endl;
+	// for (const auto& it: startLineComponents)	cerr << it << endl;
+	// for (const auto& it : headers)	cerr << it.first << ": " << it.second << endl;
+	// cerr << body << endl;
 	done = true;
 }
 

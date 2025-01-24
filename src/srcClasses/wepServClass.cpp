@@ -72,15 +72,16 @@ void webServ::reqResp() {
             if (find(serverFd.begin(), serverFd.end(), events[i].data.fd) != serverFd.end()) {
                 handelNewConnection(events[i].data.fd);
             }
-            else if(events[i].events & EPOLLIN) 
+            else if(events[i].events & EPOLLIN)
             {
                 std::cout << "request ............." << std::endl;
                 // handelClientReq(i);
 
 
                 // if (indexMap.find(events[i].data.fd) == indexMap.end())
-                indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);
 
+                cout << "---------------------" << events[i].data.fd << endl;
+                indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);
 
                 if (indexMap[events[i].data.fd].req.done == true) {
                     indexMap[events[i].data.fd].method = indexMap[events[i].data.fd].req.startLineComponents[0];
@@ -89,15 +90,13 @@ void webServ::reqResp() {
                     ev.data.fd = events[i].data.fd;
                     epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
                     cerr << "done parsing the request" << endl;
+                    indexMap[events[i].data.fd].req = Request();
                 }
-                
-                
-                std::cout << buffer << std::endl;
             }
             else if(events[i].events & EPOLLOUT) 
             {
                 // std::cout << "respond ............." << std::endl;
-                cout << indexMap[events[i].data.fd].method << ", " << indexMap[events[i].data.fd].requestedFile << endl;
+                // cout << indexMap[events[i].data.fd].method << ", " << indexMap[events[i].data.fd].requestedFile << endl;
                 handelClientRes_1(events[i].data.fd);
                 handelClientRes_2(events[i].data.fd);
 
