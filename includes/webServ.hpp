@@ -15,20 +15,16 @@ using namespace std;
 #include "wrapperFunc.hpp"
 #include "requestParse.hpp"
 
-// #define BUFFER_SIZE 1024
 #define MAX_EVENTS  10
 
 struct resReq {
-    // res     r;
+    Request     req;
+
     int         clientFd;
     int         fileFd;
     string      requestedFile;
     bool        headerSended;
     string      method;
-
-    Request     req;
-
-    // resReq(string requestedFile) : fileStream(requestedFile.c_str(), std::ios::binary) {}
 };
 
 typedef map<string, string> e_map;
@@ -46,30 +42,23 @@ class webServ {
 
         int                 statusCode;
         string              fileType;
-
         string              buffer;
-
 
         struct epoll_event  ev;
         struct epoll_event  events[MAX_EVENTS];
 
     public:
-        // webServ(int fd);
-        // webServ(const webServ& other);
-        // webServ& operator=(const webServ& other);
-        // ~webServ();
+        webServ();
+        ~webServ();
 
         // to do
-        
         // openFile();                          // open the files (configuration files)
         // readConfigurationFile();             // read and applay configuration file
 
         vector<int>     getPorts();
         vector<string>  split_string(const string& str, const string& delimiters);
-        string          getFile(string str);
         string          getBody(string str);
         e_map           getSupportedeExtensions();
-        ssize_t         ft_recv(int __fd);
 
         void createSockets();
         void startSocket(const int& port);
@@ -77,23 +66,16 @@ class webServ {
         void reqResp();
 
 
-        void handelClientReq(int& i);
+        void handelNewConnection(int eventFd);
         void handelClientRes_1(int FD);
         void handelClientRes_2(int FD);
-        // void handelClientRes_3();
-
-        // void handelClient(int& i);
-        void handelNewConnection(int eventFd);
 
 
         // string GET(const string& requestedFile);
-        string POST(string requeste);
+        // string POST(string requeste);
         // void DELETE()
 };
 
 string                          toString(const int& nbr);
-
-
-
 
 #endif

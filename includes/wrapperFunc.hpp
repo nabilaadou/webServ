@@ -22,7 +22,7 @@ int ft_socket(int __domain, int __type, int __protocol);
 int ft_fcntl(int __fd, int __cmd1, int __cmd2);
 int ft_epoll_create1(int __flags);
 int ft_listen(int __fd, int __n);
-int ft_close(int __fd, string why);
+int ft_close(int& __fd, string why);
 
 
 #endif
