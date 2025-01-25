@@ -1,18 +1,17 @@
 #ifndef WRAPPERFUNC_HPP
 #define WRAPPERFUNC_HPP
 
-using namespace std;
-
 #include <iostream>
 #include <sys/socket.h>
 #include <sys/epoll.h>
-#include <netinet/in.h>  // For sockaddr_in, htons, etc.
-#include <arpa/inet.h>   // For inet_pton, inet_addr, etc.
-#include <sys/socket.h>  // For socket, AF_INET, etc.
-#include <unistd.h>      // For close()
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <vector>
 
+using namespace std;
 
 int ft_setsockopt(int __fd, int __level, int __optname);
 int ft_epoll_wait(int __epfd, epoll_event *__events, int __maxevents, int __timeout, vector<int> serverFd, int epollFd);
@@ -23,6 +22,5 @@ int ft_fcntl(int __fd, int __cmd1, int __cmd2);
 int ft_epoll_create1(int __flags);
 int ft_listen(int __fd, int __n);
 int ft_close(int& __fd, string why);
-
 
 #endif

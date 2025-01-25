@@ -67,15 +67,16 @@ class webServ {
 
 
         void handelNewConnection(int eventFd);
-        void handelClientRes_1(int FD);
-        void handelClientRes_2(int FD);
+        void handelClientRes(int FD);
 
 
-        // string GET(const string& requestedFile);
+        void    GET(int clientFd);
+        void    sendBodyifChunked(int clientFd);
+    
         // string POST(string requeste);
         // void DELETE()
 };
 
-string                          toString(const int& nbr);
+string  toString(const int& nbr);
 
 #endif

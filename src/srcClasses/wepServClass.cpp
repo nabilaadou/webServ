@@ -57,8 +57,7 @@ void webServ::reqResp() {
         for (int i = 0; i < nfds; i++) {
             if (find(serverFd.begin(), serverFd.end(), events[i].data.fd) != serverFd.end())
                 handelNewConnection(events[i].data.fd);
-            else if(events[i].events & EPOLLIN)
-            {
+            else if(events[i].events & EPOLLIN) {
                 indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);
                 if (indexMap[events[i].data.fd].req.done == true) {
                     indexMap[events[i].data.fd].method = indexMap[events[i].data.fd].req.startLineComponents[0];
@@ -70,10 +69,8 @@ void webServ::reqResp() {
                     cout << "done parsing the request" << endl;
                 }
             }
-            else if(events[i].events & EPOLLOUT) 
-            {
-                handelClientRes_1(events[i].data.fd);
-                handelClientRes_2(events[i].data.fd);
+            else if(events[i].events & EPOLLOUT) {
+                handelClientRes(events[i].data.fd);
             }
         }
     }
