@@ -10,22 +10,22 @@ void webServ::GET(int clientFd, bool smallFile) {
         string body = buffer.str();
         response = "HTTP/1.1 200 OK\r\n" + fileType +
                         "Content-Length: " + toString(body.size()) + "\r\n" +
-                        "Connection: close" + string("\r\n\r\n");
+                        "Connection: keep-alive" + string("\r\n\r\n");
         response += body;
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
         ev.events = EPOLLIN ;                                               // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
         ev.data.fd = clientFd;
         epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
-        fileStream.close();
-        if (clientFd >= 0)
-            ft_close(clientFd, "clientFd");
+        // fileStream.close();
+        // if (clientFd >= 0)
+        //     ft_close(clientFd, "clientFd");
         cout << "done sending the response" << endl;
     }
     else {
         indexMap[clientFd].headerSended = true;
         indexMap[clientFd].fileFd = open(indexMap[clientFd].requestedFile.c_str(), O_RDONLY);
         response =   "HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\n" +
-                            fileType + "Connection: close" + string("\r\n\r\n");
+                            fileType + "Connection: keep-alive" + string("\r\n\r\n");
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
     }
 }
@@ -36,6 +36,7 @@ void webServ::sendBodyifChunked(int clientFd) {
 
     buffer[bytesRead] = '\0';
     if (bytesRead < 0) {
+        cout << indexMap[clientFd].fileFd << endl;
         perror("ba33");
     }
     else if (bytesRead > 0) {
@@ -53,8 +54,9 @@ void webServ::sendBodyifChunked(int clientFd) {
         epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
         if (indexMap[clientFd].fileFd >= 0)
             ft_close(indexMap[clientFd].fileFd, "fileFd");
-        if (clientFd >= 0)
-            ft_close(clientFd, "clientFd");
+        // if (clientFd >= 0)
+        //     ft_close(clientFd, "clientFd");
         cout << "done sending the response" << endl;
+        indexMap[clientFd].headerSended = false;
     }
 }

@@ -76,6 +76,7 @@ void webServ::reqResp() {
                             fileType =  extensions[ext];
                         }
                     }
+                    cout << indexMap[events[i].data.fd].requestedFile << ", " << events[i].data.fd << endl;
                     cout << "done parsing the request" << endl;
                 }
             }

@@ -7,7 +7,7 @@ void webServ::handelNewConnection(int eventFd) {
         cerr << "Accept failed" << endl;
         return ;
     }
-    cout << "\nNew client connected!\n" << endl;
+    cout << "\n--------------------------------------New client connected!--------------------------------------\n" << endl;
 
     // set the client socket to non-blocking mode
     if (fcntl(clientFd, F_SETFL, O_NONBLOCK) < 0) {
@@ -115,17 +115,16 @@ void webServ::sendRes(int clientFd, bool smallFile, struct stat file_stat) {
     }
     if (indexMap[clientFd].method == "DELETE") {
         string response;
-        response = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
+        response = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nConnection: keep-alive\r\n\r\n";
         cout << "DELETE method called\n";
         if (indexMap[clientFd].requestedFile.find("var/www/uploads") != 0) {
             std::cerr << "Directory Traversal Attempt While Deleting.\n";
-            // response = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
-            response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: close\r\n\r\n";
+            response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: keep-alive\r\n\r\n";
         }
         else if (S_ISDIR(file_stat.st_mode) != 0) {
             if (remove(indexMap[clientFd].requestedFile.c_str()) != 0) {
                 std::cerr << "Deleting Non-Empty Directory.\n";
-                response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: close\r\n\r\n";
+                response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: keep-alive\r\n\r\n";
             }
         }
         else if (S_ISREG(file_stat.st_mode) != 0) {
