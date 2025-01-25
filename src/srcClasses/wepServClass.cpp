@@ -1,6 +1,6 @@
 #include "webServ.hpp"
 
-webServ::webServ() { DOCUMENT_ROOT = "./var/www/"; }
+webServ::webServ() { DOCUMENT_ROOT = "./var/www"; }
 webServ::~webServ() { }
 
 vector<int> webServ::getPorts() {

@@ -37,13 +37,15 @@ void webServ::handelClientRes(int clientFd) {
 
     statusCode = 200;
     if (realpath(indexMap[clientFd].requestedFile.c_str(), resolvedPath)) {
-        indexMap[clientFd].requestedFile = resolvedPath;
-        if (indexMap[clientFd].requestedFile.find(DOCUMENT_ROOT) != 0) {
+        string file = resolvedPath;
+        if (file.find(DOCUMENT_ROOT) != 0) {
             statusCode = 403;
             reason = " 403 Forbidden";
         }
     }
-    indexMap[clientFd].requestedFile = DOCUMENT_ROOT + indexMap[clientFd].requestedFile;
+    if (indexMap[clientFd].requestedFile.find(DOCUMENT_ROOT) != 0)
+        indexMap[clientFd].requestedFile = DOCUMENT_ROOT + indexMap[clientFd].requestedFile;
+    cout << indexMap[clientFd].requestedFile << endl;
     if (statusCode == 200 && stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) == -1) {
         std::cerr << "stat failed\n";
         statusCode = 500;
