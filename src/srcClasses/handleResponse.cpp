@@ -38,7 +38,8 @@ void webServ::handelClientRes(int clientFd) {
     statusCode = 200;
     if (realpath(indexMap[clientFd].requestedFile.c_str(), resolvedPath)) {
         string file = resolvedPath;
-        if (file.find(DOCUMENT_ROOT) == 0) {
+        if (file.find(DOCUMENT_ROOT) == string::npos) {
+            cout << file << endl;
             std::cerr << "Directory Traversal Attempt.\n";
             statusCode = 403;
             reason = " 403 Forbidden";
@@ -56,7 +57,7 @@ void webServ::handelClientRes(int clientFd) {
             reason = " 500 Internal Server Error";
         }
     }
-    else if (statusCode == 200 && S_ISDIR(file_stat.st_mode) != 0) {
+    else if (statusCode == 200 && indexMap[clientFd].method == "GET" && S_ISDIR(file_stat.st_mode) != 0) {
         indexMap[clientFd].requestedFile = indexMap[clientFd].requestedFile + "/index.html";
         fileType = extensions[".html"];
         handelClientRes(clientFd);
@@ -68,6 +69,11 @@ void webServ::handelClientRes(int clientFd) {
             statusCode = 403;
             reason = " 403 Forbidden";
         }
+        if (file_stat.st_size > MAX_PAYLOAD_SIZE) {
+            std::cerr << "Payload Too Large.\n";
+            statusCode = 413;
+            reason = " 413 Payload Too Large";
+        }
     }
 
 
@@ -77,13 +83,17 @@ void webServ::handelClientRes(int clientFd) {
 
     
     if (statusCode < 300) {
-        if (file_stat.st_size < 10000)
-            sendRes(clientFd, true);
-        else
-            sendRes(clientFd, false);
+        if (file_stat.st_size < 10000) {
+            sendRes(clientFd, true, file_stat);
+        }
+        else {
+            sendRes(clientFd, false, file_stat);
+        }
     }
     else {                       // send ERROR response
-        string response = "HTTP/1.1 " + reason + string("\r\n") + "content-length: " + toString(31+reason.size()) + "\r\n" + extensions[".html"] + "\r\n\r\n" + "<header><h1>ERROR"+reason+"</h1></header>\r\n";
+        string body = "<header><h1>ERROR"+reason+"</h1></header>\n";
+        string response = "HTTP/1.1" + reason + string("\r\n") + "content-length: " + toString(body.size()) + "\r\n" + extensions[".html"] + "\r\n" + body;
+        cout << response << endl;
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
         ev.events = EPOLLIN ;
         ev.data.fd = clientFd;
@@ -91,7 +101,7 @@ void webServ::handelClientRes(int clientFd) {
     }
 }
 
-void webServ::sendRes(int clientFd, bool smallFile) {
+void webServ::sendRes(int clientFd, bool smallFile, struct stat file_stat) {
     if (indexMap[clientFd].method == "GET") {
         if (indexMap[clientFd].headerSended == false) {
             GET(clientFd, smallFile);
@@ -104,7 +114,28 @@ void webServ::sendRes(int clientFd, bool smallFile) {
         cout << "POST method called\n";
     }
     if (indexMap[clientFd].method == "DELETE") {
+        string response;
+        response = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
         cout << "DELETE method called\n";
+        if (indexMap[clientFd].requestedFile.find("var/www/uploads") != 0) {
+            std::cerr << "Directory Traversal Attempt While Deleting.\n";
+            // response = "HTTP/1.1 204 No Content\r\nContent-Type: text/html\r\nConnection: close\r\n\r\n";
+            response = "HTTP/1.1 403 Forbidden\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: close\r\n\r\n";
+        }
+        else if (S_ISDIR(file_stat.st_mode) != 0) {
+            if (remove(indexMap[clientFd].requestedFile.c_str()) != 0) {
+                std::cerr << "Deleting Non-Empty Directory.\n";
+                response = "HTTP/1.1 409 Conflict\r\nContent-Type: text/html\r\ncontent-length: 0\r\nConnection: close\r\n\r\n";
+            }
+        }
+        else if (S_ISREG(file_stat.st_mode) != 0) {
+            unlink(indexMap[clientFd].requestedFile.c_str());
+        }
+        cout << response << endl;
+        send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
+        ev.events = EPOLLIN ;
+        ev.data.fd = clientFd;
+        epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
     }
 }
 

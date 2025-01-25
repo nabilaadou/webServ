@@ -1,6 +1,9 @@
 #include "webServ.hpp"
 
-webServ::webServ() { DOCUMENT_ROOT = "./var/www"; }
+webServ::webServ() {
+    DOCUMENT_ROOT = "var/www";
+    MAX_PAYLOAD_SIZE = 50 * 1024 * 1024;     // 50 MB
+}
 webServ::~webServ() { }
 
 vector<int> webServ::getPorts() {

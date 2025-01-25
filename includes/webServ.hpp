@@ -46,6 +46,7 @@ class webServ {
         string              fileType;
         string              buffer;
         string              DOCUMENT_ROOT;
+        off_t               MAX_PAYLOAD_SIZE;
 
         struct epoll_event  ev;
         struct epoll_event  events[MAX_EVENTS];
@@ -71,7 +72,7 @@ class webServ {
 
         void handelNewConnection(int eventFd);
         void handelClientRes(int FD);
-        void sendRes(int FD, bool smallFile);
+        void sendRes(int FD, bool smallFile, struct stat file_stat);
 
 
         void    GET(int clientFd, bool smallFile);
