@@ -12,6 +12,7 @@ using namespace std;
 #include <algorithm>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <limits.h>
 #include "wrapperFunc.hpp"
 #include "requestParse.hpp"
 
@@ -43,6 +44,7 @@ class webServ {
         int                 statusCode;
         string              fileType;
         string              buffer;
+        string              DOCUMENT_ROOT;
 
         struct epoll_event  ev;
         struct epoll_event  events[MAX_EVENTS];
@@ -68,9 +70,10 @@ class webServ {
 
         void handelNewConnection(int eventFd);
         void handelClientRes(int FD);
+        void sendRes(int FD, bool smallFile);
 
 
-        void    GET(int clientFd);
+        void    GET(int clientFd, bool smallFile);
         void    sendBodyifChunked(int clientFd);
     
         // string POST(string requeste);

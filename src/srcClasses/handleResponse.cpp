@@ -30,9 +30,70 @@ void webServ::handelNewConnection(int eventFd) {
 }
 
 void webServ::handelClientRes(int clientFd) {
+    char        resolvedPath[PATH_MAX];
+    struct stat file_stat;
+    string      reason;
+
+
+    statusCode = 200;
+    if (realpath(indexMap[clientFd].requestedFile.c_str(), resolvedPath)) {
+        indexMap[clientFd].requestedFile = resolvedPath;
+        if (indexMap[clientFd].requestedFile.find(DOCUMENT_ROOT) != 0) {
+            statusCode = 403;
+            reason = " 403 Forbidden";
+        }
+    }
+    indexMap[clientFd].requestedFile = DOCUMENT_ROOT + indexMap[clientFd].requestedFile;
+    if (statusCode == 200 && stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) == -1) {
+        std::cerr << "stat failed\n";
+        statusCode = 500;
+        reason = " 500 Internal Server Error";
+    }
+    else if (statusCode == 200 && S_ISDIR(file_stat.st_mode) != 0) {
+        cout << "BA#################\n" << statusCode << endl;;
+        std::cerr << "user don't have Permissions.\n";
+        statusCode = 403;
+        reason = " 403 Forbidden";
+    }
+    else if (statusCode == 200 && S_ISREG(file_stat.st_mode) != 0) {
+        cout << "BA#################\n" << statusCode << endl;
+        if (stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) == -1) {
+            std::cerr << "Could not open the file: " << indexMap[clientFd].requestedFile + "\n";
+            statusCode = 404;
+            reason = " 404 Not Found";
+        }
+        else if (!(file_stat.st_mode & S_IRUSR)) {
+            std::cerr << "user don't have Permissions.\n";
+            statusCode = 403;
+            reason = " 403 Forbidden";
+        }
+    }
+
+
+
+
+
+    
+    if (statusCode < 300) {
+        if (file_stat.st_size < 10000)
+        {
+            sendRes(clientFd, true);
+        }
+        else
+        {
+            sendRes(clientFd, false);
+        }
+    }
+    else {                       // send ERROR response
+        string response = "HTTP/1.1 " + reason + string("\r\n") + "content-length: 31\r\n\r\n" + "<header><h1>ERROR</h1></header>\r\n";
+        send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
+    }
+}
+
+void webServ::sendRes(int clientFd, bool smallFile) {
     if (indexMap[clientFd].method == "GET") {
         if (indexMap[clientFd].headerSended == false) {
-            GET(clientFd);
+            GET(clientFd, smallFile);
         }
         else {
             sendBodyifChunked(clientFd);
@@ -45,7 +106,6 @@ void webServ::handelClientRes(int clientFd) {
         cout << "DELETE method called\n";
     }
 }
-
 
 
 

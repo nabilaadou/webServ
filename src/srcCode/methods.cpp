@@ -1,21 +1,9 @@
 #include "webServ.hpp"
 
-void webServ::GET(int clientFd) {
-    struct stat file_stat;
+void webServ::GET(int clientFd, bool smallFile) {
     string response;
 
-    if (stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) != 0) {
-        std::cerr << "Could not open the file: " << indexMap[clientFd].requestedFile + "\n";
-        statusCode = 404;
-        return ;
-    }
-    if (!(file_stat.st_mode & S_IRUSR)) {
-        std::cerr << "user don't have Permissions.\n";
-        statusCode = 403;
-        return ;
-    }
-
-    if (file_stat.st_size < 10000) {
+    if (smallFile) {
         ifstream fileStream(indexMap[clientFd].requestedFile.c_str(), std::ios::binary);
         std::stringstream buffer;
         buffer << fileStream.rdbuf();
