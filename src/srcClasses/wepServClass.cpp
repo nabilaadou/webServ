@@ -61,11 +61,18 @@ void webServ::reqResp() {
                 indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);
                 if (indexMap[events[i].data.fd].req.done == true) {
                     indexMap[events[i].data.fd].method = indexMap[events[i].data.fd].req.startLineComponents[0];
-                    indexMap[events[i].data.fd].requestedFile = indexMap[events[i].data.fd].req.startLineComponents[1];
+                    indexMap[events[i].data.fd].requestedFile = DOCUMENT_ROOT + indexMap[events[i].data.fd].req.startLineComponents[1];
                     ev.events = EPOLLOUT ;
                     ev.data.fd = events[i].data.fd;
                     epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
                     indexMap[events[i].data.fd].req = Request();
+                    size_t size = indexMap[events[i].data.fd].requestedFile.find_last_of(".");
+                    if (size != string::npos) {
+                        string ext = indexMap[events[i].data.fd].requestedFile.substr(size);
+                        if (extensions.find(ext) != extensions.end()) {
+                            fileType =  extensions[ext];
+                        }
+                    }
                     cout << "done parsing the request" << endl;
                 }
             }

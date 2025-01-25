@@ -38,33 +38,32 @@ void webServ::handelClientRes(int clientFd) {
     statusCode = 200;
     if (realpath(indexMap[clientFd].requestedFile.c_str(), resolvedPath)) {
         string file = resolvedPath;
-        if (file.find(DOCUMENT_ROOT) != 0) {
+        if (file.find(DOCUMENT_ROOT) == 0) {
+            std::cerr << "Directory Traversal Attempt.\n";
             statusCode = 403;
             reason = " 403 Forbidden";
         }
     }
-    if (indexMap[clientFd].requestedFile.find(DOCUMENT_ROOT) != 0)
-        indexMap[clientFd].requestedFile = DOCUMENT_ROOT + indexMap[clientFd].requestedFile;
-    cout << indexMap[clientFd].requestedFile << endl;
     if (statusCode == 200 && stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) == -1) {
-        std::cerr << "stat failed\n";
-        statusCode = 500;
-        reason = " 500 Internal Server Error";
-    }
-    else if (statusCode == 200 && S_ISDIR(file_stat.st_mode) != 0) {
-        cout << "BA#################\n" << statusCode << endl;;
-        std::cerr << "user don't have Permissions.\n";
-        statusCode = 403;
-        reason = " 403 Forbidden";
-    }
-    else if (statusCode == 200 && S_ISREG(file_stat.st_mode) != 0) {
-        cout << "BA#################\n" << statusCode << endl;
-        if (stat(indexMap[clientFd].requestedFile.c_str(), &file_stat) == -1) {
-            std::cerr << "Could not open the file: " << indexMap[clientFd].requestedFile + "\n";
+        if (errno == ENOENT) {
+            std::cerr << "No such file or directory: " << indexMap[clientFd].requestedFile + "\n";
             statusCode = 404;
             reason = " 404 Not Found";
         }
-        else if (!(file_stat.st_mode & S_IRUSR)) {
+        else {
+            std::cerr << "stat() failed\n";
+            statusCode = 500;
+            reason = " 500 Internal Server Error";
+        }
+    }
+    else if (statusCode == 200 && S_ISDIR(file_stat.st_mode) != 0) {
+        indexMap[clientFd].requestedFile = indexMap[clientFd].requestedFile + "/index.html";
+        fileType = extensions[".html"];
+        handelClientRes(clientFd);
+        return ;
+    }
+    else if (statusCode == 200 && S_ISREG(file_stat.st_mode) != 0) {
+        if (!(file_stat.st_mode & S_IRUSR)) {
             std::cerr << "user don't have Permissions.\n";
             statusCode = 403;
             reason = " 403 Forbidden";
@@ -75,20 +74,20 @@ void webServ::handelClientRes(int clientFd) {
 
 
 
+
     
     if (statusCode < 300) {
         if (file_stat.st_size < 10000)
-        {
             sendRes(clientFd, true);
-        }
         else
-        {
             sendRes(clientFd, false);
-        }
     }
     else {                       // send ERROR response
-        string response = "HTTP/1.1 " + reason + string("\r\n") + "content-length: 31\r\n\r\n" + "<header><h1>ERROR</h1></header>\r\n";
+        string response = "HTTP/1.1 " + reason + string("\r\n") + "content-length: " + toString(31+reason.size()) + "\r\n" + extensions[".html"] + "\r\n\r\n" + "<header><h1>ERROR"+reason+"</h1></header>\r\n";
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
+        ev.events = EPOLLIN ;
+        ev.data.fd = clientFd;
+        epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
     }
 }
 
