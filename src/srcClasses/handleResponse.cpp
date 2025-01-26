@@ -27,6 +27,7 @@ void webServ::handelNewConnection(int eventFd) {
     indexMap[clientFd].headerSended = false;
     indexMap[clientFd].clientFd = clientFd;
     indexMap[clientFd].fileFd = -1;
+    indexMap[clientFd].lastRes = 0;
 }
 
 void webServ::handelClientRes(int clientFd) {
@@ -135,6 +136,7 @@ void webServ::sendRes(int clientFd, bool smallFile, struct stat file_stat) {
         ev.events = EPOLLIN ;
         ev.data.fd = clientFd;
         epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
+        indexMap[clientFd].lastRes = time(nullptr);
     }
 }
 

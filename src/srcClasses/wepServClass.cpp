@@ -58,7 +58,13 @@ void webServ::reqResp() {
         nfds = ft_epoll_wait(epollFd, events, MAX_EVENTS, 0, serverFd, epollFd);
 
         for (int i = 0; i < nfds; i++) {
-            if (find(serverFd.begin(), serverFd.end(), events[i].data.fd) != serverFd.end())
+            int clientFd = events[i].data.fd;
+            if (indexMap.find(clientFd) != indexMap.end() && indexMap[clientFd].lastRes != 0 && time(nullptr) - indexMap[clientFd].lastRes > T) {
+                cout << indexMap[clientFd].lastRes << endl;
+                if (clientFd >= 0)
+                    ft_close(clientFd, "clientFd");
+            }
+            else if (find(serverFd.begin(), serverFd.end(), events[i].data.fd) != serverFd.end())
                 handelNewConnection(events[i].data.fd);
             else if(events[i].events & EPOLLIN) {
                 indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);

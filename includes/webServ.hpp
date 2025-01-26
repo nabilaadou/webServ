@@ -18,6 +18,7 @@ using namespace std;
 # include "requestParse.hpp"
 
 #define MAX_EVENTS  10
+#define T 5
 
 struct resReq {
     Request     req;
@@ -27,6 +28,7 @@ struct resReq {
     string      requestedFile;
     bool        headerSended;
     string      method;
+    time_t      lastRes;
 };
 
 typedef map<string, string> e_map;
@@ -60,8 +62,8 @@ class webServ {
         // readConfigurationFile();             // read and applay configuration file
 
         vector<int>     getPorts();
-        vector<string>  split_string(const string& str, const string& delimiters);
-        string          getBody(string str);
+        // vector<string>  split_string(const string& str, const string& delimiters);
+        // string          getBody(string str);
         e_map           getSupportedeExtensions();
 
         void createSockets();

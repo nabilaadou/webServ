@@ -13,12 +13,10 @@ void webServ::GET(int clientFd, bool smallFile) {
                         "Connection: keep-alive" + string("\r\n\r\n");
         response += body;
         send(clientFd, response.c_str(), response.size(), MSG_DONTWAIT);
-        ev.events = EPOLLIN ;                                               // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+        ev.events = EPOLLIN ;
         ev.data.fd = clientFd;
         epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
-        // fileStream.close();
-        // if (clientFd >= 0)
-        //     ft_close(clientFd, "clientFd");
+        indexMap[clientFd].lastRes = time(nullptr);
         cout << "done sending the response" << endl;
     }
     else {
@@ -54,9 +52,8 @@ void webServ::sendBodyifChunked(int clientFd) {
         epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev);
         if (indexMap[clientFd].fileFd >= 0)
             ft_close(indexMap[clientFd].fileFd, "fileFd");
-        // if (clientFd >= 0)
-        //     ft_close(clientFd, "clientFd");
-        cout << "done sending the response" << endl;
         indexMap[clientFd].headerSended = false;
+        indexMap[clientFd].lastRes = time(nullptr);
+        cout << "done sending the response" << endl;
     }
 }

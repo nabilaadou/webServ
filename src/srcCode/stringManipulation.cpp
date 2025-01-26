@@ -70,67 +70,44 @@ e_map webServ::getSupportedeExtensions() {
     return ext;
 }
 
-// string webServ::getFile(string str) {
-//     istringstream  iss(str);
-//     string              path;
-//     string              ext;
-//     size_t              size;
+// string webServ::getBody(string str) {
+//     string  body;
+//     size_t  index = 0;
 
-//     iss >> path;
-//     iss >> path;
-//     fileType = "";
-//     if (path == "/") {
-//         path = "/index.html";
-//     }
-//     size = path.find_last_of(".");
-//     if (size != string::npos) {
-//         ext = path.substr(size);
-//         if (extensions.find(ext) != extensions.end()) {
-//             fileType =  extensions[ext];
+//     while (index < str.size()) {
+//         if (index + 3 < str.size())
+//             break ;
+//         else if (str[index] == '\r' && str[index + 1] == '\n' && 
+//             str[index + 2] == '\r' && str[index + 3] == '\n') {
+//             index += 3;
+//             break;
 //         }
+//         index++;
 //     }
-//     // cout << path << endl;
-//     return ("." + path);
+//     body = str.substr(index);
+//     return (body);
 // }
 
-string webServ::getBody(string str) {
-    string  body;
-    size_t  index = 0;
+// vector<string> webServ::split_string(const string& str, const string& delimiters) {  
+//     vector<string> tokens;  
+//     string token;  
+//     size_t start = 0;  
+//     size_t end;  
 
-    while (index < str.size()) {
-        if (index + 3 < str.size())
-            break ;
-        else if (str[index] == '\r' && str[index + 1] == '\n' && 
-            str[index + 2] == '\r' && str[index + 3] == '\n') {
-            index += 3;
-            break;
-        }
-        index++;
-    }
-    body = str.substr(index);
-    return (body);
-}
-
-vector<string> webServ::split_string(const string& str, const string& delimiters) {  
-    vector<string> tokens;  
-    string token;  
-    size_t start = 0;  
-    size_t end;  
-
-    while ((end = str.find_first_of(delimiters, start)) != string::npos) {  
-        if (end > start) {  
-            tokens.push_back(str.substr(start, end - start));
-        }  
-        tokens.push_back(string(1, str[end]));
-        start = end + 1;  
-    }  
+//     while ((end = str.find_first_of(delimiters, start)) != string::npos) {  
+//         if (end > start) {  
+//             tokens.push_back(str.substr(start, end - start));
+//         }  
+//         tokens.push_back(string(1, str[end]));
+//         start = end + 1;  
+//     }  
     
-    if (start < str.length()) {  
-        tokens.push_back(str.substr(start));
-    }  
+//     if (start < str.length()) {  
+//         tokens.push_back(str.substr(start));
+//     }  
 
-    return tokens;  
-}
+//     return tokens;  
+// }
 
 string  trim(const string& str) {
 	size_t  start = str.find_first_not_of(" \t\n\r\f\v");
