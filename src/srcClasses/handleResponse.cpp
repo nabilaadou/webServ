@@ -17,7 +17,7 @@ void webServ::handelNewConnection(int eventFd) {
     }
 
     // add the new client socket to epoll
-    ev.events = EPOLLIN ;                                         // monitor for incoming data (add `EPOLLET` for edge-triggered mode)
+    ev.events = EPOLLIN;
     ev.data.fd = clientFd;
     if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
         cerr << "epoll_ctl failed for client socket" << clientFd << endl;

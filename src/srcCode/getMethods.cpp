@@ -45,7 +45,7 @@ void webServ::sendBodyifChunked(int clientFd) {
         send(clientFd, buffer, bytesRead, MSG_DONTWAIT);
         send(clientFd, "\r\n", 2, MSG_DONTWAIT);
     }
-    else if (bytesRead < BUFFER_SIZE) {
+    else {
         send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT);
         ev.events = EPOLLIN ;
         ev.data.fd = clientFd;

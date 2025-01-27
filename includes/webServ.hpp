@@ -1,5 +1,5 @@
-#ifndef webServ_HPP
-#define webServ_HPP
+#ifndef WEBSERV_HPP
+#define WEBSERV_HPP
 
 using namespace std;
 

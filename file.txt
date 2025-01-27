@@ -1,0 +1,16 @@
+server:   
+	port: 8080
+	host: 127.0.0.2
+	server_names: web1, web2
+	loc: /var/www
+
+server:
+	port: 9090
+	host: 127.0.0.1
+	server_names: web1, web2, web3, web4
+	loc: /var
+
+
+
+
+

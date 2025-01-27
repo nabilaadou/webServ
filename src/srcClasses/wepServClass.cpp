@@ -43,7 +43,7 @@ void webServ::startEpoll() {
 
     struct epoll_event event = {};
     for (int fd = 0; fd < (int)serverFd.size(); ++fd) {
-        event.events = EPOLLIN;                             // monitor for incoming connections
+        event.events = EPOLLIN;
         event.data.fd = serverFd[fd];
         ft_epoll_ctl(epollFd, EPOLL_CTL_ADD, serverFd[fd], &event);
     }
