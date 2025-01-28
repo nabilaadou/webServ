@@ -15,20 +15,27 @@ using namespace std;
 # include <cerrno>
 # include <arpa/inet.h>
 
+struct root {
+    vector<string>  methods;
+    string          url;
+    string          alias;
+    string          index;
+    bool            autoIndex;
+};
+
 struct keyValue {
     int             bodySize;
     vector<int>     port;
     vector<string>  host;
     vector<string>  serNames;
     vector<string>  errorPages;
-    vector<string>  locs;
+    vector<root>    roots;
 };
 
 
 class confiClass {
     private:
         string              file;
-        keyValue            kValueV;
         map<int, keyValue>  kValue;
 
     

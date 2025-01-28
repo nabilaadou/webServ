@@ -18,7 +18,7 @@ keyValue confiClass::handleServer(ifstream& sFile) {
         else if (line.empty())
             continue;
         if (i > 5)
-            return kv;
+            break;
         farr[i](line, i, kv, sFile);
         i++;
     }
@@ -42,7 +42,7 @@ void confiClass::parseFile() {
             kv = handleServer(sFile);
         }
         else {
-            throw "unknown keywords: `" + line + "`";
+            throw "parseFile::unknown keywords: `" + line + "`";
         }
         kValue[i++] = kv;
     }
@@ -51,8 +51,10 @@ void confiClass::parseFile() {
 
 
 int main(int ac, char **av) {
-    if (ac != 2)
-        return 0;
+    if (ac != 2) {
+        cout << "invalid numbers of argument!" << endl;
+        return -1;
+    }
     try {
         confiClass confi(av[1]);
         confi.parseFile();

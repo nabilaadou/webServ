@@ -104,7 +104,97 @@ void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile) {
     kv.bodySize = ft_stoi(trim(line.substr(i)));
 }
 
-void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile) {
+/////////////////////// ROOT
 
+void handleUrl(string& line, root& kv, ifstream& sFile) {
+    int i = checkKey("url: ", line);
+    kv.url = trim(line.substr(i));
+}
+
+void handleAlias(string& line, root& kv, ifstream& sFile) {
+    int i = checkKey("alias: ", line);
+    kv.alias = trim(line.substr(i));
+}
+
+void handleMethods(string& line, root& kv, ifstream& sFile) {
+    int i = checkKey("methods: ", line);
+    string tmp;
+
+    line = trim(line.substr(i));
+    while (true) {
+        i = line.find_first_of(',');
+        if (i == string::npos) {
+            kv.methods.push_back(trim(line));
+            break;
+        }
+        tmp = line.substr(0, i);
+        kv.methods.push_back(trim(tmp));
+        line = line.substr(i);
+        if (line[0] == ',')
+            line = line.substr(1);
+    }
+    if (kv.methods.size() > 3)
+        throw "invalid numbers of methods: " + to_string(kv.methods.size());
+    for (int i = 0; i < kv.methods.size(); ++i) {
+        if (kv.methods[i] != "GET" && kv.methods[i] != "DELETE" && kv.methods[i] != "POST")
+            throw "invalid method: `" + kv.methods[i] + "`";
+    }
+}
+
+void handleIndex(string& line, root& kv, ifstream& sFile) {
+    int i = checkKey("Index: ", line);
+    kv.index = trim(line.substr(i));
+}
+
+void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
+    int i = checkKey("autoIndex: ", line);
+    line = trim(line.substr(i));
+
+    if (line == "on")
+        kv.autoIndex = true;
+    else if (line == "off")
+        kv.autoIndex = false;
+    else
+        throw "invalid autoIndex: `" + line + "`";
+}
+
+
+
+root handleRoot(ifstream& sFile) {
+    void (*farr[])(string& line, root& kv, ifstream& sFile) = {handleUrl, handleAlias, handleMethods, handleIndex, handleAutoIndex};
+    string line;
+    root kv;
+    int i = 0;
+
+    while (getline(sFile, line)) {
+        line = trim(line);
+        if (line == "[END]") {
+            return kv;
+        }
+        else if (line.empty())
+            continue;
+        if (i > 4)
+            break;
+        farr[i](line, kv, sFile);
+        i++;
+    }
+    throw "[END] tag neede";
+}
+
+void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile) {
+    while (getline(sFile, line)) {
+        line = trim(line);
+        if (line.empty())
+            continue;
+        if (line == "[root]") {
+            kv.roots.push_back(handleRoot(sFile));
+        }
+        if (line == "[END]") {
+            break ;
+        }
+        else {
+            throw "handlelocs::unknown keywords: `" + line + "`";
+        }
+    }
 }
 
