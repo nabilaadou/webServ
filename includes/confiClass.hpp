@@ -1,5 +1,5 @@
-#ifndef CONFICLASS_HPP
-#define CONFICLASS_HPP
+# ifndef CONFICLASS_HPP
+# define CONFICLASS_HPP
 
 using namespace std;
 
@@ -16,34 +16,42 @@ using namespace std;
 # include <arpa/inet.h>
 
 struct keyValue {
-    int             port;
-    string          host;
+    int             bodySize;
+    vector<int>     port;
+    vector<string>  host;
     vector<string>  serNames;
+    vector<string>  errorPages;
     vector<string>  locs;
 };
 
 
 class confiClass {
     private:
-        string file;
-        map<int, keyValue> kValue;
+        string              file;
+        keyValue            kValueV;
+        map<int, keyValue>  kValue;
 
+    
     public:
         confiClass(string _file);
         ~confiClass();
 
         void parseFile();
+        keyValue handleServer(ifstream& sFile);
 
-        void handlePort(string& line, int len);
-        void handlehost(string& line, int len);
-        void handleSerNames(string& line, int len);
-        void handlelocs(string& line, int len);
+
+
 
         void printKeyValue();
 };
 
 
-
-
+void handlePort(string& line, int len, keyValue& kv, ifstream& sFile);
+void handlehost(string& line, int len, keyValue& kv, ifstream& sFile);
+void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile);
+void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile);
+void handleError(string& line, int len, keyValue& kv, ifstream& sFile);
+void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile);
+string  trim(const string& str);
 
 #endif

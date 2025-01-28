@@ -1,156 +1,118 @@
-// #include "confiClass.hpp"
+#include "confiClass.hpp"
 
-// confiClass::confiClass(string _file) { file = _file; }
-// confiClass::~confiClass() {}
+confiClass::confiClass(string _file) {
+    file = _file;
+}
+confiClass::~confiClass() {}
 
+keyValue confiClass::handleServer(ifstream& sFile) {
+    void (*farr[])(string& line, int len, keyValue& kv, ifstream& sFile) = {handlePort, handlehost, handleSerNames, handleBodyLimit, handleError, handlelocs};
+    string line;
+    keyValue kv;
+    int i = 0;
 
-// string  trim(const string& str) {
-// 	size_t  start = str.find_first_not_of(" \t\n\r\f\v");
-// 	if (start == string::npos)  return "";
+    while (getline(sFile, line)) {
+        line = trim(line);
+        if (line == "[END]")
+            return kv;
+        else if (line.empty())
+            continue;
+        if (i > 5)
+            return kv;
+        farr[i](line, i, kv, sFile);
+        i++;
+    }
+    throw "[END] tag neede";
+}
 
-// 	size_t  end = str.find_last_not_of(" \t\n\r\f\v");
+void confiClass::parseFile() {
+    ifstream sFile(file);
+    string line;
+    int i = 0;
+    keyValue kv;
 
-// 	return str.substr(start, end - start + 1);
-// }
-
-// void confiClass::printKeyValue() {
-//     for (size_t i = 0; i < kValue.size(); ++i) {
-//         if (i != 0)
-//             cout << endl << endl;
-//         cout << "------------------SERVER-" << i << "------------------" << endl;
-//         cout << "----> Port: " << kValue[i].port << endl;
-//         cout << "----> Host: " << kValue[i].host << endl;
-//         cout << "----> Server Names:" << endl;
-//         for (size_t j = 0; j < kValue[i].serNames.size(); ++j) {
-//             cout << "------------------->" << kValue[1].serNames[j] << endl;
-//         }
-//     }
-// }
-
-// int checkKey(string key, const string& line) {
-//     size_t     i;
-
-//     for (i = 0; i < key.size(); ++i) {
-//         if (key[i] != line[i]) {
-
-//             throw "invalid: " + line + "IN -" + line[i] + "-";
-//         }
-//     }
-//     return (i);
-// }
-
-// void confiClass::handlePort(string& line, int len) {
-//     int i = checkKey("port: ", line);
-//     kValue[len].port = stoi(line.substr(i));
-// }
-
-// void confiClass::handlehost(string& line, int len) {
-//     unsigned char buf[sizeof(struct in6_addr)];
-//     int i = checkKey("host: ", line);
-//     line = line.substr(i);
-
-//     int s;
-
-//     s = inet_pton(AF_INET, line.c_str(), buf);
-//     if (s == 0)
-//         throw "Host is not in presentation format";
-//     else if (s < 0)
-//         throw "inet_pton failed";
-//     kValue[len].host = line;
-// }
-
-// void confiClass::handleSerNames(string& line, int len) {
-//     size_t i = checkKey("server_names: ", line);
-//     string tmp;
-//     line = line.substr(i);
-
-    
-//     while (true) {
-//         i = line.find_first_of(',');
-//         if (i == string::npos) {
-//             kValue[len].serNames.push_back(trim(line));
-//             break;
-//         }
-//         tmp = line.substr(0, i);
-//         line = line.substr(i);
-//         kValue[len].serNames.push_back(trim(tmp));
-//         if (line[0] == ',')
-//             line = line.substr(1);
-//     }
-// }
-
-// void confiClass::handlelocs(string& line, int len) {
-//     (void)len;
-//     int i = checkKey("loc: ", line);
-//     line = line.substr(i);
-    
-    
-    
-//     // cout << "loc: " + line << endl;
-// }
+    if (!sFile) {
+        throw "Unable to open file";
+    }
+    while (getline(sFile, line)) {
+        line = trim(line);
+        if (line.empty())
+            continue;
+        if (trim(line) == "[server]") {
+            kv = handleServer(sFile);
+        }
+        else {
+            throw "unknown keywords: `" + line + "`";
+        }
+        kValue[i++] = kv;
+    }
+    sFile.close();
+}
 
 
-// void confiClass::parseFile() {
-//     ifstream sFile(file);
-//     int len = 0;
-//     int i = 0;
-
-//     if (!sFile) {
-//         throw "Unable to open file";
-//     }
-//     string line;
-//     while (getline(sFile, line)) {
-//         line = trim(line);
-//         if (line.empty())
-//             continue;
-//         if (line == "server:") {
-//             i = 0;
-//             while (getline(sFile, line))
-//             {
-//                 if (line[0] != '\t' || line[1] == '\t' || trim(line).empty())
-//                     break;
-
-//                 line = trim(line);
-//                 if (i == 0)
-//                     handlePort(line, len);
-//                 else if (i == 1)
-//                     handlehost(line, len);
-//                 else if (i == 2)
-//                     handleSerNames(line, len);
-//                 else if (i == 3)
-//                     handlelocs(line, len);
-//                 i++;
-//             }
-//         }
-//         else if (line != "server:" || !line.empty()) {
-//             throw "unknown keywords: `" + line + "`";
-//         }
-//         len++;
-//     }
-
-//     sFile.close();
-// }
+int main(int ac, char **av) {
+    if (ac != 2)
+        return 0;
+    try {
+        confiClass confi(av[1]);
+        confi.parseFile();
+        confi.printKeyValue();
+    }
+    catch (const char *s) {
+        cerr << s << endl;
+        return -1;
+    }
+    catch (string s) {
+        cerr << s << endl;
+        return -1;
+    }
+    catch (exception& e) {
+        cerr << e.what() << endl;
+        return -1;
+    }
+    return 0;
+}
 
 
-// int main(int ac, char **av) {
-//     if (ac != 2)
-//         return 0;
-//     try {
-//         confiClass confi(av[1]);
-//         confi.parseFile();
-//         confi.printKeyValue();
-//     }
-//     catch (const char *s) {
-//         cerr << s << endl;
-//         return -1;
-//     }
-//     catch (string s) {
-//         cerr << s << endl;
-//         return -1;
-//     }
-//     catch (exception& e) {
-//         cerr << e.what() << endl;
-//         return -1;
-//     }
-//     return 0;
-// }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+void confiClass::printKeyValue() {
+    for (size_t i = 0; i < kValue.size(); ++i) {
+        if (i != 0)
+            cout << "\n\n                              ------------------------------------\n\n" << endl;
+        cout << "------------------SERVER-" << i << "------------------" << endl;
+        cout << "----------> Ports:" << endl;
+        for (size_t j = 0; j < kValue[i].port.size(); ++j) {
+            cout << "-------------------> " << kValue[i].port[j] << endl;
+        }
+        cout << "----------> hosts:" << endl;
+        for (size_t j = 0; j < kValue[i].host.size(); ++j) {
+            cout << "-------------------> " << kValue[i].host[j] << endl;
+        }
+        cout << "----------> Server Names:" << endl;
+        for (size_t j = 0; j < kValue[i].serNames.size(); ++j) {
+            cout << "-------------------> " << kValue[i].serNames[j] << endl;
+        }
+        cout << "----------> Body Size:" << endl;
+        cout << "-------------------> " << kValue[i].bodySize << "M" << endl;
+        cout << "----------> Error Pages:" << endl;
+        for (size_t j = 0; j < kValue[i].errorPages.size(); ++j) {
+            cout << "-------------------> " << kValue[i].errorPages[j] << endl;
+        }
+    }
+}
+
