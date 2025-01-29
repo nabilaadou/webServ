@@ -109,22 +109,32 @@ void handleCgi(string& line, int len, keyValue& kv, ifstream& sFile) {
     if (trim(line) != "[cgi]") {
         throw "expected: `[cgi]` got `" + line + "`";
     }
-    getline(sFile, line);
-    index = checkKey("alias-script:", trim(line));
-    line = trim(line).substr(index);
-    if (!line.empty())
-        kv.cgis["alias-script"].push_back({trim(line), ""});
+
     while (getline(sFile, line)) {
         if (trim(line) == "[END]") { return ; }
         else if (i == 2) { break; }
-        index = checkKey("add-handler:", trim(line));
-        line = trim(trim(line).substr(index));
-        index = line.find_first_of(' ');
-        if (line.empty())
-            throw "add-handler can't be empty";
-        holdValue.first = trim(line.substr(0, index));
-        holdValue.second = trim(trim(line).substr(index));
-        kv.cgis["add-handler"].push_back(holdValue);
+        line = trim(line);
+        if (line[0] == 'A') {
+            index = checkKey("Alias-script:", trim(line));
+            line = trim(trim(line).substr(index));
+            if (line.empty())
+                throw "alias-script can't be empty";
+            holdValue.first = trim(line.substr(0, index));
+            holdValue.second = "";
+            kv.cgis["alias-script"].push_back(holdValue);
+        }
+        else {
+            index = checkKey("add-handler:", line);
+            line = trim(line.substr(index));
+            index = line.find_first_of(' ');
+            if (line.empty())
+                throw "add-handler can't be empty";
+            else if (index == string::npos)
+                throw "add-handler need two values";
+            holdValue.first = trim(line.substr(0, index));
+            holdValue.second = trim(line.substr(index));
+            kv.cgis["add-handler"].push_back(holdValue);
+        }
     }
 }
 
@@ -199,10 +209,8 @@ void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
 
     if (line == "on")
         kv.autoIndex = true;
-    else if (line == "off")
-        kv.autoIndex = false;
     else
-        kv.autoIndex = true;
+        kv.autoIndex = false;
 }
 
 root handleRoot(ifstream& sFile) {

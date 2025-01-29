@@ -121,15 +121,22 @@ void confiClass::printKeyValue() {
             cout << "------------------> " << kValue[i].errorPages[j].first << " | " << kValue[i].errorPages[j].second << endl;
         }
         cout << "---------> Cgi Scripts:" << endl;
-        if (kValue[i].cgis.find("alias-script") != kValue[i].cgis.end())
-            cout << "------------------> alias-script: " << kValue[i].cgis["alias-script"][0].first << endl;
+        if (kValue[i].cgis.find("alias-script") != kValue[i].cgis.end()) {
+            cout << "------------------> alias-script: ";
+            for (size_t j = 0; j < kValue[i].cgis["alias-script"].size(); ++j) {
+                cout << " " << kValue[i].cgis["alias-script"][j].first;
+                if (j + 1 < kValue[i].cgis["alias-script"].size())
+                    cout << ",";
+                else
+                    cout << endl;
+            }
+        }
         if (kValue[i].cgis.find("add-handler") != kValue[i].cgis.end()) {
             cout << "------------------> add-handler: ";
             for (size_t j = 0; j < kValue[i].cgis["add-handler"].size(); ++j) {
                 cout << " " << kValue[i].cgis["add-handler"][j].first << " | " << kValue[i].cgis["add-handler"][j].second;
-                if (j + 1 < kValue[i].cgis.size())
+                if (j + 1 < kValue[i].cgis["add-handler"].size())
                     cout << ",";
-
             }
         }
         cout << endl << "---------> ROOTS:" << endl;
