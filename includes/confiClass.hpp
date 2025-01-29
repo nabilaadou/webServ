@@ -29,6 +29,7 @@ struct keyValue {
     vector<string>  host;
     vector<string>  serNames;
     vector<string>  errorPages;
+    vector<string>  cgis;
     vector<root>    roots;
 };
 
@@ -53,12 +54,13 @@ class confiClass {
 };
 
 
-void handlePort(string& line, int len, keyValue& kv, ifstream& sFile);
-void handlehost(string& line, int len, keyValue& kv, ifstream& sFile);
-void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile);
-void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile);
-void handleError(string& line, int len, keyValue& kv, ifstream& sFile);
-void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handlePort(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handlehost(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handlelocs(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handleError(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile);
+void    handleCgi(string& line, int len, keyValue& kv, ifstream& sFile);
 string  trim(const string& str);
 
 #endif

@@ -12,7 +12,7 @@ int checkKey(string key, const string& line) {
 
     for (i = 0; i < key.size(); ++i) {
         if (key[i] != line[i]) {
-            throw "invalid: `" + line + "` IN `" + line[i] + "`";
+            throw "expected: `" + key + "` got `" + line + "`";
         }
     }
     return (i);
@@ -95,16 +95,27 @@ void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile) {
     kv.bodySize = ft_stoi(trim(line.substr(i)));
 }
 
-void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("[errors]", line);
+void handleCgi(string& line, int len, keyValue& kv, ifstream& sFile) {
+    if (trim(line) != "[cgi]") {
+        throw "expected: `[cgi]` got `" + line + "`";
+    }
+    while (getline(sFile, line)) {
+        if (trim(line) == "[END]") { return ; }
+        kv.cgis.push_back(trim(line));
+    }
+}
 
+void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
+    if (trim(line) != "[errors]") {
+        throw "expected: `[errors]` got `" + line + "`";
+    }
     while (getline(sFile, line)) {
         if (trim(line) == "[END]") { return ; }
         kv.errorPages.push_back(trim(line));
     }
 }
 
-/////////////////////// ROOT
+/////////////////////// ROOTS
 
 void handleUrl(string& line, root& kv, ifstream& sFile) {
     int i = checkKey("url: ", line);
@@ -157,8 +168,6 @@ void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
     else
         throw "invalid autoIndex: `" + line + "`";
 }
-
-
 
 root handleRoot(ifstream& sFile) {
     void (*farr[])(string& line, root& kv, ifstream& sFile) = {handleUrl, handleAlias, handleMethods, handleIndex, handleAutoIndex};

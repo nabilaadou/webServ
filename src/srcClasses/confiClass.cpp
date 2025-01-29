@@ -6,7 +6,7 @@ confiClass::confiClass(string _file) {
 confiClass::~confiClass() {}
 
 keyValue confiClass::handleServer(ifstream& sFile) {
-    void (*farr[])(string& line, int len, keyValue& kv, ifstream& sFile) = {handlePort, handlehost, handleSerNames, handleBodyLimit, handleError, handlelocs};
+    void (*farr[])(string& line, int len, keyValue& kv, ifstream& sFile) = {handlePort, handlehost, handleSerNames, handleBodyLimit, handleCgi, handleError, handlelocs};
     string line;
     keyValue kv;
     int i = 0;
@@ -17,9 +17,8 @@ keyValue confiClass::handleServer(ifstream& sFile) {
             return kv;
         else if (line.empty())
             continue;
-        if (i > 5)
+        if (i > 6)
             break;
-        // cout << line << endl;
         farr[i](line, i, kv, sFile);
         i++;
     }
@@ -117,7 +116,13 @@ void confiClass::printKeyValue() {
                 cout << ",";
         }
         cout << endl << "---------> Body Size:" << kValue[i].bodySize << "M" << endl;
-        cout << "---------> Error Pages:";
+        cout << "---------> Cgi Scripts:";
+        for (size_t j = 0; j < kValue[i].cgis.size(); ++j) {
+            cout << " " << kValue[i].cgis[j];
+            if (j + 1 < kValue[i].cgis.size())
+                cout << ",";
+        }
+        cout << endl << "---------> Error Pages:";
         for (size_t j = 0; j < kValue[i].errorPages.size(); ++j) {
             cout << " " << kValue[i].errorPages[j];
             if (j + 1 < kValue[i].errorPages.size())
