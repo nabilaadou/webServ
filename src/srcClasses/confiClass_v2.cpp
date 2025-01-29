@@ -47,6 +47,8 @@ void handlePort(string& line, int len, keyValue& kv, ifstream& sFile) {
 string getCurrentHost(string line) {
     string tmp = trim(line);
 
+    if (tmp.empty())
+        throw "host can't be empty";
     // to do
     // check the ip provided
     return tmp;
@@ -59,16 +61,20 @@ void handlehost(string& line, int len, keyValue& kv, ifstream& sFile) {
     line = trim(line.substr(i));
     while (true) {
         i = line.find_first_of(',');
+        tmp = getCurrentHost(line.substr(0, i));
         if (i == string::npos) {
-            kv.host.push_back(getCurrentHost(line));
+            if (!tmp.empty())
+                kv.host.push_back(tmp);
             break;
         }
-        tmp = line.substr(0, i);
-        kv.host.push_back(getCurrentHost(tmp));
+        if (!tmp.empty())
+            kv.host.push_back(tmp);
         line = line.substr(i);
         if (line[0] == ',')
             line = line.substr(1);
     }
+    if (kv.host.empty())
+        throw "host can't be empty";
 }
 
 void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile) {
@@ -105,14 +111,17 @@ void handleCgi(string& line, int len, keyValue& kv, ifstream& sFile) {
     }
     getline(sFile, line);
     index = checkKey("alias-script:", trim(line));
-    kv.cgis["alias-script"].push_back({trim(trim(line).substr(index)), ""});
+    line = trim(line).substr(index);
+    if (!line.empty())
+        kv.cgis["alias-script"].push_back({trim(line), ""});
     while (getline(sFile, line)) {
         if (trim(line) == "[END]") { return ; }
         else if (i == 2) { break; }
         index = checkKey("add-handler:", trim(line));
         line = trim(trim(line).substr(index));
-        cout << "`" << line << "`" << endl;
         index = line.find_first_of(' ');
+        if (line.empty())
+            throw "add-handler can't be empty";
         holdValue.first = trim(line.substr(0, index));
         holdValue.second = trim(trim(line).substr(index));
         kv.cgis["add-handler"].push_back(holdValue);
@@ -137,11 +146,15 @@ void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
 void handleUrl(string& line, root& kv, ifstream& sFile) {
     int i = checkKey("url:", line);
     kv.url = trim(line.substr(i));
+    if (kv.url.empty())
+        throw "root url can't be empty";
 }
 
 void handleAlias(string& line, root& kv, ifstream& sFile) {
     int i = checkKey("alias:", line);
     kv.alias = trim(line.substr(i));
+    if (kv.alias.empty())
+        throw "root alias can't be empty";
 }
 
 void handleMethods(string& line, root& kv, ifstream& sFile) {
@@ -152,11 +165,13 @@ void handleMethods(string& line, root& kv, ifstream& sFile) {
     while (true) {
         i = line.find_first_of(',');
         if (i == string::npos) {
-            kv.methods.push_back(trim(line));
+            if (!trim(tmp).empty())
+                kv.methods.push_back(trim(line));
             break;
         }
         tmp = line.substr(0, i);
-        kv.methods.push_back(trim(tmp));
+        if (!trim(tmp).empty())
+            kv.methods.push_back(trim(tmp));
         line = line.substr(i);
         if (line[0] == ',')
             line = line.substr(1);
@@ -167,11 +182,15 @@ void handleMethods(string& line, root& kv, ifstream& sFile) {
         if (kv.methods[i] != "GET" && kv.methods[i] != "DELETE" && kv.methods[i] != "POST")
             throw "invalid method: `" + kv.methods[i] + "`";
     }
+    if (kv.methods.empty())
+        kv.methods = {"GET", "DELETE", "POST"};
 }
 
 void handleIndex(string& line, root& kv, ifstream& sFile) {
     int i = checkKey("Index:", line);
     kv.index = trim(line.substr(i));
+    if (kv.index.empty())
+        kv.index = "index.html";
 }
 
 void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
@@ -183,7 +202,7 @@ void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
     else if (line == "off")
         kv.autoIndex = false;
     else
-        throw "invalid autoIndex: `" + line + "`";
+        kv.autoIndex = true;
 }
 
 root handleRoot(ifstream& sFile) {

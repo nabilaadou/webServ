@@ -21,6 +21,6 @@ $(NAME): $(SRCS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 fclean :
-		@rm -rf $(NAME)
+		@rm -rf $(NAME) $(CONFI)
 
 re : fclean all

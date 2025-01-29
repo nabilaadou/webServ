@@ -115,20 +115,22 @@ void confiClass::printKeyValue() {
             if (j + 1 < kValue[i].serNames.size())
                 cout << ",";
         }
-        cout << endl << "---------> Error Pages:";
+        cout << endl << "---------> Body Size: " << kValue[i].bodySize << "M";
+        cout << endl << "---------> Error Pages:" << endl;
         for (size_t j = 0; j < kValue[i].errorPages.size(); ++j) {
-            cout << " " << kValue[i].errorPages[j].first << " | " << kValue[i].errorPages[j].second;
-            if (j + 1 < kValue[i].errorPages.size())
-                cout << ",";
+            cout << "------------------> " << kValue[i].errorPages[j].first << " | " << kValue[i].errorPages[j].second << endl;
         }
-        cout << endl << "---------> Body Size:" << kValue[i].bodySize << "M" << endl;
         cout << "---------> Cgi Scripts:" << endl;
-        cout << "------------------> alias-script: " << kValue[i].cgis["alias-script"][0].first << endl;
-        cout << "------------------> add-handler: ";
-        for (size_t j = 0; j < kValue[i].cgis["add-handler"].size(); ++j) {
-            cout << " " << kValue[i].cgis["add-handler"][j].first << " | " << kValue[i].cgis["add-handler"][j].second;
-            if (j + 1 < kValue[i].cgis.size())
-                cout << ",";
+        if (kValue[i].cgis.find("alias-script") != kValue[i].cgis.end())
+            cout << "------------------> alias-script: " << kValue[i].cgis["alias-script"][0].first << endl;
+        if (kValue[i].cgis.find("add-handler") != kValue[i].cgis.end()) {
+            cout << "------------------> add-handler: ";
+            for (size_t j = 0; j < kValue[i].cgis["add-handler"].size(); ++j) {
+                cout << " " << kValue[i].cgis["add-handler"][j].first << " | " << kValue[i].cgis["add-handler"][j].second;
+                if (j + 1 < kValue[i].cgis.size())
+                    cout << ",";
+
+            }
         }
         cout << endl << "---------> ROOTS:" << endl;
         for (size_t j = 0; j < kValue[i].roots.size(); ++j) {
