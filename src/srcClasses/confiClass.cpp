@@ -19,6 +19,7 @@ keyValue confiClass::handleServer(ifstream& sFile) {
             continue;
         if (i > 5)
             break;
+        // cout << line << endl;
         farr[i](line, i, kv, sFile);
         i++;
     }
@@ -97,23 +98,45 @@ void confiClass::printKeyValue() {
         if (i != 0)
             cout << "\n\n                              ------------------------------------\n\n" << endl;
         cout << "------------------SERVER-" << i << "------------------" << endl;
-        cout << "----------> Ports:" << endl;
+        cout << "---------> Ports:";
         for (size_t j = 0; j < kValue[i].port.size(); ++j) {
-            cout << "-------------------> " << kValue[i].port[j] << endl;
+            cout << " " << kValue[i].port[j];
+            if (j + 1 < kValue[i].port.size())
+                cout << ",";
         }
-        cout << "----------> hosts:" << endl;
+        cout << endl << "---------> hosts:";
         for (size_t j = 0; j < kValue[i].host.size(); ++j) {
-            cout << "-------------------> " << kValue[i].host[j] << endl;
+            cout << " " << kValue[i].host[j];
+            if (j + 1 < kValue[i].host.size())
+                cout << ",";
         }
-        cout << "----------> Server Names:" << endl;
+        cout << endl << "---------> Server Names:";
         for (size_t j = 0; j < kValue[i].serNames.size(); ++j) {
-            cout << "-------------------> " << kValue[i].serNames[j] << endl;
+            cout << " " << kValue[i].serNames[j];
+            if (j + 1 < kValue[i].serNames.size())
+                cout << ",";
         }
-        cout << "----------> Body Size:" << endl;
-        cout << "-------------------> " << kValue[i].bodySize << "M" << endl;
-        cout << "----------> Error Pages:" << endl;
+        cout << endl << "---------> Body Size:" << kValue[i].bodySize << "M" << endl;
+        cout << "---------> Error Pages:";
         for (size_t j = 0; j < kValue[i].errorPages.size(); ++j) {
-            cout << "-------------------> " << kValue[i].errorPages[j] << endl;
+            cout << " " << kValue[i].errorPages[j];
+            if (j + 1 < kValue[i].errorPages.size())
+                cout << ",";
+        }
+        cout << endl << "---------> ROOTS:" << endl;
+        for (size_t j = 0; j < kValue[i].roots.size(); ++j) {
+            cout << "------------------> ROOT:" << endl;
+            cout << "---------------------------> url:       " << kValue[i].roots[j].url << endl;
+            cout << "---------------------------> alias:     " << kValue[i].roots[j].alias << endl;
+            cout << "---------------------------> Methods:   ";
+            for (size_t k = 0; k < kValue[i].roots[j].methods.size(); ++k) {
+                cout << kValue[i].roots[j].methods[k];
+                if (k + 1 < kValue[i].roots[j].methods.size())
+                    cout << ", ";
+            }
+            cout << endl;
+            cout << "---------------------------> index:     " << kValue[i].roots[j].index << endl;
+            cout << "---------------------------> autoIndex: " << (kValue[i].roots[j].autoIndex ? "True" : "False") << endl;
         }
     }
 }

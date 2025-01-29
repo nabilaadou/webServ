@@ -90,18 +90,18 @@ void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile) {
     }
 }
 
-void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("[errP]", line);
-
-    while (getline(sFile, line)) {
-        if (trim(line) == "[END]") { break; }
-        kv.errorPages.push_back(trim(line));
-    }
-}
-
 void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile) {
     int i = checkKey("body: ", line);
     kv.bodySize = ft_stoi(trim(line.substr(i)));
+}
+
+void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
+    int i = checkKey("[errors]", line);
+
+    while (getline(sFile, line)) {
+        if (trim(line) == "[END]") { return ; }
+        kv.errorPages.push_back(trim(line));
+    }
 }
 
 /////////////////////// ROOT
@@ -182,6 +182,8 @@ root handleRoot(ifstream& sFile) {
 }
 
 void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile) {
+    if (line != "[ROOTS]")
+            throw "handlelocs::unknown keywords: `" + line + "`";
     while (getline(sFile, line)) {
         line = trim(line);
         if (line.empty())
@@ -189,7 +191,7 @@ void handlelocs(string& line, int len, keyValue& kv, ifstream& sFile) {
         if (line == "[root]") {
             kv.roots.push_back(handleRoot(sFile));
         }
-        if (line == "[END]") {
+        else if (line == "[END]") {
             break ;
         }
         else {
