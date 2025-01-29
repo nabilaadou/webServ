@@ -6,7 +6,7 @@ confiClass::confiClass(string _file) {
 confiClass::~confiClass() {}
 
 keyValue confiClass::handleServer(ifstream& sFile) {
-    void (*farr[])(string& line, int len, keyValue& kv, ifstream& sFile) = {handlePort, handlehost, handleSerNames, handleBodyLimit, handleCgi, handleError, handlelocs};
+    void (*farr[])(string& line, int len, keyValue& kv, ifstream& sFile) = {handlePort, handlehost, handleSerNames, handleBodyLimit, handleError, handleCgi, handlelocs};
     string line;
     keyValue kv;
     int i = 0;
@@ -115,17 +115,19 @@ void confiClass::printKeyValue() {
             if (j + 1 < kValue[i].serNames.size())
                 cout << ",";
         }
-        cout << endl << "---------> Body Size:" << kValue[i].bodySize << "M" << endl;
-        cout << "---------> Cgi Scripts:";
-        for (size_t j = 0; j < kValue[i].cgis.size(); ++j) {
-            cout << " " << kValue[i].cgis[j];
-            if (j + 1 < kValue[i].cgis.size())
-                cout << ",";
-        }
         cout << endl << "---------> Error Pages:";
         for (size_t j = 0; j < kValue[i].errorPages.size(); ++j) {
-            cout << " " << kValue[i].errorPages[j];
+            cout << " " << kValue[i].errorPages[j].first << " | " << kValue[i].errorPages[j].second;
             if (j + 1 < kValue[i].errorPages.size())
+                cout << ",";
+        }
+        cout << endl << "---------> Body Size:" << kValue[i].bodySize << "M" << endl;
+        cout << "---------> Cgi Scripts:" << endl;
+        cout << "------------------> alias-script: " << kValue[i].cgis["alias-script"][0].first << endl;
+        cout << "------------------> add-handler: ";
+        for (size_t j = 0; j < kValue[i].cgis["add-handler"].size(); ++j) {
+            cout << " " << kValue[i].cgis["add-handler"][j].first << " | " << kValue[i].cgis["add-handler"][j].second;
+            if (j + 1 < kValue[i].cgis.size())
                 cout << ",";
         }
         cout << endl << "---------> ROOTS:" << endl;

@@ -29,7 +29,7 @@ int ft_stoi(const std::string &__str) {
 }
 
 void handlePort(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("port: ", line);
+    int i = checkKey("port:", line);
     string tmp;
 
     line = trim(line.substr(i));
@@ -53,7 +53,7 @@ string getCurrentHost(string line) {
 }
 
 void handlehost(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("host: ", line);
+    int i = checkKey("host:", line);
     string tmp;
 
     line = trim(line.substr(i));
@@ -72,7 +72,7 @@ void handlehost(string& line, int len, keyValue& kv, ifstream& sFile) {
 }
 
 void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("serN: ", line);
+    int i = checkKey("serN:", line);
     string tmp;
 
     line = trim(line.substr(i));
@@ -91,44 +91,61 @@ void handleSerNames(string& line, int len, keyValue& kv, ifstream& sFile) {
 }
 
 void handleBodyLimit(string& line, int len, keyValue& kv, ifstream& sFile) {
-    int i = checkKey("body: ", line);
+    int i = checkKey("body:", line);
     kv.bodySize = ft_stoi(trim(line.substr(i)));
 }
 
 void handleCgi(string& line, int len, keyValue& kv, ifstream& sFile) {
+    pair<string, string>    holdValue;
+    int                     index = 0;
+    int                     i = 0;
+
     if (trim(line) != "[cgi]") {
         throw "expected: `[cgi]` got `" + line + "`";
     }
+    getline(sFile, line);
+    index = checkKey("alias-script:", trim(line));
+    kv.cgis["alias-script"].push_back({trim(trim(line).substr(index)), ""});
     while (getline(sFile, line)) {
         if (trim(line) == "[END]") { return ; }
-        kv.cgis.push_back(trim(line));
+        else if (i == 2) { break; }
+        index = checkKey("add-handler:", trim(line));
+        line = trim(trim(line).substr(index));
+        cout << "`" << line << "`" << endl;
+        index = line.find_first_of(' ');
+        holdValue.first = trim(line.substr(0, index));
+        holdValue.second = trim(trim(line).substr(index));
+        kv.cgis["add-handler"].push_back(holdValue);
     }
 }
 
 void handleError(string& line, int len, keyValue& kv, ifstream& sFile) {
+    pair<int, string> holdValue;
     if (trim(line) != "[errors]") {
         throw "expected: `[errors]` got `" + line + "`";
     }
     while (getline(sFile, line)) {
         if (trim(line) == "[END]") { return ; }
-        kv.errorPages.push_back(trim(line));
+        holdValue.first = ft_stoi(trim(line).substr(0, 3));
+        holdValue.second = trim(line).substr(4);
+        kv.errorPages.push_back(holdValue);
     }
 }
 
 /////////////////////// ROOTS
 
 void handleUrl(string& line, root& kv, ifstream& sFile) {
-    int i = checkKey("url: ", line);
+    int i = checkKey("url:", line);
     kv.url = trim(line.substr(i));
 }
 
 void handleAlias(string& line, root& kv, ifstream& sFile) {
-    int i = checkKey("alias: ", line);
+    int i = checkKey("alias:", line);
     kv.alias = trim(line.substr(i));
 }
 
 void handleMethods(string& line, root& kv, ifstream& sFile) {
-    int i = checkKey("methods: ", line);
+    int i = checkKey("methods:", line);
     string tmp;
 
     line = trim(line.substr(i));
@@ -153,12 +170,12 @@ void handleMethods(string& line, root& kv, ifstream& sFile) {
 }
 
 void handleIndex(string& line, root& kv, ifstream& sFile) {
-    int i = checkKey("Index: ", line);
+    int i = checkKey("Index:", line);
     kv.index = trim(line.substr(i));
 }
 
 void handleAutoIndex(string& line, root& kv, ifstream& sFile) {
-    int i = checkKey("autoIndex: ", line);
+    int i = checkKey("autoIndex:", line);
     line = trim(line.substr(i));
 
     if (line == "on")

@@ -24,13 +24,13 @@ struct root {
 };
 
 struct keyValue {
-    int             bodySize;
-    vector<int>     port;
-    vector<string>  host;
-    vector<string>  serNames;
-    vector<string>  errorPages;
-    vector<string>  cgis;
-    vector<root>    roots;
+    int                                         bodySize;
+    vector<int>                                 port;
+    vector<string>                              host;
+    vector<string>                              serNames;
+    vector<pair<int, string>>                   errorPages;
+    map<string, vector<pair<string, string>>>   cgis;
+    vector<root>                                roots;
 };
 
 
@@ -46,10 +46,6 @@ class confiClass {
 
         void parseFile();
         keyValue handleServer(ifstream& sFile);
-
-
-
-
         void printKeyValue();
 };
 
