@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Cgi.hpp"
 #include <iostream>
 #include <string.h>
 #include <unordered_map>
@@ -7,48 +8,67 @@
 #include <stack>
 #include <sstream>
 #include <algorithm>
+#include <unistd.h>
+#include <arpa/inet.h>//for frecv
+#include <sys/stat.h>
 
-#include <sys/socket.h>
-#include <sys/epoll.h>
-#include <netinet/in.h>  // For sockaddr_in, htons, etc.
-#include <arpa/inet.h>   // For inet_pton, inet_addr, etc.
-#include <sys/socket.h>  // For socket, AF_INET, etc.
-#include <unistd.h>      // For close()
-#define BUFFER_SIZE 8192
+#define BUFFER_SIZE 8192 
 
 using namespace std;
+
 string  trim(const string& str);
+
+class Cgi;
+
+typedef enum e_methods{
+	GET,
+	POST,
+	DELETE
+}	t_methods;
+
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
 
 class Request {
-
-	stack<bool (Request::*)(stringstream&)>			parseFunctions;
-	stack<void (Request::*)(const string&) const>	parseFunctionsStarterLine;
-
-	string											remainingBuffer;
-
-	// struct epoll_event  ev;
-	public:
-		vector<string>									startLineComponents;
-		unordered_map<string, string>					headers;
-		string											body;
-
-		bool done;
-		Request();
-		void	parseMessage(int clinetFD);
-
 	private:
-		void	isProtocole(const string& httpVersion) const;
-		void	isTarget(const string& str) const;
-		void	isMethod(const string& target) const;
-		bool	parseStartLine(stringstream& stream);
+		string									method;
+		string									target;
+		string									targetPath;
+		string									targetQuery;
+		string									scriptName;
+		string									httpVersion;
+		unordered_map<string, string>			headers;
+		string									body;
+		stack<bool (Request::*)(stringstream&)>	parseFunctions;
+		stack<void (Request::*)(string&)>		parseFunctionsStarterLine;
+		string									remainingBuffer;
+		pair<int, int>							pipes;
+		bool									readAllRequest;
 
-		bool    validFieldName(string& str) const;
-		bool	parseFileds(stringstream& stream);
+		Cgi*									cgi;//
+		
 
-		bool	parseBody(stringstream& stream);
-
-		void	reconstructUri();
-
-		vector<string>	splitStartLine(string& str);
+		vector<string>							splitStarterLine(string& str);
+		void									isProtocole(string& httpVersion);
+		bool									isCGI(const string& uri);
+		void									reconstructAndParseUri(string& uri);
+		void									isTarget(string& target);
+		void									isMethod(string& method);
+		bool									parseStartLine(stringstream&);
+		bool									validFieldName(string& str) const;
+		bool									parseFileds(stringstream&);
+		int										openTargetFile() const;
+		bool									contentLengthBased(stringstream&);
+		bool									transferEncodingChunkedBased(stringstream&);
+		bool									parseBody(stringstream&);
+	public:
+		Request();
+		void									parseMessage(const int clientFd);
+		const string&							getMethod()	const;
+		const string&							getTarget()	const;
+		const string&							getHttpProtocole()	const;
+		const string							getHeader(const string&);
+		const string&							getPath() const;
+		const string&							getQuery() const;
+		const string&							getScriptName() const;
+		const bool&								getRequestStatus() const;
 };

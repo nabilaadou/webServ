@@ -1,0 +1,9 @@
+#include "Cgi.hpp"
+
+int Cgi::wFd() {
+	return wPipe[1];
+}
+
+int	Cgi::rFd() {
+	return rPipe[0];
+}

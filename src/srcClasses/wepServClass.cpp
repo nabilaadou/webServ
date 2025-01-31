@@ -68,9 +68,9 @@ void webServ::reqResp() {
                 handelNewConnection(events[i].data.fd);
             else if(events[i].events & EPOLLIN) {
                 indexMap[events[i].data.fd].req.parseMessage(events[i].data.fd);
-                if (indexMap[events[i].data.fd].req.done == true) {
-                    indexMap[events[i].data.fd].method = indexMap[events[i].data.fd].req.startLineComponents[0];
-                    indexMap[events[i].data.fd].requestedFile = DOCUMENT_ROOT + indexMap[events[i].data.fd].req.startLineComponents[1];
+                if (indexMap[events[i].data.fd].req.getRequestStatus() == true) {
+                    indexMap[events[i].data.fd].method = indexMap[events[i].data.fd].req.getMethod();
+                    indexMap[events[i].data.fd].requestedFile = DOCUMENT_ROOT + indexMap[events[i].data.fd].req.getTarget();
                     ev.events = EPOLLOUT ;
                     ev.data.fd = events[i].data.fd;
                     epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev);
