@@ -6,32 +6,34 @@
 #include <sys/epoll.h>
 #include <stdlib.h>
 #include <algorithm>
+#include<map>
 
-#include <requestParse.hpp>
+#include <request.hpp>
+#include <response.hpp>
+#define MAX_EVENTS 10
 
 using namespace std;
 
-#define MAX_EVENTS 10
+typedef struct s_ {
+	Request		req;
+	Response	res;
+	int			statusCode;
+	string		codeMeaning;
+} t_;
+
 
 class bngnServer {
 	private:
-		//server
-		vector<int>			listenSockets;
 		struct sockaddr_in	address;
-		//epoll
-		int 				epollFd;
 		struct epoll_event	ev, events[MAX_EVENTS];
-
-		Request				req;
-
-		
+		int 				epollFd;
+		vector<int>			listenSockets;
+		map<int, t_>		handelers;
 
 		void	startServer();
 		void	addListenSocksToEpoll();
 		void	createEpollInstance();
-
 		void	acceptNewClient(const int);
-		void	treatRequest(const int);
 		void	IOMultiplexer();
 	public:
 		bngnServer();

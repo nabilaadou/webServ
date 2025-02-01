@@ -1,4 +1,4 @@
-#include "requestParse.hpp"
+#include "request.hpp"
 
 const vector<string> aliasScript= {"/bin/cgi/", "test/test1/"};
 const vector<string> addHandler= {".sh", ".py", ".cgi"};

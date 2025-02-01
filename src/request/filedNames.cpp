@@ -1,4 +1,4 @@
-#include "requestParse.hpp"
+#include "request.hpp"
 
 bool    Request::validFieldName(string& str) const {
 	for (auto& c: str) {

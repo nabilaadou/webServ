@@ -1,4 +1,4 @@
-#include "requestParse.hpp"
+#include "request.hpp"
 
 Request::Request() : cgi(NULL) {
 	parseFunctions.push(&Request::parseBody);

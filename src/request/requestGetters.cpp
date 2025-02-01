@@ -1,4 +1,4 @@
-#include "requestParse.hpp"
+#include "request.hpp"
 
 const string&	Request::getMethod()	const {
 	return (method);
