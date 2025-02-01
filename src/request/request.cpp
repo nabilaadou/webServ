@@ -16,7 +16,7 @@ void	Request::parseMessage(const int clientFd) {
 	int		byteRead;
 	if ((byteRead = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT)) < 0) {
 		perror("recv syscall failed");
-		exit(-1);
+		throw(statusCodeException(500, "Internal Server Error"));
 	}
 
 	remainingBuffer += buffer;

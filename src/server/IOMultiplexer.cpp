@@ -21,23 +21,28 @@ void	bngnServer::IOMultiplexer() {
 		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
 			perror("epoll_wait failed: "); exit(-1);
 		}
-		for (int i = 0; i < nfds; ++i) {
-			if (find(listenSockets.begin(), listenSockets.end(), events[i].data.fd) != listenSockets.end()) {
-				acceptNewClient(events[i].data.fd);
-			}
-			else if (events[i].events & EPOLLIN){
-				req.parseMessage(events[i].data.fd);
-				if (req.getRequestStatus() == true) {
-					ev.events = EPOLLOUT;
-					ev.data.fd = events[i].data.fd;
-					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev) == -1) {
-						perror("epoll_ctl failed: "); exit(EXIT_FAILURE);
+		try {
+			for (int i = 0; i < nfds; ++i) {
+				if (find(listenSockets.begin(), listenSockets.end(), events[i].data.fd) != listenSockets.end()) {
+					acceptNewClient(events[i].data.fd);
+				}
+				else if (events[i].events & EPOLLIN){
+					httpSessions[events[i].data.fd].req.parseMessage(events[i].data.fd);
+					if (httpSessions[events[i].data.fd].req.getRequestStatus() == true) {
+						ev.events = EPOLLOUT;
+						ev.data.fd = events[i].data.fd;
+						if (epoll_ctl(epollFd, EPOLL_CTL_MOD, events[i].data.fd, &ev) == -1) {
+							perror("epoll_ctl failed: "); exit(EXIT_FAILURE);
+						}
 					}
 				}
+				else if (events[i].events & EPOLLOUT) {
+					// httpSessions[events[i].data.fd].res
+				}
 			}
-			else if (events[i].events & EPOLLOUT) {
-				//res.
-			}
+		}
+		catch (const statusCodeException& exception) {
+			//call appropiete function
 		}
 	}
 }

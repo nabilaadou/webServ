@@ -92,29 +92,33 @@ void	Request::reconstructAndParseUri(string& uri) {
 		if (access(targetPath.c_str(), F_OK))
 		{
 			if (errno == ENOENT)
-				throw("bad request:: file doesn't exist");
-			else
-				throw("access failed");
+				throw(statusCodeException(404, "Not Found"));
+			throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
 }
 
 void	Request::isProtocole(string& http) {
-	if (http.size() == 8 && !strncmp(http.c_str(), "HTTP/", 5) && isdigit(http[5]) && http[6] == '.' && isdigit(http[7])) {
+	if (http == "HTTP/1.1") {
 		this->httpVersion = http;
 		return ;
 	}
-	throw("bad requst::protocole version");
+	else if (http.size() == 8 && !strncmp(http.c_str(), "HTTP/", 5) && isdigit(http[5]) && http[6] == '.' && isdigit(http[7]))
+		throw(statusCodeException(505, "HTTP Version Not Supported"));
+	throw(statusCodeException(400, "Bad Request"));
 }
 
 void	Request::isTarget(string& target) {
 	const string	validCharachters = "-._~:/?#[]@!$&'()*+,;=";
 
-	if (strncmp(target.c_str(), "http://", 7) && target[0] != '/')
-		throw("bad requst:: unkown target form");
+	if (strncmp(target.c_str(), "http://", 7) && target[0] != '/') {
+		if (strncmp(target.c_str(), "https://", 8))
+			throw(statusCodeException(501, "Not Implemented"));
+		throw(statusCodeException(400, "Bad Request"));
+	}
 	for (const auto& c : target) {
 		if (!iswalnum(c) && validCharachters.find(c) == string::npos)
-			throw("bad requst:: malformed target");
+			throw(statusCodeException(400, "Bad Request"));
 	}
 	reconstructAndParseUri(target);
 	this->target = target;
@@ -124,7 +128,7 @@ void	Request::isMethod(string& method) {
 	if (method == "GET" || method == "POST" || method == "DELETE")
 		this->method = method;
 	else
-		throw("bad requst:: invalid method");
+		throw(statusCodeException(400, "Bad Request"));
 }
 
 bool	Request::parseStartLine(stringstream& stream) {
@@ -152,6 +156,7 @@ bool	Request::parseStartLine(stringstream& stream) {
 		if (++startLineCompsIt == startLineComps.end())
 			return false;
 	}
-	if (++startLineCompsIt != startLineComps.end() || !lineEndedWithLF)	throw("bad request:: invalid start line");
+	if (++startLineCompsIt != startLineComps.end() || !lineEndedWithLF)
+		throw(statusCodeException(400, "Bad Request"));
 	return true;
 }

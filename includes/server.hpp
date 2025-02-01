@@ -8,18 +8,19 @@
 #include <algorithm>
 #include<map>
 
+#include <statusCodeException.hpp>
 #include <request.hpp>
 #include <response.hpp>
 #define MAX_EVENTS 10
 
 using namespace std;
 
-typedef struct s_ {
+typedef struct s_httpSession {
 	Request		req;
 	Response	res;
 	int			statusCode;
 	string		codeMeaning;
-} t_;
+} t_httpSession;
 
 
 class bngnServer {
@@ -28,7 +29,7 @@ class bngnServer {
 		struct epoll_event	ev, events[MAX_EVENTS];
 		int 				epollFd;
 		vector<int>			listenSockets;
-		map<int, t_>		handelers;
+		map<int, t_httpSession>		httpSessions;
 
 		void	startServer();
 		void	addListenSocksToEpoll();

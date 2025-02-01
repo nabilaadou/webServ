@@ -5,7 +5,7 @@ int	Request::openTargetFile() const {
 	if (cgi != NULL)
 		fd = cgi->wFd();
 	else if (fd = open(target.c_str(), O_WRONLY | O_CREAT, 0644) < 0) {
-		perror("open failed: responseParser/body.cpp l: 7"); exit(-1);
+		perror("open failed: "); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);
 }
@@ -21,7 +21,7 @@ bool	Request::contentLengthBased(stringstream& stream) {
 			length = stoi(headers["content-length"]);
 		}
 		catch(...) {
-			perror("unvalid number in content length"); exit(-1);
+			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
 
@@ -46,13 +46,13 @@ bool	Request::transferEncodingChunkedBased(stringstream& stream) {
 					remainingBuffer = line;
 					return false;
 				}
-				perror("getline failed"); exit(-1);
+				perror("getline failed"); throw(statusCodeException(500, "Internal Server Error"));
 			}
 			try {
 				length = stoi(line);
 			}
 			catch(...) {
-				perror("unvalid number in chunked length"); exit(-1);
+				perror("unvalid number in chunked length"); throw(statusCodeException(500, "Internal Server Error"));
 			}
 			if (line == "0")	return true;
 		}
@@ -75,6 +75,6 @@ bool	Request::parseBody(stringstream& stream) {
 	else if (headers.find("transfer-encoding") != headers.end() && headers["transfer-encoding"] == "chunked")
 		parseFunctions.push(&Request::transferEncodingChunkedBased);
 	else
-		throw("unsoported tranfer-encoding");
+		throw(statusCodeException(501, "Not Implemented"));
 	return true;
 }

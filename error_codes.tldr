@@ -48,11 +48,34 @@
 			"typeName": "page"
 		},
 		{
+			"x": 569,
+			"y": 94.8046875,
+			"rotation": 0,
+			"isLocked": false,
+			"opacity": 1,
+			"meta": {},
+			"id": "shape:pqbX2CcYQSrik4sbXPcaD",
+			"type": "text",
+			"props": {
+				"color": "black",
+				"size": "m",
+				"w": 463.828125,
+				"text": "1xx\n2xx\n3xx\n4xx: server error-> throw in\n5xx: client error-> throw in response",
+				"font": "draw",
+				"textAlign": "start",
+				"autoSize": true,
+				"scale": 1
+			},
+			"parentId": "page:page",
+			"index": "a1",
+			"typeName": "shape"
+		},
+		{
 			"id": "pointer:pointer",
 			"typeName": "pointer",
-			"x": -416.77180206171806,
-			"y": 390.73968232112776,
-			"lastActivityTimestamp": 1738436913773,
+			"x": 904.9140625,
+			"y": -239.21875,
+			"lastActivityTimestamp": 1738443413725,
 			"meta": {}
 		},
 		{
@@ -101,9 +124,11 @@
 			"typeName": "instance"
 		},
 		{
-			"editingShapeId": null,
+			"editingShapeId": "shape:j5Mgqn6BWy3-yYRFiXxj0",
 			"croppingShapeId": null,
-			"selectedShapeIds": [],
+			"selectedShapeIds": [
+				"shape:j5Mgqn6BWy3-yYRFiXxj0"
+			],
 			"hoveredShapeId": null,
 			"erasingShapeIds": [],
 			"hintingShapeIds": [],
@@ -114,34 +139,34 @@
 			"typeName": "instance_page_state"
 		},
 		{
-			"x": 1184.771802061718,
-			"y": 459.26031767887224,
+			"x": 901.0859375,
+			"y": 681.21875,
 			"z": 0.5,
 			"meta": {},
 			"id": "camera:page:page",
 			"typeName": "camera"
 		},
 		{
-			"x": 569,
-			"y": 94.8046875,
+			"x": -217.0859375,
+			"y": -229.4140625,
 			"rotation": 0,
 			"isLocked": false,
 			"opacity": 1,
 			"meta": {},
-			"id": "shape:pqbX2CcYQSrik4sbXPcaD",
+			"id": "shape:j5Mgqn6BWy3-yYRFiXxj0",
 			"type": "text",
 			"props": {
 				"color": "black",
 				"size": "m",
-				"w": 463.828125,
-				"text": "1xx\n2xx\n3xx\n4xx: server error-> throw in\n5xx: client error-> throw in response",
+				"w": 781.84375,
+				"text": "-an error will occure\n-i ll throw the code and meaning corespending to the error\n-catch it and call the appropriet function to send the response",
 				"font": "draw",
 				"textAlign": "start",
 				"autoSize": true,
 				"scale": 1
 			},
 			"parentId": "page:page",
-			"index": "a1",
+			"index": "a28Lp",
 			"typeName": "shape"
 		}
 	]

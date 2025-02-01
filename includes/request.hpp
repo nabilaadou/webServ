@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <arpa/inet.h>//for frecv
 #include <sys/stat.h>
+#include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192 
 

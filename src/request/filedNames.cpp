@@ -28,7 +28,7 @@ bool	Request::parseFileds(stringstream& stream) {
 			filedValue = trim(filedValue);
 		}
 		if (colonIndex == string::npos || !validFieldName(fieldName)) {
-			throw("bad request");
+			throw(statusCodeException(400, "Bad Request"));
 		}
 		headers[fieldName] = filedValue;
 		prvsFieldName = fieldName;

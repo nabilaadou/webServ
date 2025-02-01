@@ -1,8 +1,9 @@
 NAME =  webServ
 CONFI = confi
 
-SRCS =  src/srcCode/*.cpp src/server/*.cpp\
-		src/request/*.cpp src/cgi/*.cpp
+SRCS =  src/srcCode/*.cpp src/server/*.cpp \
+		src/request/*.cpp src/cgi/*.cpp src/exceptions/*.cpp \
+		src/response/*.cpp
 
 # SCONFI = src/srcClasses/confiClass.cpp src/srcClasses/confiClass_v2.cpp
 
