@@ -31,4 +31,5 @@ void	Request::parseMessage(const int clientFd) {
 	for (const auto& it : headers)
 		cerr << it.first << ": " << it.second << endl;
 	readAllRequest = true;
+	cerr << "done parsing the request" << endl;
 }

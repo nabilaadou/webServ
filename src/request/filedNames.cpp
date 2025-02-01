@@ -12,7 +12,7 @@ bool	Request::parseFileds(stringstream& stream) {
 	string			line;
 	static string	prvsFieldName;
 
-	while(getline(stream, line) && line == " ") {
+	while(getline(stream, line) && line != " ") {
 		string	fieldName;
 		string	filedValue;
 

@@ -1,4 +1,5 @@
-#include "webServ.hpp"
+// #include "webServ.hpp"
+#include "server.hpp"
 
 int main(int ac, char **av) {
     if (ac != 2) {
@@ -7,18 +8,6 @@ int main(int ac, char **av) {
     }
     (void)av;
 
-    webServ wServ;
-
-    try {
-        wServ.createSockets();
-        wServ.startEpoll();
-        wServ.reqResp();
-    }
-    catch (const char *s) {
-        cerr << s << endl;
-        return -1;
-    }
-
-
+    bngnServer tt;
     return 0;
 }
