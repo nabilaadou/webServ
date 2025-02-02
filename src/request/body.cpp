@@ -4,7 +4,7 @@ int	Request::openTargetFile() const {
 	int fd;
 	if (cgi != NULL)
 		fd = cgi->wFd();
-	else if (fd = open(target.c_str(), O_WRONLY | O_CREAT, 0644) < 0) {
+	else if (fd = open(targetPath.c_str(), O_WRONLY | O_CREAT, 0644) < 0) {
 		perror("open failed: "); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);

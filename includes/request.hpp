@@ -21,31 +21,28 @@ string  trim(const string& str);
 
 class Cgi;
 
-typedef enum e_methods{
-	GET,
-	POST,
-	DELETE
-}	t_methods;
+typedef enum e_requestState{
+	PROCESSING,
+	DONE,
+	CCLOSEDCON,
+}	t_requestState;
 
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
 
 class Request {
 	private:
 		string									method;
-		string									target;
 		string									targetPath;
 		string									targetQuery;
-		string									scriptName;
 		string									httpVersion;
+		string									prvsFieldName;
 		unordered_map<string, string>			headers;
-		string									body;
 		stack<bool (Request::*)(stringstream&)>	parseFunctions;
 		stack<void (Request::*)(string&)>		parseFunctionsStarterLine;
 		string									remainingBuffer;
-		pair<int, int>							pipes;
-		bool									readAllRequest;
+		e_requestState							state;
 
-		Cgi*									cgi;//
+		Cgi*									cgi;
 		
 
 		vector<string>							splitStarterLine(string& str);
@@ -70,6 +67,5 @@ class Request {
 		const string							getHeader(const string&);
 		const string&							getPath() const;
 		const string&							getQuery() const;
-		const string&							getScriptName() const;
-		const bool&								getRequestStatus() const;
+		const t_requestState&					getRequestStatus() const;
 };

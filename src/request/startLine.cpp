@@ -73,17 +73,18 @@ bool	Request::isCGI(const string& uri) {
 
 void	Request::reconstructAndParseUri(string& uri) {
 	const string root = "var/www";
-	uri = root + uri;
 	if (uri[0] != '/') { //removing the scheme and authority and leaving just the path and query
 		size_t pos = uri.find('/', 7);
 		if (pos == string::npos) {
 			uri = "/"; 
 			targetPath = uri;
+			return ;
 		}
 		else
 			uri = uri.substr(pos);
 	}
-	else if (!isCGI(target)) {
+	uri = root + uri;
+	if (!isCGI(uri)) {
 		size_t pos = uri.find('?');
 		targetPath = uri.substr(0, pos);
 		if (pos != string::npos)
@@ -93,6 +94,7 @@ void	Request::reconstructAndParseUri(string& uri) {
 		{
 			if (errno == ENOENT)
 				throw(statusCodeException(404, "Not Found"));
+			perror("acces failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
@@ -121,7 +123,6 @@ void	Request::isTarget(string& target) {
 			throw(statusCodeException(400, "Bad Request"));
 	}
 	reconstructAndParseUri(target);
-	this->target = target;
 }
 
 void	Request::isMethod(string& method) {

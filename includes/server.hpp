@@ -1,3 +1,4 @@
+#pragma once
 #include <vector>
 #include <iostream>
 #include <string>
@@ -18,18 +19,16 @@ using namespace std;
 typedef struct s_httpSession {
 	Request		req;
 	Response	res;
-	int			statusCode;
-	string		codeMeaning;
 } t_httpSession;
 
 
 class bngnServer {
 	private:
-		struct sockaddr_in	address;
-		struct epoll_event	ev, events[MAX_EVENTS];
-		int 				epollFd;
-		vector<int>			listenSockets;
-		map<int, t_httpSession>		httpSessions;
+		struct sockaddr_in		address;
+		struct epoll_event		ev, events[MAX_EVENTS];
+		int 					epollFd;
+		vector<int>				listenSockets;
+		map<int, t_httpSession>	httpSessions;
 
 		void	startServer();
 		void	addListenSocksToEpoll();

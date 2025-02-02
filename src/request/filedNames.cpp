@@ -10,7 +10,6 @@ bool    Request::validFieldName(string& str) const {
 
 bool	Request::parseFileds(stringstream& stream) {
 	string			line;
-	static string	prvsFieldName;
 
 	while(getline(stream, line) && line != " ") {
 		string	fieldName;

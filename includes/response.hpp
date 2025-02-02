@@ -1,3 +1,4 @@
+#pragma once
 #include "Cgi.hpp"
 #include <iostream>
 #include <string.h>
@@ -11,15 +12,32 @@
 #include <sys/stat.h>
 #include "statusCodeException.hpp"
 
+#define BUFFER_SIZE 8192 
+
 using namespace std;
+
+string getSupportedeExtensions(const string& key);
+ssize_t w_write(int fildes, const void *buf, size_t nbyte);
+
 class Response {
 	private:
-		int		clientFd;
+		string	methode;
+		string	target;
+		string	httpProtocol;
+		int		contentFd;
+		bool	sentHeader;
+		bool	sentAllresponse;
+		int		statusCode;
+		string	codeMeaning;
 
-		void	sendStartLine();
-		void	sendHeaders();
-		void	sendBody();
+		void		sendStartLine(const int);
+		string		contentTypeHeader();
+		void		sendHeaders(const int);
+		void		sendBody(const int);
 	public:
 		Response();
-
+		void	sendResponse(const int clinetFd);
+		void	equipe(const string&, const string&, const string&);
+		void	setStatusCode(const int code, const string& meaning);
+		bool	getResponseStatus();
 };

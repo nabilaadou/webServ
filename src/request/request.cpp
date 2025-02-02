@@ -1,6 +1,6 @@
 #include "request.hpp"
 
-Request::Request() : cgi(NULL) {
+Request::Request() : cgi(NULL), state(PROCESSING){
 	parseFunctions.push(&Request::parseBody);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseStartLine);
@@ -14,8 +14,12 @@ Request::Request() : cgi(NULL) {
 void	Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
 	int		byteRead;
-	if ((byteRead = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT)) < 0) {
-		perror("recv syscall failed");
+	if ((byteRead =read(clientFd, buffer, BUFFER_SIZE)) <= 0) {
+		if (errno == ECONNRESET || !byteRead) {
+			state = CCLOSEDCON;
+			return;
+    	}
+		perror("read failed: ");
 		throw(statusCodeException(500, "Internal Server Error"));
 	}
 
@@ -27,9 +31,6 @@ void	Request::parseMessage(const int clientFd) {
 		if (!(this->*func)(stream))	return;
 		parseFunctions.pop();
 	}
-	cerr << method << " " << target << " " << httpVersion << endl;
-	for (const auto& it : headers)
-		cerr << it.first << ": " << it.second << endl;
-	readAllRequest = true;
+	state = DONE;
 	cerr << "done parsing the request" << endl;
 }

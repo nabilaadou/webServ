@@ -3,7 +3,7 @@ CONFI = confi
 
 SRCS =  src/srcCode/*.cpp src/server/*.cpp \
 		src/request/*.cpp src/cgi/*.cpp src/exceptions/*.cpp \
-		src/response/*.cpp
+		src/response/*.cpp src/wrappers/*.cpp
 
 # SCONFI = src/srcClasses/confiClass.cpp src/srcClasses/confiClass_v2.cpp
 
