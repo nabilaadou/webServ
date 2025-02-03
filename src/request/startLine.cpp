@@ -72,7 +72,7 @@ bool	Request::isCGI(const string& uri) {
 }
 
 void	Request::reconstructAndParseUri(string& uri) {
-	const string root = "var/www";
+	const string root = "www";
 	if (uri[0] != '/') { //removing the scheme and authority and leaving just the path and query
 		size_t pos = uri.find('/', 7);
 		if (pos == string::npos) {

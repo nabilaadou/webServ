@@ -1,27 +1,27 @@
 #include "request.hpp"
 
-const string&	Request::getMethod()	const {
+const string&	Request::Method()	const {
 	return (method);
 }
 
-const string&	Request::getHttpProtocole()	const {
+const string&	Request::HttpProtocole()	const {
 	return (httpVersion);
 }
 
-const string	Request::getHeader(const string& header) {
+const string	Request::Header(const string& header) {
 	if (headers.find(header) != headers.end())
 		return (headers[header]);
 	return "";
 }
 
-const string&	Request::getPath()	const {
+const string&	Request::Path()	const {
 	return (targetPath);
 }
 
-const string&	Request::getQuery()	const {
+const string&	Request::Query()	const {
 	return (targetQuery);
 }
 
-const t_requestState&	Request::getRequestStatus() const {
+const t_requestState&	Request::RequestStatus() const {
 	return state;
 }

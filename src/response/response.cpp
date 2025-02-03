@@ -4,8 +4,9 @@ Response::Response(): statusCode(200), codeMeaning("OK"), contentFd(-1) {}
 
 void	Response::sendResponse(const int clientFd) {
 	if (sentHeader == false) {
-		sendStartLine(clientFd);
-		sendHeaders(clientFd);
+		sendHeader(clientFd);
+		if (state == CCLOSEDCON)
+			return ;
 		sentHeader = true;
 	}
 	sendBody(clientFd);
@@ -22,7 +23,7 @@ void	Response::setStatusCode(const int code, const string& meaning) {
 	this->codeMeaning = meaning;
 }
 
-bool	Response::getResponseStatus() {
-	return sentAllresponse;
+t_requestState	Response::responseStatus() {
+	return state;
 }
 

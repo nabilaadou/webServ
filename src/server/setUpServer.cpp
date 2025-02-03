@@ -1,47 +1,47 @@
-#include "server.hpp"
+#include "server.h"
 
-bngnServer::bngnServer() {
-	startServer();
-	createEpollInstance();
-	addListenSocksToEpoll();
-	IOMultiplexer();
-}
+void	addServrSocksToEpollPool(const map<int, t_sockaddr>& servrSocks) {
+	int					epollFd;
+	struct epoll_event	ev;
 
-void	bngnServer::addListenSocksToEpoll() {
-	for (int i = 0; i < listenSockets.size(); ++i) {
+	if (epollFd = epoll_create1(0) == -1) {
+		perror("epoll_create1 failed(setUpserver.cpp): "); exit(-1);
+	}
+	for (t_sockaddr_it it = servrSocks.begin(); it != servrSocks.end(); ++it) {
 		ev.events = EPOLLIN;
-		ev.data.fd = listenSockets[i];
-		if (epoll_ctl(epollFd, EPOLL_CTL_ADD, listenSockets[i], &ev) == -1) {
+		ev.data.fd = it->first;
+		if (epoll_ctl(epollFd, EPOLL_CTL_ADD, it->first, &ev) == -1) {
 			perror("epoll_ctl failed: "); exit(EXIT_FAILURE);
 		}
 	}
 }
 
-void bngnServer::createEpollInstance() {
-	epollFd = epoll_create1(0);
-	if (epollFd == -1) {
-		perror("epoll_create1: "); exit(-1);
-	}
-}
+void	startServer() {
+	map<int, t_sockaddr>	servrSocks;
 
-void 	bngnServer::startServer() {
-	int serverFd, opt = 1;
+	// for (int i = 0; i < configFile.hostPort; ++i) {
+		t_sockaddr	sockInfo;
+		int 		sockFd;
+		int			opt = 1;
+		socklen_t	addrLen = sizeof(t_sockaddr);
 
-	if ((serverFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-        perror("socket failed"); exit(EXIT_FAILURE);
-    }
-	if (setsockopt(serverFd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-        perror("setsockopt"); exit(EXIT_FAILURE);
-    }
-	address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
-    address.sin_port = htons(8080);
-	if (bind(serverFd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-        perror("bind failed"); exit(EXIT_FAILURE);
-    }
-	cerr << "listening on port 8080.." << endl;
-	if (listen(serverFd, 3) < 0) {
-        perror("listen"); exit(EXIT_FAILURE);
-    }
-	listenSockets.push_back(serverFd);
+		if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
+    	    perror("socket failed(setUpserver.cpp): "); exit(-1);
+    	}
+		if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
+    	    perror("setsockopt failed(setUpserver.cpp): "); exit(-1);
+    	}
+		sockInfo.sin_family = AF_INET;
+    	sockInfo.sin_addr.s_addr = INADDR_ANY;
+    	sockInfo.sin_port = htons(8080);
+		if (bind(sockFd, (struct sockaddr*)&sockInfo, addrLen) < 0) {
+    	    perror("bind failed(setUpserver.cpp): "); exit(-1);
+    	}
+		cout << "listening on port 8080.." << endl;
+		if (listen(sockFd, 3) < 0) {
+    	    perror("listen failed(setUpserver.cpp): "); exit(-1);
+    	}
+		servrSocks[sockFd] = sockInfo;
+	// }
+	addServrSocksToEpollPool(servrSocks);
 }

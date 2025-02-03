@@ -13,16 +13,11 @@ Request::Request() : cgi(NULL), state(PROCESSING){
 
 void	Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
-	int		byteRead;
-	if ((byteRead =read(clientFd, buffer, BUFFER_SIZE)) <= 0) {
-		if (errno == ECONNRESET || !byteRead) {
-			state = CCLOSEDCON;
-			return;
-    	}
-		perror("read failed: ");
-		throw(statusCodeException(500, "Internal Server Error"));
-	}
 
+	if (read(clientFd, buffer, BUFFER_SIZE) <= 0) {
+		state = CCLOSEDCON;
+		return;
+	}
 	remainingBuffer += buffer;
 	replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
 	stringstream	stream(remainingBuffer);

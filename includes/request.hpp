@@ -28,7 +28,6 @@ typedef enum e_requestState{
 }	t_requestState;
 
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
-
 class Request {
 	private:
 		string									method;
@@ -61,11 +60,10 @@ class Request {
 	public:
 		Request();
 		void									parseMessage(const int clientFd);
-		const string&							getMethod()	const;
-		const string&							getTarget()	const;
-		const string&							getHttpProtocole()	const;
-		const string							getHeader(const string&);
-		const string&							getPath() const;
-		const string&							getQuery() const;
-		const t_requestState&					getRequestStatus() const;
+		const string&							Method()	const;
+		const string&							HttpProtocole()	const;
+		const string							Header(const string&);
+		const string&							Path() const;
+		const string&							Query() const;
+		const t_requestState&					RequestStatus() const;
 };
