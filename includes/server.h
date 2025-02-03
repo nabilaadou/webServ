@@ -22,3 +22,4 @@ typedef struct s_httpSession {
 } t_httpSession;
 
 void	startServer();
+void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd);

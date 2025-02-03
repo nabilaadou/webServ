@@ -1,18 +1,13 @@
-NAME =  webServ
-CONFI = confi
+NAME = webServ
 
-SRCS =  src/srcCode/*.cpp src/server/*.cpp \
-		src/request/*.cpp src/cgi/*.cpp src/exceptions/*.cpp \
-		src/response/*.cpp src/wrappers/*.cpp
+SRCS =  src/*.cpp src/cgi/*.cpp \
+		src/exceptions/*.cpp src/request/*.cpp src/response/*.cpp \
+		src/server/*.cpp
 
-# SCONFI = src/srcClasses/confiClass.cpp src/srcClasses/confiClass_v2.cpp
 
 CC = g++
 
 CFLAGS = -Wall -Wextra -I./includes -fsanitize=address -w -g3 #-Werror #-std=c++98
-
-CONFI: $(SCONFI)
-	$(CC) $(CFLAGS) $(SRCS) -o $(CONFI)
 
 all : $(NAME)
 

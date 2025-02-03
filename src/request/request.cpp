@@ -1,6 +1,6 @@
 #include "request.hpp"
 
-Request::Request() : cgi(NULL), state(PROCESSING){
+Request::Request() : cgi(NULL), state(PROCESSING_Q){
 	parseFunctions.push(&Request::parseBody);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseStartLine);
@@ -15,7 +15,7 @@ void	Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
 
 	if (read(clientFd, buffer, BUFFER_SIZE) <= 0) {
-		state = CCLOSEDCON;
+		state = CCLOSEDCON_Q;
 		return;
 	}
 	remainingBuffer += buffer;
@@ -26,6 +26,6 @@ void	Request::parseMessage(const int clientFd) {
 		if (!(this->*func)(stream))	return;
 		parseFunctions.pop();
 	}
-	state = DONE;
+	state = DONE_Q;
 	cerr << "done parsing the request" << endl;
 }

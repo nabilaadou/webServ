@@ -1,19 +1,20 @@
 #include "server.h"
 
-void	addServrSocksToEpollPool(const map<int, t_sockaddr>& servrSocks) {
+void	addServrSocksToEpollPool(map<int, t_sockaddr>& servrSocks) {
 	int					epollFd;
 	struct epoll_event	ev;
 
-	if (epollFd = epoll_create1(0) == -1) {
-		perror("epoll_create1 failed(setUpserver.cpp): "); exit(-1);
+	if ((epollFd = epoll_create1(0)) == -1) {
+		perror("epoll_create1 failed(setUpserver.cpp)"); exit(-1);
 	}
 	for (t_sockaddr_it it = servrSocks.begin(); it != servrSocks.end(); ++it) {
 		ev.events = EPOLLIN;
 		ev.data.fd = it->first;
 		if (epoll_ctl(epollFd, EPOLL_CTL_ADD, it->first, &ev) == -1) {
-			perror("epoll_ctl failed: "); exit(EXIT_FAILURE);
+			perror("epoll_ctl failed"); exit(-1);
 		}
 	}
+	multiplexerSytm(servrSocks, epollFd);
 }
 
 void	startServer() {
@@ -26,10 +27,10 @@ void	startServer() {
 		socklen_t	addrLen = sizeof(t_sockaddr);
 
 		if ((sockFd = socket(AF_INET, SOCK_STREAM, 0)) == 0) {
-    	    perror("socket failed(setUpserver.cpp): "); exit(-1);
+    	    perror("socket failed(setUpserver.cpp)"); exit(-1);
     	}
 		if (setsockopt(sockFd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt))) {
-    	    perror("setsockopt failed(setUpserver.cpp): "); exit(-1);
+    	    perror("setsockopt failed(setUpserver.cpp)"); exit(-1);
     	}
 		sockInfo.sin_family = AF_INET;
     	sockInfo.sin_addr.s_addr = INADDR_ANY;

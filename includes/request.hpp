@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Cgi.hpp"
 #include <iostream>
 #include <string.h>
 #include <unordered_map>
@@ -9,8 +8,7 @@
 #include <sstream>
 #include <algorithm>
 #include <unistd.h>
-#include <arpa/inet.h>//for frecv
-#include <sys/stat.h>
+#include "Cgi.hpp"
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192 
@@ -20,11 +18,10 @@ using namespace std;
 string  trim(const string& str);
 
 class Cgi;
-
 typedef enum e_requestState{
-	PROCESSING,
-	DONE,
-	CCLOSEDCON,
+	PROCESSING_Q,
+	DONE_Q,
+	CCLOSEDCON_Q,
 }	t_requestState;
 
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
