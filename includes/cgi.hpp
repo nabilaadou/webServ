@@ -2,6 +2,7 @@
 #include <string>
 #include <vector>
 #include <fcntl.h>
+#include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>

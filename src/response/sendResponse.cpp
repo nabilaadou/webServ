@@ -148,6 +148,7 @@ void    Response::sendCgiStarterLine(const int clientFd) {
 void    Response::sendCgiOutput(const int clientFd) {
     char    buff[BUFFER_SIZE+1] = {0};
     int     byteRead;
+    // cerr << cgi->rFd() << endl;
     if ((byteRead = read(cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));

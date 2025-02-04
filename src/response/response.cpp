@@ -12,14 +12,12 @@ void	Response::sendResponse(const int clientFd) {
 		}
 		sendBody(clientFd);
 	} else {
-		if (state = PROCESSING) {
+		if (state == PROCESSING) {
 			sendCgiStarterLine(clientFd);
 			if (state == CCLOSEDCON)
 				return ;
 			state = SHEADER;
 			cgi->setupCGIProcess();
-			wait(0);
-			cerr << "here" << endl;
 		}
 		sendCgiOutput(clientFd);
 	}

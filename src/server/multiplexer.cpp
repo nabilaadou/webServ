@@ -92,7 +92,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd) {
 			catch (const statusCodeException& exception) {
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
-				//send error page;
+				
 				exit(-1);
 			}
 		}

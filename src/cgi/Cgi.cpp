@@ -8,7 +8,7 @@
 #include "cgi.hpp"
 
 
-Cgi::Cgi() {
+Cgi::Cgi(): rPipe({-1}), wPipe({-1}){
 	createPipes();
 }
 
@@ -90,7 +90,14 @@ void	Cgi::executeScript() {
 		vecArgv.push_back(scriptExecuter);
 	vecArgv.push_back(scriptPath);
 	argv = transformVectorToChar(vecArgv);
-	path = (scriptExecuter.empty()) ? scriptPath.c_str() : scriptExecuter.c_str(); 
+	path = (scriptExecuter.empty()) ? scriptPath.c_str() : scriptExecuter.c_str();
+	cerr << path << endl;
+	int i = 0;
+	while(argv[i]) {
+		cerr << argv[i] << endl;
+		++i;
+	}
+	exit(0);
 	execve(path, argv, CGIEnvp);
 }
 
@@ -112,6 +119,7 @@ void	Cgi::setupCGIProcess() {
 		close(wPipe[0]);
 		executeScript();
 	}
+	wait(0);
 	close(rPipe[1]);
 	close(wPipe[0]);
 }
