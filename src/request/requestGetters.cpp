@@ -22,6 +22,6 @@ const string&	Request::Query()	const {
 	return (targetQuery);
 }
 
-const t_requestState&	Request::RequestStatus() const {
+const t_state&	Request::RequestStatus() const {
 	return state;
 }

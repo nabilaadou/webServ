@@ -1,7 +1,16 @@
 #pragma once
-#include <exception>
 #include <string>
+#include <exception>
+
 using namespace std;
+
+typedef enum e_state{
+	PROCESSING,
+	SHEADER,
+	DONE,
+	CCLOSEDCON,
+}	t_state;
+
 class statusCodeException : public exception {
 	const int 		_code;
 	const string	_meaning;

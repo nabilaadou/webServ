@@ -1,28 +1,21 @@
 #pragma once
 
-#include <iostream>
-#include <string.h>
-#include <unordered_map>
 #include <vector>
 #include <stack>
-#include <sstream>
-#include <algorithm>
-#include <unistd.h>
 #include "Cgi.hpp"
+#include <sstream>
+#include <iostream>
+#include <unistd.h>
+#include <string.h>
+#include <algorithm>
+#include <unordered_map>
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192 
 
 using namespace std;
 
-string  trim(const string& str);
-
 class Cgi;
-typedef enum e_requestState{
-	PROCESSING_Q,
-	DONE_Q,
-	CCLOSEDCON_Q,
-}	t_requestState;
 
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
 class Request {
@@ -36,12 +29,10 @@ class Request {
 		stack<bool (Request::*)(stringstream&)>	parseFunctions;
 		stack<void (Request::*)(string&)>		parseFunctionsStarterLine;
 		string									remainingBuffer;
-		e_requestState							state;
+		t_state									state;
 
 		Cgi*									cgi;
 		
-
-		vector<string>							splitStarterLine(string& str);
 		void									isProtocole(string& httpVersion);
 		bool									isCGI(const string& uri);
 		void									reconstructAndParseUri(string& uri);
@@ -62,5 +53,5 @@ class Request {
 		const string							Header(const string&);
 		const string&							Path() const;
 		const string&							Query() const;
-		const t_requestState&					RequestStatus() const;
+		const t_state&						RequestStatus() const;
 };

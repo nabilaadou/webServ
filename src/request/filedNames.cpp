@@ -1,5 +1,11 @@
 #include "request.hpp"
 
+inline std::string& trim(std::string& s) {
+	s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);
+	s.erase(0, s.find_first_not_of(" \t\n\r\f\v"));
+    return s;
+}
+
 bool    Request::validFieldName(string& str) const {
 	for (auto& c: str) {
 		if (!iswalnum(c) && c != '_' && c != '-')	return false;

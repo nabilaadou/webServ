@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <sys/epoll.h>
+#include <netinet/in.h>
 #include <sys/socket.h>
 #include <request.hpp>
 #include <response.hpp>
@@ -21,5 +22,5 @@ typedef struct s_httpSession {
 	Response	res;
 } t_httpSession;
 
-void	startServer();
+int		startServer(map<int, t_sockaddr>& servrSocks);
 void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd);

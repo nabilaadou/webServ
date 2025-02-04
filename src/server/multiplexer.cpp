@@ -1,9 +1,9 @@
 #include "server.h"
 
-void	resSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& session, const t_responseState& status) {
+void	resSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& session, const t_state& status) {
 	struct epoll_event	ev;
 
-	if (session.res.responseStatus() == DONE_S) {
+	if (session.res.responseStatus() == DONE) {
 		ev.events = EPOLLIN;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -12,7 +12,7 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& se
 		}
 		session.res = Response();
 	}
-	else if (session.res.responseStatus() == CCLOSEDCON_S) {
+	else if (session.res.responseStatus() == CCLOSEDCON) {
 		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
 			perror("epoll_ctl failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
@@ -22,10 +22,10 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& se
 	}
 }
 
-void	reqSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& session, const t_requestState& status) {
+void	reqSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& session, const t_state& status) {
 	struct epoll_event	ev;
 
-	if (session.req.RequestStatus() == DONE_Q) {
+	if (session.req.RequestStatus() == DONE) {
 		ev.events = EPOLLOUT;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -35,7 +35,7 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& se
 		session.res.equipe(session.req.Method(), session.req.Path(), session.req.HttpProtocole());
 		session.req = Request();
 	}
-	else if (session.req.RequestStatus() == CCLOSEDCON_Q) {
+	else if (session.req.RequestStatus() == CCLOSEDCON) {
 		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
 			perror("epoll_ctl failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
@@ -48,7 +48,7 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& se
 void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& addrsInfo) {
 	struct epoll_event	ev;
 	int					clientFd;
-	socklen_t			addrsLen = sizeof(t_sockaddr);
+	socklen_t			addrsLen = sizeof(addrsInfo);
 
 	if ((clientFd = accept(serverFd, (struct sockaddr*)&addrsInfo, &addrsLen)) < 0) {
 		perror("accept faield: ");

@@ -1,6 +1,6 @@
 #include "server.h"
 
-void	addServrSocksToEpollPool(map<int, t_sockaddr>& servrSocks) {
+int	addServrSocksToEpollPool(map<int, t_sockaddr>& servrSocks) {
 	int					epollFd;
 	struct epoll_event	ev;
 
@@ -14,12 +14,10 @@ void	addServrSocksToEpollPool(map<int, t_sockaddr>& servrSocks) {
 			perror("epoll_ctl failed"); exit(-1);
 		}
 	}
-	multiplexerSytm(servrSocks, epollFd);
+	return epollFd;
 }
 
-void	startServer() {
-	map<int, t_sockaddr>	servrSocks;
-
+int	startServer(map<int, t_sockaddr>& servrSocks) {
 	// for (int i = 0; i < configFile.hostPort; ++i) {
 		t_sockaddr	sockInfo;
 		int 		sockFd;
@@ -44,5 +42,6 @@ void	startServer() {
     	}
 		servrSocks[sockFd] = sockInfo;
 	// }
-	addServrSocksToEpollPool(servrSocks);
+	int epollFd = addServrSocksToEpollPool(servrSocks);
+	return epollFd;
 }

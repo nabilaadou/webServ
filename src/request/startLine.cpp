@@ -3,7 +3,7 @@
 const vector<string> aliasScript= {"/bin/cgi/", "test/test1/"};
 const vector<string> addHandler= {".sh", ".py", ".cgi"};
 
-vector<string>	Request::splitStarterLine(string& str) {
+vector<string>	split(string& str) {
 	const string	whiteSpace = " \t\n\r\f\v";
 	string			remainingStr;
 	int				pos = 0, i = 0;
@@ -143,7 +143,7 @@ bool	Request::parseStartLine(stringstream& stream) {
 		line += '\n';
 		lineEndedWithLF = true;
 	}
-	startLineComps = splitStarterLine(line);
+	startLineComps = split(line);
 	if (startLineComps.empty())
 		return false;
 	if (!lineEndedWithLF)	remainingBuffer = line;

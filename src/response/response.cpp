@@ -1,13 +1,13 @@
 #include "response.hpp"
 
-Response::Response(): statusCode(200), codeMeaning("OK"), contentFd(-1), state(PROCESSING_S) {}
+Response::Response(): statusCode(200), codeMeaning("OK"), contentFd(-1), state(PROCESSING) {}
 
 void	Response::sendResponse(const int clientFd) {
-	if (sentHeader == false) {
+	if (state == PROCESSING) {
 		sendHeader(clientFd);
-		if (state == CCLOSEDCON_S)
+		if (state == CCLOSEDCON)
 			return ;
-		sentHeader = true;
+		state = SHEADER;
 	}
 	sendBody(clientFd);
 }
@@ -23,7 +23,7 @@ void	Response::setStatusCode(const int code, const string& meaning) {
 	this->codeMeaning = meaning;
 }
 
-t_responseState	Response::responseStatus() {
+const t_state&	Response::responseStatus() const{
 	return state;
 }
 
