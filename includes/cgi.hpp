@@ -5,7 +5,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <unordered_map>
+#include <map>
 
 using namespace std;
 class Request;
@@ -22,7 +22,7 @@ class Cgi {
 
 		void	createPipes();
 		void	executeScript();
-		// void    prepearingCgiEnvVars(Request, unordered_map<string, string>&);	
+		// void    prepearingCgiEnvVars(Request, map<string, string>&);
 	public:
 		Cgi();
 

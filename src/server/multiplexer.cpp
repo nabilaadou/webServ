@@ -32,7 +32,7 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, t_httpSession& se
 			perror("epoll_ctl failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
-		session.res.equipe(session.req.Method(), session.req.Path(), session.req.HttpProtocole());
+		session.res.equipe(session.req.Method(), session.req.Path(), session.req.HttpProtocole(), session.req.cgiPointer());
 		session.req = Request();
 	}
 	else if (session.req.RequestStatus() == CCLOSEDCON) {

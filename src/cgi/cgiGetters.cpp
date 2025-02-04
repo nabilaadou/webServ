@@ -1,4 +1,4 @@
-#include "Cgi.hpp"
+#include "cgi.hpp"
 
 int Cgi::wFd() {
 	return wPipe[1];

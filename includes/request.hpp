@@ -2,7 +2,7 @@
 
 #include <vector>
 #include <stack>
-#include "Cgi.hpp"
+#include "cgi.hpp"
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
@@ -18,6 +18,7 @@ using namespace std;
 class Cgi;
 
 //echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
+
 class Request {
 	private:
 		string									method;
@@ -53,5 +54,6 @@ class Request {
 		const string							Header(const string&);
 		const string&							Path() const;
 		const string&							Query() const;
-		const t_state&						RequestStatus() const;
+		Cgi*									cgiPointer();
+		const t_state&							RequestStatus() const;
 };

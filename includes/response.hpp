@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include "statusCodeException.hpp"
+#include "cgi.hpp"
 
 #define BUFFER_SIZE 8192
 
@@ -17,6 +18,7 @@ class Response {
 		string			target;
 		string			httpProtocol;
 		int				contentFd;
+		Cgi*			cgi;
 		int				statusCode;
 		string			codeMeaning;
 		t_state			state;
@@ -25,10 +27,12 @@ class Response {
 		string			contentTypeHeader() const;
 		void			sendHeader(const int);
 		void			sendBody(const int);
+		void			sendCgiStarterLine(const int);
+		void			sendCgiOutput(const int);
 	public:
 		Response();
 		void			sendResponse(const int clinetFd);
-		void			equipe(const string&, const string&, const string&);
+		void			equipe(const string&, const string&, const string&, Cgi*);
 		void			setStatusCode(const int code, const string& meaning);
 		const t_state&	responseStatus() const;
 };

@@ -22,6 +22,10 @@ const string&	Request::Query()	const {
 	return (targetQuery);
 }
 
+Cgi*	Request::cgiPointer() {
+	return cgi;
+}
+
 const t_state&	Request::RequestStatus() const {
 	return state;
 }

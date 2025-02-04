@@ -1,4 +1,4 @@
-#include "Cgi.hpp"
+#include "cgi.hpp"
 
 void	Cgi::setScriptPath(const string& str) {
 	scriptPath = str;

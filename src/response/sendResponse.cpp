@@ -136,3 +136,31 @@ void	Response::sendBody(const int clientFd) {
 		cerr << "done sending response" << endl;
 	}
 }
+
+void    Response::sendCgiStarterLine(const int clientFd) {
+    string starterLine = httpProtocol + " " + to_string(statusCode) + " " + codeMeaning + "\r\n";
+    if (write(clientFd, starterLine.c_str(), starterLine.size()) <= 0) {
+		perror("write failed(sendResponse.cpp 143)");
+		state = CCLOSEDCON;
+	}
+}
+
+void    Response::sendCgiOutput(const int clientFd) {
+    char    buff[BUFFER_SIZE+1] = {0};
+    int     byteRead;
+    if ((byteRead = read(cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
+        perror("read failed(sendResponse.cpp 152)");
+        throw(statusCodeException(500, "Internal Server Error"));
+    }
+    if (byteRead > 0) {
+        if (write(clientFd, buff, byteRead) <= 0) {
+			perror("write failed(sendResponse.cpp 157)");
+			state = CCLOSEDCON;
+			return ;
+		}
+    } else {
+        state = DONE;
+		close(cgi->rFd());
+		cerr << "done sending response" << endl;
+    }
+}

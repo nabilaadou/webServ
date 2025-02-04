@@ -5,7 +5,7 @@
 
 //https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
 
-#include "Cgi.hpp"
+#include "cgi.hpp"
 
 
 Cgi::Cgi() {
@@ -33,7 +33,7 @@ void	Cgi::createPipes() {
 
 
 
-// void	Cgi::prepearingCgiEnvVars(Request req, unordered_map<string, string>& mapEnvp) {
+// void	Cgi::prepearingCgiEnvVars(Request req, map<string, string>& mapEnvp) {
 // 	mapEnvp["GATEWAY_INTERFACE"] = "CGI/1.1";//idk
 // 	mapEnvp["SERVER_PROTOCOL"] = "http/1.1";
 // 	mapEnvp["SERVER_NAME"] = "localhost";
@@ -48,13 +48,13 @@ void	Cgi::createPipes() {
 // 	mapEnvp["HTTP_ACCEPT_ENCODING"] = req.getHeader("accept-encoding");
 // 	mapEnvp["HTTP_ACCEPT_LANGUAGE"] = req.getHeader("accept-language");
 // 	mapEnvp["HTTP_USER_AGENT"] = req.getHeader("user-agent");
-// 	mapEnvp["HTTP_HOST"] = "";//idk
-// 	mapEnvp["PATH_TRANSLATED"] = "";//idk
-// 	mapEnvp["REMOTE_ADDR"] = "";//idk
-// 	mapEnvp["REMOTE_HOST"] = "";
-// 	mapEnvp["REMOTE_USER"] = "";
-// 	mapEnvp["SERVER_PORT"] = "";
-// 	mapEnvp["WEBTOP_USER"] = "";
+// 	// mapEnvp["HTTP_HOST"] = "";//idk
+// 	// mapEnvp["PATH_TRANSLATED"] = "";//idk
+// 	// mapEnvp["REMOTE_ADDR"] = "";//idk
+// 	// mapEnvp["REMOTE_HOST"] = "";
+// 	// mapEnvp["REMOTE_USER"] = "";
+// 	// mapEnvp["SERVER_PORT"] = "";
+// 	// mapEnvp["WEBTOP_USER"] = "";
 // }
 
 char**	transformVectorToChar(vector<string>& vec) {
@@ -71,10 +71,10 @@ char**	transformVectorToChar(vector<string>& vec) {
 void	Cgi::executeScript() {
 	char *const*					argv;
 	const char* 					path;
-	char** 							CGIEnvp;
+	char** 							CGIEnvp = NULL;
 	vector<string>					vecArgv;
 	vector<string> 					vecEnvp;
-	// unordered_map<string, string>	mapEnvp;
+	// map<string, string>	mapEnvp;
 	// prepearingCgiEnvVars(req, mapEnvp);
 	// for(const auto& it: mapEnvp) {
 	// 	if (!it.second.empty())

@@ -26,9 +26,11 @@ vector<string>	split(string& str) {
 }
 
 bool	Request::isCGI(const string& uri) {
-	stringstream ss(uri);
-	vector<string> strings;
-	string line;
+	stringstream	ss(uri);
+	vector<string>	strings;
+	string			reappendedUri;
+	string			line;
+
 	while (getline(ss, line, '/')) {
 		if (!line.empty())
 			strings.push_back(line);
@@ -49,7 +51,6 @@ bool	Request::isCGI(const string& uri) {
 			return true;
 		}
 	}
-	string reappendedUri;
 	for (int i = 0; i < strings.size(); ++i) {
 		reappendedUri += "/" + strings[i];
 		for (const auto& it : addHandler) {
