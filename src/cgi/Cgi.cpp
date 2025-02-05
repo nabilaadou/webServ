@@ -69,7 +69,7 @@ char**	transformVectorToChar(vector<string>& vec) {
 }
 
 void	Cgi::executeScript() {
-	char *const*					argv;
+	char *							argv[]  = {"/home/goodgoodnotbadd/Desktop/webserv-fork/www/cgi/script.cgi" ,NULL};
 	const char* 					path;
 	char** 							CGIEnvp = NULL;
 	vector<string>					vecArgv;
@@ -86,19 +86,19 @@ void	Cgi::executeScript() {
 	// }
 	// CGIEnvp = transformVectorToChar(vecEnvp);
 	//exec
-	if (!scriptExecuter.empty())
-		vecArgv.push_back(scriptExecuter);
-	vecArgv.push_back(scriptPath);
-	argv = transformVectorToChar(vecArgv);
-	path = (scriptExecuter.empty()) ? scriptPath.c_str() : scriptExecuter.c_str();
-	cerr << path << endl;
-	int i = 0;
-	while(argv[i]) {
-		cerr << argv[i] << endl;
-		++i;
-	}
-	exit(0);
-	execve(path, argv, CGIEnvp);
+	// if (!scriptExecuter.empty())
+	// 	vecArgv.push_back(scriptExecuter);
+	// vecArgv.push_back(scriptPath);
+	// argv = transformVectorToChar(vecArgv);
+	// path = (scriptExecuter.empty()) ? scriptPath.c_str() : scriptExecuter.c_str();
+	// cerr << path << endl;
+	// int i = 0;
+	// while(argv[i]) {
+	// 	cerr << argv[i] << endl;
+	// 	++i;
+	// }
+	// exit(0);
+	execve("/home/goodgoodnotbadd/Desktop/webserv-fork/www/cgi/script.cgi", argv, CGIEnvp);
 }
 
 void	Cgi::setupCGIProcess() {
