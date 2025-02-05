@@ -69,7 +69,7 @@ char**	transformVectorToChar(vector<string>& vec) {
 }
 
 void	Cgi::executeScript() {
-	char *							argv[]  = {"/home/goodgoodnotbadd/Desktop/webserv-fork/www/cgi/script.cgi" ,NULL};
+	char *							argv[]  = {"./www/cgi/script.cgi" ,NULL};
 	const char* 					path;
 	char** 							CGIEnvp = NULL;
 	vector<string>					vecArgv;
@@ -98,7 +98,9 @@ void	Cgi::executeScript() {
 	// 	++i;
 	// }
 	// exit(0);
-	execve("/home/goodgoodnotbadd/Desktop/webserv-fork/www/cgi/script.cgi", argv, CGIEnvp);
+	if (execve("./www/cgi/script.cgi", argv, CGIEnvp) == -1) {
+		perror("execve failed(cgu.cpp 102)"); exit(-1);
+	}
 }
 
 void	Cgi::setupCGIProcess() {
