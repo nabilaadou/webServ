@@ -1,7 +1,7 @@
 #include "cgi.hpp"
 
 void	Cgi::setScriptPath(const string& str) {
-	scriptPath = str;
+	scriptPath = "." + str;
 }
 
 void	Cgi::setScriptName(const string& str) {

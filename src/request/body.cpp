@@ -5,7 +5,7 @@ int	Request::openTargetFile() const {
 	if (cgi != NULL)
 		fd = cgi->wFd();
 	else if (fd = open(targetPath.c_str(), O_WRONLY | O_CREAT, 0644) < 0) {
-		perror("open failed: "); throw(statusCodeException(500, "Internal Server Error"));
+		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);
 }
@@ -33,7 +33,7 @@ bool	Request::contentLengthBased(stringstream& stream) {
 }
 
 bool	Request::transferEncodingChunkedBased(stringstream& stream) {
-	static int	length;
+	static int	length;//remove static
 	static int	targetFileFD;
 
 	if (!targetFileFD)

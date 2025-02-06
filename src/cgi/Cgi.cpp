@@ -58,22 +58,19 @@ void	Cgi::createPipes() {
 // }
 
 char**	transformVectorToChar(vector<string>& vec) {
-	char** 	CGIEnvp = new char*[vec.size() + 1];
+	char** 	strs = new char*[vec.size() + 1];
 
 	for (int i = 0; i < vec.size(); ++i) {
-		CGIEnvp[i] = new char[vec[i].size()+1];
-		strcpy(CGIEnvp[i], vec[i].c_str());
+		strs[i] = new char[vec[i].size()+1];
+		strcpy(strs[i], vec[i].c_str());
 	}
-	CGIEnvp[vec.size()] = NULL;
-	return (CGIEnvp);
+	strs[vec.size()] = NULL;
+	return (strs);
 }
 
 void	Cgi::executeScript() {
-	char *							argv[]  = {"./www/cgi/script.cgi" ,NULL};
-	const char* 					path;
-	char** 							CGIEnvp = NULL;
-	vector<string>					vecArgv;
-	vector<string> 					vecEnvp;
+	char**							argv, CGIEnvp;
+	vector<string>					vecArgv, vecEnvp;
 	// map<string, string>	mapEnvp;
 	// prepearingCgiEnvVars(req, mapEnvp);
 	// for(const auto& it: mapEnvp) {
@@ -86,20 +83,16 @@ void	Cgi::executeScript() {
 	// }
 	// CGIEnvp = transformVectorToChar(vecEnvp);
 	//exec
-	// if (!scriptExecuter.empty())
-	// 	vecArgv.push_back(scriptExecuter);
-	// vecArgv.push_back(scriptPath);
-	// argv = transformVectorToChar(vecArgv);
-	// path = (scriptExecuter.empty()) ? scriptPath.c_str() : scriptExecuter.c_str();
-	// cerr << path << endl;
-	// int i = 0;
-	// while(argv[i]) {
-	// 	cerr << argv[i] << endl;
-	// 	++i;
-	// }
-	// exit(0);
-	if (execve("./www/cgi/script.cgi", argv, CGIEnvp) == -1) {
-		perror("execve failed(cgu.cpp 102)"); exit(-1);
+	if (!scriptExecuter.empty())
+		vecArgv.push_back(scriptExecuter);
+	vecArgv.push_back(scriptPath);
+	argv = transformVectorToChar(vecArgv);
+	if (execve(argv[0], argv, NULL) == -1) {
+		for (int i = 0; argv[i]; ++i) {
+			delete argv[i];
+		}
+		delete []argv;
+		perror("execve failed(cgi.cpp 102)"); exit(-1);
 	}
 }
 
