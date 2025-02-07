@@ -1,17 +1,16 @@
-#include "request.hpp"
+#include "httpSession.hpp"
 
-Request::Request() : cgi(NULL), state(PROCESSING), length(0), fd(-1) {
+httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSING), length(0), fd(-1) {
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseBody);
 
-	parseFunctionsStarterLine.push(&Request::isProtocole);
-	parseFunctionsStarterLine.push(&Request::isTarget);
 	parseFunctionsStarterLine.push(&Request::isMethod);
+	parseFunctionsStarterLine.push(&Request::isTarget);
+	parseFunctionsStarterLine.push(&Request::isProtocole);
 }
 
-
-void	Request::parseMessage(const int clientFd) {
+void	httpSession::Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
 
 	if (read(clientFd, buffer, BUFFER_SIZE) <= 0) {
@@ -28,4 +27,8 @@ void	Request::parseMessage(const int clientFd) {
 	}
 	state = DONE;
 	cerr << "done parsing the request" << endl;
+}
+
+const t_state& httpSession::Request::status() const {
+	return state;
 }

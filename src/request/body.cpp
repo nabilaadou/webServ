@@ -1,21 +1,21 @@
-#include "request.hpp"
+#include "httpSession.hpp"
 
-int	Request::openTargetFile() const {
+int	httpSession::Request::openTargetFile() const {
 	int fd;
-	if (cgi != NULL)
-		fd = cgi->wFd();
-	else if ((fd = open(targetPath.c_str(), O_WRONLY | O_CREAT, 0644)) < 0) {
+	if (s.cgi != NULL)
+		fd = s.cgi->wFd();
+	else if ((fd = open(s.path.c_str(), O_WRONLY | O_CREAT, 0644)) < 0) {
 		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);
 }
 
-bool	Request::contentLengthBased(stringstream& stream) {
+bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 	if (fd == -1)
 		fd = openTargetFile();
 	if (!length) {
 		try {
-			length = stoi(headers["content-length"]);
+			length = stoi(s.headers["content-length"]);
 		}
 		catch(...) {
 			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
@@ -32,7 +32,7 @@ bool	Request::contentLengthBased(stringstream& stream) {
 	return false;
 }
 
-bool	Request::transferEncodingChunkedBased(stringstream& stream) {
+bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
 	if (fd == -1)
 		fd = openTargetFile();
 	while (1) {
@@ -67,12 +67,12 @@ bool	Request::transferEncodingChunkedBased(stringstream& stream) {
 
 
 
-bool	Request::parseBody(stringstream& stream) {
-	if (method != "POST")
+bool	httpSession::Request::parseBody(stringstream& stream) {
+	if (s.method != "POST")
 		return true;
-	if (headers.find("content-length") != headers.end())
+	if (s.headers.find("content-length") != s.headers.end())
 		parseFunctions.push(&Request::contentLengthBased);
-	else if (headers.find("transfer-encoding") != headers.end() && headers["transfer-encoding"] == "chunked")
+	else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
 		parseFunctions.push(&Request::transferEncodingChunkedBased);
 	else
 		throw(statusCodeException(501, "Not Implemented"));

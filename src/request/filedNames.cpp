@@ -1,4 +1,4 @@
-#include "request.hpp"
+#include "httpSession.hpp"
 
 inline std::string& trim(std::string& s) {
 	s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);
@@ -6,7 +6,7 @@ inline std::string& trim(std::string& s) {
     return s;
 }
 
-bool    Request::validFieldName(string& str) const {
+bool    httpSession::Request::validFieldName(string& str) const {
 	for (auto& c: str) {
 		if (!iswalnum(c) && c != '_' && c != '-')	return false;
 		c = tolower(c);
@@ -14,15 +14,15 @@ bool    Request::validFieldName(string& str) const {
 	return true;
 }
 
-bool	Request::parseFileds(stringstream& stream) {
+bool	httpSession::Request::parseFileds(stringstream& stream) {
 	string			line;
 
 	while(getline(stream, line) && line != " ") {
 		string	fieldName;
 		string	filedValue;
 
-		if (!headers.empty() && (line[0] == ' ' || line[0] == '\t')) {
-			headers[prvsFieldName] += " " + trim(line);
+		if (!s.headers.empty() && (line[0] == ' ' || line[0] == '\t')) {
+			s.headers[prvsFieldName] += " " + trim(line);
 			continue ;
 		}
 
@@ -35,7 +35,7 @@ bool	Request::parseFileds(stringstream& stream) {
 		if (colonIndex == string::npos || !validFieldName(fieldName)) {
 			throw(statusCodeException(400, "Bad Request"));
 		}
-		headers[fieldName] = filedValue;
+		s.headers[fieldName] = filedValue;
 		prvsFieldName = fieldName;
 	}
 	if (stream.eof()) {

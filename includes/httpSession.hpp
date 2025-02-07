@@ -16,6 +16,11 @@
 
 using namespace std;
 
+
+
+// req
+// res
+
 class httpSession {
 private:
 	string				method;
@@ -23,11 +28,13 @@ private:
 	string				query;
 	string				httpProtocole;
 	map<string, string>	headers;
+	int					statusCode;
+	string				codeMeaning;
 	Cgi*				cgi;
 public:
 	class Request {
 	private:
-		httpSession&							session;
+		httpSession&							s;
 		string									prvsFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
 		queue<void(Request::*)(string&)>		parseFunctionsStarterLine;
@@ -35,6 +42,7 @@ public:
 		int										fd;
 		string									remainingBuffer;
 		t_state									state;
+
 		void									isProtocole(string& httpVersion);
 		bool									isCGI(const string& uri);
 		void									reconstructAndParseUri(string& uri);
@@ -55,11 +63,10 @@ public:
 
 	class Response {
 	private:
-		httpSession&	session;
+		httpSession&	s;
 		int				contentFd;
-		int				statusCode;
-		string			codeMeaning;
 		t_state			state;
+
 		static string	getSupportedeExtensions(const string&);
 		string			contentTypeHeader() const;
 		void			sendHeader(const int);
@@ -68,12 +75,12 @@ public:
 		void			sendCgiOutput(const int);
 	public:
 		Response(httpSession& session);
+		void			sendResponse(const int clientFd);
 		const t_state&	status() const;
 	};
 
 	httpSession();
-	// Request		createRequest();
-	// Response	createResponse();
+	// ~httpSession();
 	Request		req;
 	Response	res;
 };

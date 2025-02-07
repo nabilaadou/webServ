@@ -1,6 +1,6 @@
-#include "response.hpp"
+#include "httpSession.hpp"
 
-string Response::getSupportedeExtensions(const string& key) {
+string httpSession::Response::getSupportedeExtensions(const string& key) {
     static map<string, string> ext;
     
     if (ext.empty()) {
@@ -66,22 +66,22 @@ string Response::getSupportedeExtensions(const string& key) {
     return "";
 }
 
-string	Response::contentTypeHeader() const {
-	size_t pos = target.rfind(".");
+string	httpSession::Response::contentTypeHeader() const {
+	size_t pos = s.path.rfind(".");
 	if (pos == string::npos)
 		throw(statusCodeException(501, "Not Implemented"));
-	string ext = target.substr(pos);
+	string ext = s.path.substr(pos);
 	string contentTypeValue = getSupportedeExtensions(ext);
 	if (contentTypeValue.empty())
 		throw(statusCodeException(501, "Not Implemented"));
 	return ("Content-Type: " + contentTypeValue + "\r\n");
 }
 
-void	Response::sendHeader(const int clientFd) {
+void	httpSession::Response::sendHeader(const int clientFd) {
 	string header;
 
-	header += httpProtocol + " " + to_string(statusCode) + " " + codeMeaning + "\r\n";
-    if (methode != "POST") {
+	header += s.httpProtocole + " " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
+    if (s.method != "POST") {
 	    header += contentTypeHeader();
 	    header += "Transfer-Encoding: chunked\r\n";
     } else
@@ -96,11 +96,11 @@ void	Response::sendHeader(const int clientFd) {
 	}
 }
 
-void	Response::sendBody(const int clientFd) {
+void	httpSession::Response::sendBody(const int clientFd) {
 	char buff[BUFFER_SIZE+1] = {0};
 
 	if (contentFd == -1) {
-		if ((contentFd = open(target.c_str(), O_RDONLY, 0644)) == -1) {
+		if ((contentFd = open(s.path.c_str(), O_RDONLY, 0644)) == -1) {
 			perror("open failed(sendresponse.cpp 37)");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
@@ -140,18 +140,18 @@ void	Response::sendBody(const int clientFd) {
 	}
 }
 
-void    Response::sendCgiStarterLine(const int clientFd) {
-    string starterLine = httpProtocol + " " + to_string(statusCode) + " " + codeMeaning + "\r\n";
+void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
+    string starterLine = s.httpProtocole + " " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
     if (write(clientFd, starterLine.c_str(), starterLine.size()) <= 0) {
 		perror("write failed(sendResponse.cpp 143)");
 		state = CCLOSEDCON;
 	}
 }
 
-void    Response::sendCgiOutput(const int clientFd) {
+void    httpSession::Response::sendCgiOutput(const int clientFd) {
     char    buff[BUFFER_SIZE+1] = {0};
     int     byteRead;
-    if ((byteRead = read(cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
+    if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));
     }
@@ -163,7 +163,7 @@ void    Response::sendCgiOutput(const int clientFd) {
 		}
     } else {
         state = DONE;
-		close(cgi->rFd());
+		close(s.cgi->rFd());
 		cerr << "done sending response" << endl;
     }
 }

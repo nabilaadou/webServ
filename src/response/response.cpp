@@ -1,16 +1,16 @@
-#include "response.hpp"
+#include "httpSession.hpp"
 
-Response::Response(): statusCode(200), codeMeaning("OK"), contentFd(-1), state(PROCESSING), cgi(NULL) {}
+httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1), state(PROCESSING) {}
 
-void	Response::sendResponse(const int clientFd) {
-	if (cgi == NULL) {
+void	httpSession::Response::sendResponse(const int clientFd) {
+	if (s.cgi == NULL) {
 		if (state == PROCESSING) {
 			sendHeader(clientFd);
 			if (state == CCLOSEDCON)
 				return ;
 			state = SHEADER;
 		}
-		if (methode != "POST")
+		if (s.method != "POST")
 			sendBody(clientFd);
 		else
 			state = DONE;
@@ -20,25 +20,13 @@ void	Response::sendResponse(const int clientFd) {
 			if (state == CCLOSEDCON)
 				return ;
 			state = SHEADER;
-			cgi->setupCGIProcess();
+			s.cgi->setupCGIProcess();
 		}
 		sendCgiOutput(clientFd);
 	}
 }
 
-void	Response::equipe(const string& methode, const string& path, const string& http, Cgi* cgi) {
-	this->methode = methode;
-	this->target = path;
-	this->httpProtocol = http;
-	this->cgi = cgi;
-}
-
-void	Response::setStatusCode(const int code, const string& meaning) {
-	this->statusCode = code;
-	this->codeMeaning = meaning;
-}
-
-const t_state&	Response::status() const{
+const t_state&	httpSession::Response::status() const {
 	return state;
 }
 
