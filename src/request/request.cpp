@@ -1,9 +1,9 @@
 #include "request.hpp"
 
-Request::Request() : cgi(NULL), state(PROCESSING){
-	parseFunctions.push(&Request::parseBody);
-	parseFunctions.push(&Request::parseFileds);
+Request::Request() : cgi(NULL), state(PROCESSING), length(0), fd(-1) {
 	parseFunctions.push(&Request::parseStartLine);
+	parseFunctions.push(&Request::parseFileds);
+	parseFunctions.push(&Request::parseBody);
 
 	parseFunctionsStarterLine.push(&Request::isProtocole);
 	parseFunctionsStarterLine.push(&Request::isTarget);
@@ -22,7 +22,7 @@ void	Request::parseMessage(const int clientFd) {
 	replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
 	stringstream	stream(remainingBuffer);
 	while(!parseFunctions.empty()) {
-		const auto& func = parseFunctions.top();
+		const auto& func = parseFunctions.front();
 		if (!(this->*func)(stream))	return;
 		parseFunctions.pop();
 	}

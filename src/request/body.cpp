@@ -4,18 +4,15 @@ int	Request::openTargetFile() const {
 	int fd;
 	if (cgi != NULL)
 		fd = cgi->wFd();
-	else if (fd = open(targetPath.c_str(), O_WRONLY | O_CREAT, 0644) < 0) {
+	else if ((fd = open(targetPath.c_str(), O_WRONLY | O_CREAT, 0644)) < 0) {
 		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);
 }
 
 bool	Request::contentLengthBased(stringstream& stream) {
-	static int	length;
-	static int	targetFileFD;
-
-	if (!targetFileFD)
-		targetFileFD = openTargetFile();
+	if (fd == -1)
+		fd = openTargetFile();
 	if (!length) {
 		try {
 			length = stoi(headers["content-length"]);
@@ -24,20 +21,20 @@ bool	Request::contentLengthBased(stringstream& stream) {
 			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
-
 	char buff[length+1] = {0};
 	stream.read(buff, length);
 	length -= stream.gcount();
-	write(targetFileFD, buff, stream.gcount());
-	return (length > 0) ? false : true;
+	write(fd, buff, stream.gcount());
+	if (length == 0) {
+		close(fd);
+		return true;
+	}
+	return false;
 }
 
 bool	Request::transferEncodingChunkedBased(stringstream& stream) {
-	static int	length;//remove static
-	static int	targetFileFD;
-
-	if (!targetFileFD)
-		targetFileFD = openTargetFile();
+	if (fd == -1)
+		fd = openTargetFile();
 	while (1) {
 		string	line;
 		if (length <= 0) {
@@ -54,13 +51,16 @@ bool	Request::transferEncodingChunkedBased(stringstream& stream) {
 			catch(...) {
 				perror("unvalid number in chunked length"); throw(statusCodeException(500, "Internal Server Error"));
 			}
-			if (line == "0")	return true;
+			if (line == "0") {
+				close(fd);
+				return true;
+			}
 		}
 		char buff[length+1] = {0};
 		stream.read(buff, length);
 		if (stream.gcount() == 0) return false;
 		length -= stream.gcount();
-		write(targetFileFD, buff, stream.gcount());
+		write(fd, buff, stream.gcount());
 		getline(stream, line); // consume the \n(its not included n the length)
 	}
 }

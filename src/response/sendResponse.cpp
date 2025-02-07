@@ -81,8 +81,11 @@ void	Response::sendHeader(const int clientFd) {
 	string header;
 
 	header += httpProtocol + " " + to_string(statusCode) + " " + codeMeaning + "\r\n";
-	header += contentTypeHeader();
-	header += "Transfer-Encoding: chunked\r\n";
+    if (methode != "POST") {
+	    header += contentTypeHeader();
+	    header += "Transfer-Encoding: chunked\r\n";
+    } else
+        header += "Content-Length: 0\r\n";
 	header += "Connection: keep-alive\r\n";
 	header += "Server: bngn/0.1\r\n";
 	header += "\r\n";

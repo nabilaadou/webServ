@@ -10,7 +10,10 @@ void	Response::sendResponse(const int clientFd) {
 				return ;
 			state = SHEADER;
 		}
-		sendBody(clientFd);
+		if (methode != "POST")
+			sendBody(clientFd);
+		else
+			state = DONE;
 	} else {
 		if (state == PROCESSING) {
 			sendCgiStarterLine(clientFd);
@@ -35,7 +38,7 @@ void	Response::setStatusCode(const int code, const string& meaning) {
 	this->codeMeaning = meaning;
 }
 
-const t_state&	Response::responseStatus() const{
+const t_state&	Response::status() const{
 	return state;
 }
 

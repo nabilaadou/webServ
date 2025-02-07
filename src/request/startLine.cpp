@@ -91,7 +91,7 @@ void	Request::reconstructAndParseUri(string& uri) {
 		if (pos != string::npos)
 			targetQuery = uri.substr(pos+1);
 		//append the path of the files to the path (eg: /where -> /usr/nabil/Desktop/webserv/www/where) // if path == "/" append to the default path
-		if (access(targetPath.c_str(), F_OK))
+		if (access(targetPath.c_str(), F_OK))	
 		{
 			if (errno == ENOENT)
 				throw(statusCodeException(404, "Not Found"));

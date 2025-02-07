@@ -26,6 +26,6 @@ Cgi*	Request::cgiPointer() {
 	return cgi;
 }
 
-const t_state&	Request::RequestStatus() const {
+const t_state&	Request::status() const {
 	return state;
 }

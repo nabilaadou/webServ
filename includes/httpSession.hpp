@@ -1,42 +1,40 @@
 #pragma once
-
-#include <vector>
+#include <map>
 #include <stack>
 #include <queue>
+#include <vector>
 #include "cgi.hpp"
+#include <fcntl.h>
 #include <sstream>
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
 #include <algorithm>
-#include <unordered_map>
 #include "statusCodeException.hpp"
 
-#define BUFFER_SIZE 8192 
+#define BUFFER_SIZE 8192
 
 using namespace std;
 
-class Cgi;
-
-//echo -e "GET / HTTP/1.1\r\n    Host: localhost\r\n\r\n" | nc localhost 8080 // cmd for manually writing requests
-
-class Request {
+class httpSession {
+private:
+	string				method;
+	string				path;
+	string				query;
+	string				httpProtocole;
+	map<string, string>	headers;
+	Cgi*				cgi;
+public:
+	class Request {
 	private:
-		string									method;
-		string									targetPath;
-		string									targetQuery;
-		string									httpVersion;
+		httpSession&							session;
 		string									prvsFieldName;
-		unordered_map<string, string>			headers;
-		queue<bool (Request::*)(stringstream&)> parseFunctions;
-		stack<void (Request::*)(string&)>		parseFunctionsStarterLine;
+		queue<bool(Request::*)(stringstream&)>	parseFunctions;
+		queue<void(Request::*)(string&)>		parseFunctionsStarterLine;
 		int										length;
 		int										fd;
 		string									remainingBuffer;
 		t_state									state;
-
-		Cgi*									cgi;
-		
 		void									isProtocole(string& httpVersion);
 		bool									isCGI(const string& uri);
 		void									reconstructAndParseUri(string& uri);
@@ -50,13 +48,32 @@ class Request {
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);
 	public:
-		Request();
+		Request(httpSession& session);
 		void									parseMessage(const int clientFd);
-		const string&							Method()	const;
-		const string&							HttpProtocole()	const;
-		const string							Header(const string&);
-		const string&							Path() const;
-		const string&							Query() const;
-		Cgi*									cgiPointer();
 		const t_state&							status() const;
+	};
+
+	class Response {
+	private:
+		httpSession&	session;
+		int				contentFd;
+		int				statusCode;
+		string			codeMeaning;
+		t_state			state;
+		static string	getSupportedeExtensions(const string&);
+		string			contentTypeHeader() const;
+		void			sendHeader(const int);
+		void			sendBody(const int);
+		void			sendCgiStarterLine(const int);
+		void			sendCgiOutput(const int);
+	public:
+		Response(httpSession& session);
+		const t_state&	status() const;
+	};
+
+	httpSession();
+	// Request		createRequest();
+	// Response	createResponse();
+	Request		req;
+	Response	res;
 };

@@ -18,10 +18,11 @@ class Response {
 		string			target;
 		string			httpProtocol;
 		int				contentFd;
-		Cgi*			cgi;
 		int				statusCode;
 		string			codeMeaning;
 		t_state			state;
+		
+		Cgi*			cgi;
 
 		static string	getSupportedeExtensions(const string&);
 		string			contentTypeHeader() const;
@@ -34,5 +35,5 @@ class Response {
 		void			sendResponse(const int clinetFd);
 		void			equipe(const string&, const string&, const string&, Cgi*);
 		void			setStatusCode(const int code, const string& meaning);
-		const t_state&	responseStatus() const;
+		const t_state&	status() const;
 };
