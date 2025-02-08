@@ -16,11 +16,6 @@
 
 using namespace std;
 
-
-
-// req
-// res
-
 class httpSession {
 private:
 	string				method;
@@ -80,7 +75,7 @@ public:
 	};
 
 	httpSession();
-	// ~httpSession();
 	Request		req;
 	Response	res;
+
 };

@@ -73,7 +73,7 @@ string	httpSession::Response::contentTypeHeader() const {
 	string ext = s.path.substr(pos);
 	string contentTypeValue = getSupportedeExtensions(ext);
 	if (contentTypeValue.empty())
-		throw(statusCodeException(501, "Not Implemented"));
+		throw(statusCodeException(501, "Not Implemented"));//check this before begining to write in the sock
 	return ("Content-Type: " + contentTypeValue + "\r\n");
 }
 
