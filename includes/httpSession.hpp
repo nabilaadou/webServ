@@ -16,6 +16,20 @@
 
 using namespace std;
 
+struct location {
+    vector<string>	methods;
+    string			redirection;
+    string			root;
+    string			index;
+    bool			autoIndex;
+};
+
+struct configuration {
+    int						bodySize;
+    map<int, string>		errorPages;
+    map<string, location>	loctions;
+};
+
 class httpSession {
 private:
 	string				method;
@@ -26,6 +40,7 @@ private:
 	int					statusCode;
 	string				codeMeaning;
 	Cgi*				cgi;
+	configuration*		config;
 public:
 	class Request {
 	private:
@@ -74,6 +89,7 @@ public:
 		const t_state&	status() const;
 	};
 
+	httpSession(int clientFd, configuration* confi);
 	httpSession();
 	Request		req;
 	Response	res;

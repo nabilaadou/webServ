@@ -1,6 +1,9 @@
 #include "server.h"
 
-httpSession::httpSession() : req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession(int clientFd, configuration* config)
+	: config(config), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+
+httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
 
 void	sendError(const int clientFd, const int statusCode, const string codeMeaning) {
 	string msg;
@@ -21,7 +24,7 @@ void	sendError(const int clientFd, const int statusCode, const string codeMeanin
 }
 
 
-void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, map<int, httpSession>::iterator it, const t_state& status) {
+void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const t_state& status) {
 	struct epoll_event	ev;
 
 	if (status == DONE) {
@@ -31,7 +34,7 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			perror("epoll_ctl failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
-		s.erase(it);
+		s.erase(s.find(clientFd));
 	}
 	else if (status == CCLOSEDCON) {
 		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
@@ -39,11 +42,11 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
 		}
 		close(clientFd);
-		s.erase(it);
+		s.erase(s.find(clientFd));
 	}
 }
 
-void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, map<int, httpSession>::iterator it, const t_state& status) {
+void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const t_state& status) {
 	struct epoll_event	ev;
 
 	if (status == DONE) {
@@ -60,7 +63,7 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
 		}
 		close(clientFd);
-		s.erase(it);
+		s.erase(s.find(clientFd));
 	}
 }
 
@@ -82,9 +85,9 @@ void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& 
 	cerr << "-------new client added-------" << endl;
 }
 
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd) {
+void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config) {
 	struct epoll_event		events[MAX_EVENTS];
-	map<int, httpSession>	sessions;
+	map<int, httpSession>	sessions;//change httpSession to a pointer so i can be able to free it
 
 	while (1) {
 		int nfds;
@@ -100,12 +103,13 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd) {
 				if (servrSocks.find(fd) != servrSocks.end())
 					acceptNewClient(epollFd, fd, servrSocks[fd]);
 				else if (events[i].events & EPOLLIN) {
+					sessions.try_emplace(fd, *(new httpSession(fd, &config)));
 					sessions[fd].req.parseMessage(fd);
-					reqSessionStatus(epollFd, fd, sessions, sessions.find(fd) ,sessions[fd].req.status());
+					reqSessionStatus(epollFd, fd, sessions, sessions[fd].req.status());
 				}
 				else if (events[i].events & EPOLLOUT) {
 					sessions[fd].res.sendResponse(fd);
-					resSessionStatus(epollFd, fd, sessions, sessions.find(fd) ,sessions[fd].res.status());
+					resSessionStatus(epollFd, fd, sessions, sessions[fd].res.status());
 				}
 			}
 			catch (const statusCodeException& exception) {

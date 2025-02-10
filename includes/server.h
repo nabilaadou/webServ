@@ -25,4 +25,4 @@ typedef map<int, t_sockaddr>::const_iterator t_sockaddr_it;
 // } t_httpSession;
 
 int		startServer(map<int, t_sockaddr>& servrSocks);
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd);
+void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config);
