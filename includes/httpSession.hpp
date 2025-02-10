@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <algorithm>
+#include <sys/stat.h>
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192
@@ -19,9 +20,11 @@ using namespace std;
 struct location {
     vector<string>	methods;
     string			redirection;
-    string			root;
+    string			alias;
     string			index;
+	string			cgi;
     bool			autoIndex;
+	location() : index("index.html") {}
 };
 
 struct configuration {
@@ -47,7 +50,6 @@ public:
 		httpSession&							s;
 		string									prvsFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
-		queue<void(Request::*)(string&)>		parseFunctionsStarterLine;
 		int										length;
 		int										fd;
 		string									remainingBuffer;
@@ -55,9 +57,10 @@ public:
 
 		void									isProtocole(string& httpVersion);
 		bool									isCGI(const string& uri);
-		void									reconstructAndParseUri(string& uri);
+		void									reconstructUri(string& uri);
 		void									isTarget(string& target);
 		void									isMethod(string& method);
+		location*								getConfigFileRules();
 		bool									parseStartLine(stringstream&);
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(stringstream&);

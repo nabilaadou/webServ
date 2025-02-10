@@ -4,10 +4,6 @@ httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSI
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseBody);
-
-	parseFunctionsStarterLine.push(&Request::isMethod);
-	parseFunctionsStarterLine.push(&Request::isTarget);
-	parseFunctionsStarterLine.push(&Request::isProtocole);
 }
 
 void	httpSession::Request::parseMessage(const int clientFd) {

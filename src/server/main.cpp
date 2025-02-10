@@ -5,9 +5,8 @@ int main(int ac, char **av) {
 
     configuration config;
     config.bodySize == 100000;
-    config.loctions["/html/"].methods.push_back("GET");
-    config.loctions["/html/"].root = "www/static";
-    config.loctions["/html/"].index = "index.html";
+    config.loctions["/html"].methods.push_back("GET");
+    config.loctions["/html"].alias = "/www/static/html";
 
 
 
