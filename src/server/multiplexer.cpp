@@ -116,7 +116,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				struct epoll_event	ev;
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
-				exit(-1);
+				// exit(-1);
 				
 				sendError(fd, exception.code(), exception.meaning());
 

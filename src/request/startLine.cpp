@@ -77,7 +77,7 @@ location*	httpSession::Request::getConfigFileRules() {
 	location* loc = NULL;
 	while (1) {
 		pos = s.path.find('/', pos);
-		string subUri = s.path.substr(0, pos);
+		string subUri = s.path.substr(0, pos+1);
 		if (s.config->loctions.find(subUri) != s.config->loctions.end()) {
 			loc = &(s.config->loctions.at(subUri));
 		}
@@ -141,6 +141,7 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isMethod(comps[0]);
 		isTarget(comps[1]);
 		isProtocole(comps[2]);
+		cerr << "original uri: " << s.path << endl;
 		location* rules = getConfigFileRules();
 		if (rules) {
 			if (find(rules->methods.begin(), rules->methods.end(), s.method) == rules->methods.end())
@@ -155,14 +156,16 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 				s.path = rules->alias + s.path;
 			}
 			s.path = "." + s.path;
-			// struct stat pathStat;
-    		// if (stat(s.path.c_str(), &pathStat))
-			// 	throw(statusCodeException(404, "Not Found"));
-			// if (S_ISDIR(pathStat.st_mode))//&& s.path == location
-			// 	s.path += "/" + rules->index;
-		} else
+			cerr << s.path << endl;
+			struct stat pathStat;
+    		if (stat(s.path.c_str(), &pathStat))
+				throw(statusCodeException(404, "Not Found"));
+			if (S_ISDIR(pathStat.st_mode))//&& s.path == location
+				s.path += "/" + rules->index;
+		} else {
 			s.path = "." + s.path;
-		cerr << s.path << endl;
+			cerr << s.path << endl;
+		}
 		return true;
 	}
 	remainingBuffer += line;
