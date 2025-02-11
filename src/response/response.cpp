@@ -3,6 +3,7 @@
 httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1), state(PROCESSING) {}
 
 void	httpSession::Response::sendResponse(const int clientFd) {
+	cerr << s.path << endl;
 	if (s.cgi == NULL) {
 		if (state == PROCESSING) {
 			sendHeader(clientFd);

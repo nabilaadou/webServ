@@ -6,8 +6,9 @@ int main(int ac, char **av) {
     config.bodySize == 100000;
     config.errorPages[405] = "/www/static/errors/405.html";
     config.loctions["/html/"].uri = "/html/";
-    config.loctions["/html/"].methods.push_back("GET");
+    // config.loctions["/html/"].methods.push_back("GET");
     config.loctions["/html/"].alias = "/www/static/html";
+    config.loctions["/html/"].cgi = "bash .sh / python .py";
     
     
     config.loctions["/assets/"].uri = "/assets/";

@@ -118,6 +118,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				cerr << "reason--> " << exception.meaning() << endl;
 				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
 					sessions[fd].path = w_realpath(("." + config.errorPages.at(exception.code())).c_str());
+					cerr << sessions[fd].path << endl;
 					ev.events = EPOLLOUT;
 					ev.data.fd = fd;
 					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {

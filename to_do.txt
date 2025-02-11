@@ -1,2 +1,0 @@
-- server error pages
-- generate random files for POST method
