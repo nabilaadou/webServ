@@ -11,6 +11,7 @@
 #include <string.h>
 #include <algorithm>
 #include <sys/stat.h>
+#include "wrappers.h"
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192
@@ -18,6 +19,7 @@
 using namespace std;
 
 struct location {
+	string			uri;
     vector<string>	methods;
     string			redirection;
     string			alias;
@@ -36,7 +38,6 @@ struct configuration {
 class httpSession {
 private:
 	string				method;
-	string				path;
 	string				query;
 	string				httpProtocole;
 	map<string, string>	headers;
@@ -57,7 +58,8 @@ public:
 
 		void									isProtocole(string& httpVersion);
 		bool									isCGI(const string& uri);
-		void									reconstructUri(string& uri);
+		void									reconstructUri(location* rules);
+		void									extractPathQuery(string& uri);
 		void									isTarget(string& target);
 		void									isMethod(string& method);
 		location*								getConfigFileRules();
@@ -79,7 +81,7 @@ public:
 		httpSession&	s;
 		int				contentFd;
 		t_state			state;
-
+		
 		static string	getSupportedeExtensions(const string&);
 		string			contentTypeHeader() const;
 		void			sendHeader(const int);
@@ -91,6 +93,8 @@ public:
 		void			sendResponse(const int clientFd);
 		const t_state&	status() const;
 	};
+
+	string				path;
 
 	httpSession(int clientFd, configuration* confi);
 	httpSession();

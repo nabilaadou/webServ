@@ -1,6 +1,6 @@
 # react-components-training
 
-A simple page built with HTML, CSS, & JS. 
+A simple page built with HTML, CSS, & Js-> 
 
 ## Todo: 
 [] Clone the project

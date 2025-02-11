@@ -1,12 +1,18 @@
 #include "server.h"
-using namespace std;
 
 int main(int ac, char **av) {
 
     configuration config;
     config.bodySize == 100000;
+    config.errorPages[405] = "/www/static/errors/405.html";
+    config.loctions["/html/"].uri = "/html/";
     config.loctions["/html/"].methods.push_back("GET");
     config.loctions["/html/"].alias = "/www/static/html";
+    
+    
+    config.loctions["/assets/"].uri = "/assets/";
+    config.loctions["/assets/"].methods.push_back("GET");
+    config.loctions["/assets/"].alias = "/www/static/assets";
 
 
 

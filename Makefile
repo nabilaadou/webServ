@@ -1,6 +1,6 @@
 NAME = webServ
 
-SRCS =  src/cgi/*.cpp \
+SRCS =  src/wrappers.cpp src/cgi/*.cpp \
 		src/exceptions/*.cpp src/request/*.cpp src/response/*.cpp \
 		src/server/*.cpp
 

@@ -116,16 +116,22 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				struct epoll_event	ev;
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
-				// exit(-1);
-				
-				sendError(fd, exception.code(), exception.meaning());
-
-				ev.events = EPOLLIN;
-				ev.data.fd = fd;
-				if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-					perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
+				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
+					sessions[fd].path = w_realpath(("." + config.errorPages.at(exception.code())).c_str());
+					ev.events = EPOLLOUT;
+					ev.data.fd = fd;
+					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
+					}
+				} else {
+					sendError(fd, exception.code(), exception.meaning());
+					ev.events = EPOLLIN;
+					ev.data.fd = fd;
+					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
+					}
+					sessions.erase(sessions.find(fd));
 				}
-				sessions.erase(sessions.find(fd));
 			}
 		}
 	}

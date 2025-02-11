@@ -32,9 +32,9 @@ string httpSession::Response::getSupportedeExtensions(const string& key) {
         ext[".mov"]   = "video/quicktime";
         ext[".mkv"]   = "video/x-matroska";
         ext[".ogg"]   = "audio/ogg";
-        ext[".odt"]   = "application/vnd.oasis.opendocument.text";
-        ext[".ods"]   = "application/vnd.oasis.opendocument.spreadsheet";
-        ext[".odp"]   = "application/vnd.oasis.opendocument.presentation";
+        ext[".odt"]   = "application/vnd.oasis->opendocument.text";
+        ext[".ods"]   = "application/vnd.oasis->opendocument.spreadsheet";
+        ext[".odp"]   = "application/vnd.oasis->opendocument.presentation";
         ext[".otf"]   = "font/otf";
         ext[".png"]   = "images/png";
         ext[".pdf"]   = "application/pdf";

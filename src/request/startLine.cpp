@@ -33,38 +33,38 @@ vector<string>	split(string& str) {
 
 // 	while (getline(ss, line, '/')) {
 // 		if (!line.empty())
-// 			strings.push_back(line);
+// 			strings->push_back(line);
 // 	}
 // 	for (const auto& it : aliasScript) {
 // 		if (strncmp(uri.c_str(), it.c_str(), it.size()) == 0) {
-// 			s.cgi = new Cgi();
+// 			s->cgi = new Cgi();
 
 // 			size_t pathEndpos = uri.find('/', it.size());
-// 			s.cgi->setScriptPath(uri.substr(0, pathEndpos));
-// 			s.cgi->setScriptName(uri.substr(it.size(), pathEndpos-it.size()));
+// 			s->cgi->setScriptPath(uri.substr(0, pathEndpos));
+// 			s->cgi->setScriptName(uri.substr(it.size(), pathEndpos-it.size()));
 
 // 			size_t queryStartpos = uri.find('?', pathEndpos+1);
 // 			if (pathEndpos < uri.size())
-// 				s.cgi->setPath(uri.substr(pathEndpos+1, queryStartpos-(pathEndpos+1)));
+// 				s->cgi->setPath(uri.substr(pathEndpos+1, queryStartpos-(pathEndpos+1)));
 // 			if (queryStartpos != string::npos)
-// 				s.cgi->setQuery(uri.substr(queryStartpos+1));
+// 				s->cgi->setQuery(uri.substr(queryStartpos+1));
 // 			return true;
 // 		}
 // 	}
-// 	for (int i = 0; i < strings.size(); ++i) {
+// 	for (int i = 0; i < strings->size(); ++i) {
 // 		reappendedUri += "/" + strings[i];
 // 		for (const auto& it : addHandler) {
 // 			if (reappendedUri.rfind(it) != string::npos) {
-// 				s.cgi = new Cgi();
+// 				s->cgi = new Cgi();
 
-// 				s.cgi->setScriptPath(reappendedUri);
-// 				s.cgi->setScriptName(strings[i]);
+// 				s->cgi->setScriptPath(reappendedUri);
+// 				s->cgi->setScriptName(strings[i]);
 
 // 				size_t queryStartpos = uri.find('?', reappendedUri.size());
 // 				if (reappendedUri.size() < uri.size())
-// 					s.cgi->setPath(uri.substr(reappendedUri.size()+1, queryStartpos-(reappendedUri.size()+1)));
+// 					s->cgi->setPath(uri.substr(reappendedUri.size()+1, queryStartpos-(reappendedUri.size()+1)));
 // 				if (queryStartpos != string::npos)
-// 					s.cgi->setQuery(uri.substr(queryStartpos+1));
+// 					s->cgi->setQuery(uri.substr(queryStartpos+1));
 // 				return true;
 // 			}
 // 		}
@@ -72,15 +72,39 @@ vector<string>	split(string& str) {
 // 	return false;
 // }
 
+void	httpSession::Request::reconstructUri(location*	rules) {
+	struct stat pathStat;
+
+	if (find(rules->methods.begin(), rules->methods.end(), s.method) == rules->methods.end())
+		throw(statusCodeException(405, "Method Not Allowed"));
+	if (!rules->redirection.empty()) {
+		s.statusCode = 301;
+		s.codeMeaning = "Moved Permanently";
+		//adding the location header to the response with the new path;
+		return ;
+	}
+	if (!rules->alias.empty()) {
+		s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size()-1);
+		s.path = rules->alias + s.path;
+	}
+	s.path = w_realpath(("." + s.path).c_str());
+    if (stat(s.path.c_str(), &pathStat))
+		throw(statusCodeException(404, "Not Found"));
+	if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
+		s.path += "/" + rules->index;
+		if (stat(s.path.c_str(), &pathStat))
+			throw(statusCodeException(404, "Not Found"));
+	}
+}
+
 location*	httpSession::Request::getConfigFileRules() {
 	size_t	pos = 0;
 	location* loc = NULL;
 	while (1) {
 		pos = s.path.find('/', pos);
 		string subUri = s.path.substr(0, pos+1);
-		if (s.config->loctions.find(subUri) != s.config->loctions.end()) {
+		if (s.config->loctions.find(subUri) != s.config->loctions.end())
 			loc = &(s.config->loctions.at(subUri));
-		}
 		if (pos++ == string::npos)
 			break;
 	}
@@ -97,7 +121,7 @@ void	httpSession::Request::isProtocole(string& http) {
 	throw(statusCodeException(400, "Bad Request"));
 }
 
-void	httpSession::Request::reconstructUri(string& uri) {
+void	httpSession::Request::extractPathQuery(string& uri) {
 	if (uri[0] != '/') {
 		size_t pos = uri.find('/', 7);
 		if (pos == string::npos)
@@ -120,7 +144,7 @@ void	httpSession::Request::isTarget(string& target) {
 		if (!iswalnum(c) && validCharachters.find(c) == string::npos)
 			throw(statusCodeException(400, "Bad Request"));
 	}
-	reconstructUri(target);
+	extractPathQuery(target);
 }
 
 void	httpSession::Request::isMethod(string& method) {
@@ -133,6 +157,8 @@ void	httpSession::Request::isMethod(string& method) {
 
 bool	httpSession::Request::parseStartLine(stringstream& stream) {
 	string	line;
+	location* rules;
+	char absolutePath[1024];
 	if (getline(stream, line)) {
 		vector<string>	comps;
 		comps = split(line);
@@ -141,31 +167,10 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isMethod(comps[0]);
 		isTarget(comps[1]);
 		isProtocole(comps[2]);
-		cerr << "original uri: " << s.path << endl;
-		location* rules = getConfigFileRules();
-		if (rules) {
-			if (find(rules->methods.begin(), rules->methods.end(), s.method) == rules->methods.end())
-				throw(statusCodeException(405, "Method Not Allowed"));
-			if (!rules->redirection.empty()) {
-				s.statusCode = 301;
-				s.codeMeaning = "Moved Permanently";
-				//adding the location header to the response with the new path;
-			}
-			if (!rules->alias.empty()) {
-				s.path.erase(s.path.begin(), s.path.begin()+5);
-				s.path = rules->alias + s.path;
-			}
-			s.path = "." + s.path;
-			cerr << s.path << endl;
-			struct stat pathStat;
-    		if (stat(s.path.c_str(), &pathStat))
-				throw(statusCodeException(404, "Not Found"));
-			if (S_ISDIR(pathStat.st_mode))//&& s.path == location
-				s.path += "/" + rules->index;
-		} else {
-			s.path = "." + s.path;
-			cerr << s.path << endl;
-		}
+		if ((rules = getConfigFileRules()))
+			reconstructUri(rules);
+		else
+			s.path = w_realpath(("." + s.path).c_str());
 		return true;
 	}
 	remainingBuffer += line;
