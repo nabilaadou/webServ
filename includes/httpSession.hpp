@@ -38,6 +38,7 @@ struct configuration {
 class httpSession {
 private:
 	string				method;
+	string				path;
 	string				query;
 	string				httpProtocole;
 	map<string, string>	headers;
@@ -48,7 +49,7 @@ private:
 public:
 	class Request {
 	private:
-		httpSession&							s;
+		// httpSession&							s;
 		string									prvsFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
 		int										length;
@@ -57,7 +58,7 @@ public:
 		t_state									state;
 
 		void									isProtocole(string& httpVersion);
-		bool									isCGI(const string& uri);
+		// bool									isCGI(const string& uri);
 		void									reconstructUri(location* rules);
 		void									extractPathQuery(string& uri);
 		void									isTarget(string& target);
@@ -71,6 +72,7 @@ public:
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);
 	public:
+	httpSession&	s;
 		Request(httpSession& session);
 		void									parseMessage(const int clientFd);
 		const t_state&							status() const;
@@ -78,7 +80,6 @@ public:
 
 	class Response {
 	private:
-		httpSession&	s;
 		int				contentFd;
 		t_state			state;
 		
@@ -89,16 +90,18 @@ public:
 		void			sendCgiStarterLine(const int);
 		void			sendCgiOutput(const int);
 	public:
+		httpSession&	s;
 		Response(httpSession& session);
 		void			sendResponse(const int clientFd);
 		const t_state&	status() const;
 	};
 
-	string				path;
+	Request		req;
+	Response	res;
 
 	httpSession(int clientFd, configuration* confi);
 	httpSession();
-	Request		req;
-	Response	res;
+
+	void		reSetPath(const string& newPath);
 
 };

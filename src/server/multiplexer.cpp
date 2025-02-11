@@ -1,9 +1,12 @@
 #include "server.h"
 
-httpSession::httpSession(int clientFd, configuration* config)
-	: config(config), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
 
 httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+
+void	httpSession::reSetPath(const string& newPath) {
+	path = newPath;
+}
 
 void	sendError(const int clientFd, const int statusCode, const string codeMeaning) {
 	string msg;
@@ -24,7 +27,7 @@ void	sendError(const int clientFd, const int statusCode, const string codeMeanin
 }
 
 
-void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const t_state& status) {
+void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
 	struct epoll_event	ev;
 
 	if (status == DONE) {
@@ -34,6 +37,7 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			perror("epoll_ctl failed: ");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
+		delete s[clientFd];
 		s.erase(s.find(clientFd));
 	}
 	else if (status == CCLOSEDCON) {
@@ -42,11 +46,12 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
 		}
 		close(clientFd);
+		delete s[clientFd];
 		s.erase(s.find(clientFd));
 	}
 }
 
-void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const t_state& status) {
+void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
 	struct epoll_event	ev;
 
 	if (status == DONE) {
@@ -63,6 +68,7 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
 		}
 		close(clientFd);
+		delete s[clientFd];
 		s.erase(s.find(clientFd));
 	}
 }
@@ -87,7 +93,7 @@ void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& 
 
 void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config) {
 	struct epoll_event		events[MAX_EVENTS];
-	map<int, httpSession>	sessions;//change httpSession to a pointer so i can be able to free it
+	map<int, httpSession*>	sessions;//change httpSession to a pointer so i can be able to free it
 
 	while (1) {
 		int nfds;
@@ -103,13 +109,13 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				if (servrSocks.find(fd) != servrSocks.end())
 					acceptNewClient(epollFd, fd, servrSocks[fd]);
 				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, *(new httpSession(fd, &config)));
-					sessions[fd].req.parseMessage(fd);
-					reqSessionStatus(epollFd, fd, sessions, sessions[fd].req.status());
+					sessions.try_emplace(fd, new httpSession(fd, &config));
+					sessions[fd]->req.parseMessage(fd);
+					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
 				}
 				else if (events[i].events & EPOLLOUT) {
-					sessions[fd].res.sendResponse(fd);
-					resSessionStatus(epollFd, fd, sessions, sessions[fd].res.status());
+					sessions[fd]->res.sendResponse(fd);
+					resSessionStatus(epollFd, fd, sessions, sessions[fd]->res.status());
 				}
 			}
 			catch (const statusCodeException& exception) {
@@ -117,8 +123,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
 				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
-					sessions[fd].path = w_realpath(("." + config.errorPages.at(exception.code())).c_str());
-					cerr << sessions[fd].path << endl;
+					sessions[fd]->reSetPath(w_realpath(("." + config.errorPages.at(exception.code())).c_str()));
 					ev.events = EPOLLOUT;
 					ev.data.fd = fd;
 					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {

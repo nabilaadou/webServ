@@ -1,7 +1,6 @@
 #include "server.h"
 
 int main(int ac, char **av) {
-
     configuration config;
     config.bodySize == 100000;
     config.errorPages[405] = "/www/static/errors/405.html";
