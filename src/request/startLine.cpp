@@ -25,53 +25,6 @@ vector<string>	split(string& str) {
 	return strings;
 }
 
-// bool	httpSession::Request::isCGI(const string& uri) {
-// 	stringstream	ss(uri);
-// 	vector<string>	strings;
-// 	string			reappendedUri;
-// 	string			line;
-
-// 	while (getline(ss, line, '/')) {
-// 		if (!line.empty())
-// 			strings->push_back(line);
-// 	}
-// 	for (const auto& it : aliasScript) {
-// 		if (strncmp(uri.c_str(), it.c_str(), it.size()) == 0) {
-// 			s->cgi = new Cgi();
-
-// 			size_t pathEndpos = uri.find('/', it.size());
-// 			s->cgi->setScriptPath(uri.substr(0, pathEndpos));
-// 			s->cgi->setScriptName(uri.substr(it.size(), pathEndpos-it.size()));
-
-// 			size_t queryStartpos = uri.find('?', pathEndpos+1);
-// 			if (pathEndpos < uri.size())
-// 				s->cgi->setPath(uri.substr(pathEndpos+1, queryStartpos-(pathEndpos+1)));
-// 			if (queryStartpos != string::npos)
-// 				s->cgi->setQuery(uri.substr(queryStartpos+1));
-// 			return true;
-// 		}
-// 	}
-// 	for (int i = 0; i < strings->size(); ++i) {
-// 		reappendedUri += "/" + strings[i];
-// 		for (const auto& it : addHandler) {
-// 			if (reappendedUri.rfind(it) != string::npos) {
-// 				s->cgi = new Cgi();
-
-// 				s->cgi->setScriptPath(reappendedUri);
-// 				s->cgi->setScriptName(strings[i]);
-
-// 				size_t queryStartpos = uri.find('?', reappendedUri.size());
-// 				if (reappendedUri.size() < uri.size())
-// 					s->cgi->setPath(uri.substr(reappendedUri.size()+1, queryStartpos-(reappendedUri.size()+1)));
-// 				if (queryStartpos != string::npos)
-// 					s->cgi->setQuery(uri.substr(queryStartpos+1));
-// 				return true;
-// 			}
-// 		}
-// 	}
-// 	return false;
-// }
-
 void	httpSession::Request::reconstructUri(location*	rules) {
 	struct stat pathStat;
 
@@ -97,25 +50,11 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 	}
 }
 
-location*	httpSession::Request::getConfigFileRules() {
-	size_t	pos = 0;
-	location* loc = NULL;
-	//matchin exact path
-	if (s.config->locations.find(s.path) != s.config->locations.end()) {
-		loc = &(s.config->locations.at(s.path));
-		return loc;
-	}
-	//matchin start 
-	while (1) {
-		pos = s.path.find('/', pos);
-		string subUri = s.path.substr(0, pos);
-		if (s.config->locations.find(subUri) != s.config->locations.end())
-			loc = &(s.config->locations.at(subUri));
-		if (pos++ == string::npos)
-			break;
-	}
-	//matchin extenstion
-	pos = 0;
+void	httpSession::Request::isCGI() {
+	size_t		pos = 0;
+	location*	loc;
+	cgiInfo		cgiVars;
+
 	while (1) {
 		pos = s.path.find('/', pos);
 		string subUri = s.path.substr(0, pos);
@@ -123,12 +62,42 @@ location*	httpSession::Request::getConfigFileRules() {
 			if (it->first[0] != '*')
 				continue;
 			size_t prefixPos = subUri.rfind(it->second.uri);
-			if (prefixPos != string::npos)//check if the match happend in the end of the path
+			if (prefixPos != string::npos && prefixPos + it->second.uri.size() == subUri.size() && !access(("." + it->second.alias + subUri).c_str() ,F_OK)) {
+				cgiVars.scriptUri = subUri;
+				size_t barPos = subUri.rfind('/');
+				cgiVars.scriptName = subUri.substr(barPos+1);
+				cgiVars.exec = it->second.exec;
+				size_t pathInfoPos = s.path.find('/', subUri.size()+1);
+				if (pathInfoPos != string::npos)
+					cgiVars.path = s.path.substr(pos);
+				cgiVars.query = s.query;
 				loc = &(it->second);
+			}
 		}
 		if (pos++ == string::npos)
 			break;
 	}
+	if (loc)
+		s.cgi = new Cgi(cgiVars);
+}
+
+location*	httpSession::Request::getConfigFileRules() {
+	size_t		pos = 0;
+	location*	loc = NULL;
+
+	if (s.config->locations.find(s.path) != s.config->locations.end()) {
+		loc = &(s.config->locations.at(s.path));
+		return loc;
+	}
+	while (1) {
+		pos = s.path.find('/', pos);
+		string subUri = s.path.substr(0, pos+1);
+		if (s.config->locations.find(subUri) != s.config->locations.end())
+			loc = &(s.config->locations.at(subUri));
+		if (pos++ == string::npos)
+			break;
+	}
+	isCGI();
 	return loc;
 }
 

@@ -58,7 +58,7 @@ public:
 		t_state									state;
 
 		void									isProtocole(string& httpVersion);
-		// bool									isCGI(const string& uri);
+		void									isCGI();
 		void									reconstructUri(location* rules);
 		void									extractPathQuery(string& uri);
 		void									isTarget(string& target);
