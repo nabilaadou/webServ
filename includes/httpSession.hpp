@@ -24,7 +24,7 @@ struct location {
     string			redirection;
     string			alias;
     string			index;
-	string			cgi;
+	string			exec;
     bool			autoIndex;
 	location() : index("index.html") {}
 };
@@ -32,7 +32,7 @@ struct location {
 struct configuration {
     int						bodySize;
     map<int, string>		errorPages;
-    map<string, location>	loctions;
+    map<string, location>	locations;
 };
 
 class httpSession {
@@ -49,7 +49,7 @@ private:
 public:
 	class Request {
 	private:
-		// httpSession&							s;
+		httpSession&	s;
 		string									prvsFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
 		int										length;
@@ -72,7 +72,6 @@ public:
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);
 	public:
-	httpSession&	s;
 		Request(httpSession& session);
 		void									parseMessage(const int clientFd);
 		const t_state&							status() const;
@@ -80,6 +79,7 @@ public:
 
 	class Response {
 	private:
+		httpSession&	s;
 		int				contentFd;
 		t_state			state;
 		
@@ -90,7 +90,6 @@ public:
 		void			sendCgiStarterLine(const int);
 		void			sendCgiOutput(const int);
 	public:
-		httpSession&	s;
 		Response(httpSession& session);
 		void			sendResponse(const int clientFd);
 		const t_state&	status() const;

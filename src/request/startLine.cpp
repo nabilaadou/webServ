@@ -84,7 +84,7 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 		return ;
 	}
 	if (!rules->alias.empty()) {
-		s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size()-1);
+		s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size() - 1);
 		s.path = rules->alias + s.path;
 	}
 	s.path = w_realpath(("." + s.path).c_str());
@@ -100,11 +100,32 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 location*	httpSession::Request::getConfigFileRules() {
 	size_t	pos = 0;
 	location* loc = NULL;
+	//matchin exact path
+	if (s.config->locations.find(s.path) != s.config->locations.end()) {
+		loc = &(s.config->locations.at(s.path));
+		return loc;
+	}
+	//matchin start 
 	while (1) {
 		pos = s.path.find('/', pos);
-		string subUri = s.path.substr(0, pos+1);
-		if (s.config->loctions.find(subUri) != s.config->loctions.end())
-			loc = &(s.config->loctions.at(subUri));
+		string subUri = s.path.substr(0, pos);
+		if (s.config->locations.find(subUri) != s.config->locations.end())
+			loc = &(s.config->locations.at(subUri));
+		if (pos++ == string::npos)
+			break;
+	}
+	//matchin extenstion
+	pos = 0;
+	while (1) {
+		pos = s.path.find('/', pos);
+		string subUri = s.path.substr(0, pos);
+		for (auto it = s.config->locations.begin(); it != s.config->locations.end(); ++it) {
+			if (it->first[0] != '*')
+				continue;
+			size_t prefixPos = subUri.rfind(it->second.uri);
+			if (prefixPos != string::npos)//check if the match happend in the end of the path
+				loc = &(it->second);
+		}
 		if (pos++ == string::npos)
 			break;
 	}

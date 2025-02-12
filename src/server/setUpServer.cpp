@@ -18,7 +18,11 @@ int	addServrSocksToEpollPool(map<int, t_sockaddr>& servrSocks) {
 }
 
 int	startServer(map<int, t_sockaddr>& servrSocks) {
-	// for (int i = 0; i < configFile.hostPort; ++i) {
+	vector<int>	ports;
+
+	ports.push_back(8080);
+	ports.push_back(4040);
+	for (int i = 0; i < ports.size(); ++i) {
 		t_sockaddr	sockInfo;
 		int 		sockFd;
 		int			opt = 1;
@@ -32,16 +36,16 @@ int	startServer(map<int, t_sockaddr>& servrSocks) {
     	}
 		sockInfo.sin_family = AF_INET;
     	sockInfo.sin_addr.s_addr = INADDR_ANY;
-    	sockInfo.sin_port = htons(8080);
+    	sockInfo.sin_port = htons(ports[i]);
 		if (bind(sockFd, (struct sockaddr*)&sockInfo, addrLen) < 0) {
     	    perror("bind failed(setUpserver.cpp): "); exit(-1);
     	}
-		cout << "listening on port 8080.." << endl;
+		cout << "listening on port XXXX.." << endl;
 		if (listen(sockFd, 3) < 0) {
     	    perror("listen failed(setUpserver.cpp): "); exit(-1);
     	}
 		servrSocks[sockFd] = sockInfo;
-	// }
+	}
 	int epollFd = addServrSocksToEpollPool(servrSocks);
 	return epollFd;
 }
