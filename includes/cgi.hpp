@@ -23,16 +23,17 @@ struct cgiInfo {
 
 class Cgi {
 	private:
-		const cgiInfo&	infos;
+		const cgiInfo	infos;
 		int				wPipe[2];
 		int				rPipe[2];
 
 		void	createPipes();
-		// void	executeScript();
+		void	executeScript();
 		// void    prepearingCgiEnvVars(Request, map<string, string>&);
 	public:
 		Cgi(const cgiInfo& infos);
-		// void	setupCGIProcess();
+		~Cgi();
+		void	setupCGIProcess();
 		int		wFd();
 		int		rFd();
 };

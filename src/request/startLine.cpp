@@ -28,41 +28,32 @@ vector<string>	split(string& str) {
 void	httpSession::Request::isCGI(location* loc) {
 	size_t		pos = 0;
 	cgiInfo		cgiVars;
-	string      indexExt = "";
-	if (!loc->index.empty()) {
-        size_t dotPos = loc->index.rfind('.');
-		if (dotPos != string::npos) {
-			indexExt = loc->index.substr(dotPos);
-		}
-	}
+	bool		foundAMatch = false;
 
 	while (1) {
 		pos = s.path.find('/', pos);
 		string subUri = s.path.substr(0, pos);
+		if (subUri == loc->alias || (subUri + '/') == loc->uri)
+			subUri += '/' + loc->index;
 		size_t	dotPos = subUri.rfind('.');
 		string subUriExt = "";
 		if (dotPos != string::npos)
 			subUriExt = subUri.substr(dotPos);
-		else if (/*dir*/ && !indexExt.empty()){
-			//if dir append the default index;
-		}
 		if (loc->cgi.find(subUriExt) != loc->cgi.end() && !access(("." + subUri).c_str() ,F_OK)) {
-			cgiVars.scriptUri = subUri;
-			cerr << cgiVars.scriptUri << endl;
+			cgiVars.scriptUri = w_realpath(("." + subUri).c_str());
 			size_t barPos = subUri.rfind('/');
 			cgiVars.scriptName = subUri.substr(barPos+1);
-			cerr << cgiVars.scriptName << endl;
 			cgiVars.exec = loc->cgi[subUriExt];
-			cerr << cgiVars.exec << endl;
 			if (s.path.size() > subUri.size()+1)
 				cgiVars.path = s.path.substr(pos);
-			cerr << cgiVars.path << endl;
 			cgiVars.query = s.query;
-			cerr << cgiVars.query << endl;
+			foundAMatch = true;
 		}
 		if (pos++ == string::npos)
 			break;
 	}
+	if (foundAMatch == true)
+		s.cgi = new Cgi(cgiVars);
 }
 
 void	httpSession::Request::reconstructUri(location*	rules) {
@@ -81,13 +72,15 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 		s.path = rules->alias + s.path;
 	}
 	isCGI(rules);
-	s.path = w_realpath(("." + s.path).c_str());
-    if (stat(s.path.c_str(), &pathStat))
-		throw(statusCodeException(404, "Not Found"));
-	if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
-		s.path += "/" + rules->index;
-		if (stat(s.path.c_str(), &pathStat))
+	if (s.cgi == NULL) {
+		s.path = w_realpath(("." + s.path).c_str());
+    	if (stat(s.path.c_str(), &pathStat))
 			throw(statusCodeException(404, "Not Found"));
+		if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
+			s.path += "/" + rules->index;
+			if (stat(s.path.c_str(), &pathStat))
+				throw(statusCodeException(404, "Not Found"));
+		}
 	}
 }
 
@@ -168,8 +161,15 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isProtocole(comps[2]);
 		if ((rules = getConfigFileRules()))
 			reconstructUri(rules);
-		else
+		else {
+			struct stat pathStat;
 			s.path = w_realpath(("." + s.path).c_str());
+			if (stat(s.path.c_str(), & pathStat) || S_ISDIR(pathStat.st_mode)) {
+				s.path += "/index.html";
+				if (stat(s.path.c_str(), &pathStat))
+					throw(statusCodeException(404, "Not Found"));
+			}
+		}
 		return true;
 	}
 	remainingBuffer += line;

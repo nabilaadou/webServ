@@ -3,6 +3,9 @@
 Cgi::Cgi(const cgiInfo& infos): infos(infos), rPipe({-1}), wPipe({-1}){
 	createPipes();
 }
+Cgi::~Cgi() {
+	cerr << "des called" << endl;
+}
 
 void	Cgi::createPipes() {
 	if (pipe(wPipe) < 0 || pipe(rPipe) < 0) {
@@ -49,64 +52,64 @@ void	Cgi::createPipes() {
 // 	// mapEnvp["WEBTOP_USER"] = "";
 // }
 
-// char**	transformVectorToChar(vector<string>& vec) {
-// 	char** 	strs = new char*[vec.size() + 1];
+static char**	transformVectorToChar(vector<string>& vec) {
+	char** 	strs = new char*[vec.size() + 1];
 
-// 	for (int i = 0; i < vec.size(); ++i) {
-// 		strs[i] = new char[vec[i].size()+1];
-// 		strcpy(strs[i], vec[i].c_str());
-// 	}
-// 	strs[vec.size()] = NULL;
-// 	return (strs);
-// }
+	for (int i = 0; i < vec.size(); ++i) {
+		strs[i] = new char[vec[i].size()+1];
+		strcpy(strs[i], vec[i].c_str());
+	}
+	strs[vec.size()] = NULL;
+	return (strs);
+}
 
-// void	Cgi::executeScript() {
-// 	char**							argv, CGIEnvp;
-// 	vector<string>					vecArgv, vecEnvp;
-// 	// map<string, string>	mapEnvp;
-// 	// prepearingCgiEnvVars(req, mapEnvp);
-// 	// for(const auto& it: mapEnvp) {
-// 	// 	if (!it.second.empty())
-// 	// 		vecEnvp.push_back(it.first + "=" + it.second);
-// 	// }
-// 	// while(*ncHomeEnvp) {
-// 	// 	vecEnvp.push_back(*ncHomeEnvp);
-// 	// 	++ncHomeEnvp;
-// 	// }
-// 	// CGIEnvp = transformVectorToChar(vecEnvp);
-// 	//exec
-// 	if (!scriptExecuter.empty())
-// 		vecArgv.push_back(scriptExecuter);
-// 	vecArgv.push_back(scriptPath);
-// 	argv = transformVectorToChar(vecArgv);
-// 	if (execve(argv[0], argv, NULL) == -1) {
-// 		for (int i = 0; argv[i]; ++i) {
-// 			delete argv[i];
-// 		}
-// 		delete []argv;
-// 		perror("execve failed(cgi.cpp 102)"); exit(-1);
-// 	}
-// }
+void	Cgi::executeScript() {
+	char**							argv, CGIEnvp;
+	vector<string>					vecArgv, vecEnvp;
+	// map<string, string>	mapEnvp;
+	// prepearingCgiEnvVars(req, mapEnvp);
+	// for(const auto& it: mapEnvp) {
+	// 	if (!it.second.empty())
+	// 		vecEnvp.push_back(it.first + "=" + it.second);
+	// }
+	// while(*ncHomeEnvp) {
+	// 	vecEnvp.push_back(*ncHomeEnvp);
+	// 	++ncHomeEnvp;
+	// }
+	// CGIEnvp = transformVectorToChar(vecEnvp);
+	//exec
+	if (!infos.exec.empty())
+		vecArgv.push_back(infos.exec);
+	vecArgv.push_back(infos.scriptUri);
+	argv = transformVectorToChar(vecArgv);
+	if (execve(argv[0], argv, NULL) == -1) {
+		for (int i = 0; argv[i]; ++i) {
+			delete argv[i];
+		}
+		delete []argv;
+		perror("execve failed(cgi.cpp 102)"); exit(-1);
+	}
+}
 
-// void	Cgi::setupCGIProcess() {
-// 	// //fd[1] // write end;
-// 	// //fd[0] // read end;
-// 	pid_t pid = fork();
-// 	if (pid < 0) {
-// 		perror("fork failed"); exit(-1);
-// 	}
-// 	else if(pid == 0) {
-// 		close(rPipe[0]);
-// 		close(wPipe[1]);
+void	Cgi::setupCGIProcess() {
+	// //fd[1] // write end;
+	// //fd[0] // read end;
+	pid_t pid = fork();
+	if (pid < 0) {
+		perror("fork failed"); exit(-1);
+	}
+	else if(pid == 0) {
+		close(rPipe[0]);
+		close(wPipe[1]);
 
-// 		if (dup2(rPipe[1], STDOUT_FILENO) < 0 || dup2(wPipe[0], STDIN_FILENO) < 0) {
-// 			perror("dup2 failed"); exit(-1);
-// 		}
-// 		close(rPipe[1]);
-// 		close(wPipe[0]);
-// 		executeScript();
-// 	}
-// 	wait(0);
-// 	close(rPipe[1]);
-// 	close(wPipe[0]);
-// }
+		if (dup2(rPipe[1], STDOUT_FILENO) < 0 || dup2(wPipe[0], STDIN_FILENO) < 0) {
+			perror("dup2 failed"); exit(-1);
+		}
+		close(rPipe[1]);
+		close(wPipe[0]);
+		executeScript();
+	}
+	wait(0);
+	close(rPipe[1]);
+	close(wPipe[0]);
+}

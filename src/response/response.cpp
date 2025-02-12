@@ -14,16 +14,16 @@ void	httpSession::Response::sendResponse(const int clientFd) {
 			sendBody(clientFd);
 		else
 			state = DONE;
-	} //else {
-	// 	if (state == PROCESSING) {
-	// 		sendCgiStarterLine(clientFd);
-	// 		if (state == CCLOSEDCON)
-	// 			return ;
-	// 		state = SHEADER;
-	// 		s.cgi->setupCGIProcess();
-	// 	}
-	// 	sendCgiOutput(clientFd);
-	// }
+	} else {
+		if (state == PROCESSING) {
+			sendCgiStarterLine(clientFd);
+			if (state == CCLOSEDCON)
+				return ;
+			state = SHEADER;
+			s.cgi->setupCGIProcess();
+		}
+		sendCgiOutput(clientFd);
+	}
 }
 
 const t_state&	httpSession::Response::status() const {

@@ -25,7 +25,7 @@ int main(int ac, char **av) {
     config.locations["/cgi/"].alias = "/www/bin/cgi";
     config.locations["/cgi/"].cgi[".cgi"] = "";
     config.locations["/cgi/"].cgi[".sh"] = "bash";
-    config.locations["/cgi/"].index = "def.cgi";
+    config.locations["/cgi/"].index = "script.cgi";
 
     if (ac != 2) {
         cerr << "invalid number of argument" << endl;
