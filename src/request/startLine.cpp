@@ -28,6 +28,13 @@ vector<string>	split(string& str) {
 void	httpSession::Request::isCGI(location* loc) {
 	size_t		pos = 0;
 	cgiInfo		cgiVars;
+	string      indexExt = "";
+	if (!loc->index.empty()) {
+        size_t dotPos = loc->index.rfind('.');
+		if (dotPos != string::npos) {
+			indexExt = loc->index.substr(dotPos);
+		}
+	}
 
 	while (1) {
 		pos = s.path.find('/', pos);
@@ -36,6 +43,9 @@ void	httpSession::Request::isCGI(location* loc) {
 		string subUriExt = "";
 		if (dotPos != string::npos)
 			subUriExt = subUri.substr(dotPos);
+		else if (/*dir*/ && !indexExt.empty()){
+			//if dir append the default index;
+		}
 		if (loc->cgi.find(subUriExt) != loc->cgi.end() && !access(("." + subUri).c_str() ,F_OK)) {
 			cgiVars.scriptUri = subUri;
 			cerr << cgiVars.scriptUri << endl;
@@ -53,7 +63,6 @@ void	httpSession::Request::isCGI(location* loc) {
 		if (pos++ == string::npos)
 			break;
 	}
-	exit(0);
 }
 
 void	httpSession::Request::reconstructUri(location*	rules) {
