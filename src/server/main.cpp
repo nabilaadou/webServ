@@ -19,12 +19,13 @@ int main(int ac, char **av) {
     config.locations["/assets/"].alias = "/www/static/assets";
     config.locations["/assets/"].index = "mov_bbb.mp4";
 
-    config.locations["*.cgi"].uri = ".cgi";
-    config.locations["*.cgi"].methods.push_back("GET");
-    config.locations["*.cgi"].methods.push_back("POST");
-    config.locations["*.cgi"].alias = "/www/bin";
-    config.locations["*.cgi"].index = "def.cgi";
-    config.locations["*.cgi"].exec = "";
+    config.locations["/cgi/"].uri = "/cgi/";
+    config.locations["/cgi/"].methods.push_back("GET");
+    config.locations["/cgi/"].methods.push_back("POST");
+    config.locations["/cgi/"].alias = "/www/bin/cgi";
+    config.locations["/cgi/"].cgi[".cgi"] = "";
+    config.locations["/cgi/"].cgi[".sh"] = "bash";
+    config.locations["/cgi/"].index = "def.cgi";
 
     if (ac != 2) {
         cerr << "invalid number of argument" << endl;

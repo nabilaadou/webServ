@@ -1,10 +1,3 @@
-/*
-	fork and run teh script and pipe and read it and ship it
-	before check if the headers are well formed and make the start-line and send the response
-*/
-
-//https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
-
 #include "cgi.hpp"
 
 Cgi::Cgi(const cgiInfo& infos): infos(infos), rPipe({-1}), wPipe({-1}){
@@ -13,7 +6,7 @@ Cgi::Cgi(const cgiInfo& infos): infos(infos), rPipe({-1}), wPipe({-1}){
 
 void	Cgi::createPipes() {
 	if (pipe(wPipe) < 0 || pipe(rPipe) < 0) {
-		perror("pipe failed"); exit(-1);
+		perror("pipe failed"); throw(statusCodeException(500, "Internal Server Error"));
 	}
 }
 

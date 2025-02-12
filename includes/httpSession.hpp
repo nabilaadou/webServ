@@ -19,13 +19,13 @@
 using namespace std;
 
 struct location {
-	string			uri;
-    vector<string>	methods;
-    string			redirection;
-    string			alias;
-    string			index;
-	string			exec;
-    bool			autoIndex;
+	string				uri;
+    vector<string>		methods;
+    string				redirection;
+    string				alias;
+	map<string, string>	cgi;
+    string				index;
+    bool				autoIndex;
 	location() : index("index.html") {}
 };
 
@@ -58,7 +58,7 @@ public:
 		t_state									state;
 
 		void									isProtocole(string& httpVersion);
-		void									isCGI();
+		void									isCGI(location*);
 		void									reconstructUri(location* rules);
 		void									extractPathQuery(string& uri);
 		void									isTarget(string& target);
