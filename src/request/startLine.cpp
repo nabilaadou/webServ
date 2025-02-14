@@ -1,8 +1,5 @@
 #include "httpSession.hpp"
 
-// const vector<string> aliasScript= {"/bin/cgi/", "test/test1/"};
-// const vector<string> addHandler= {".sh", ".py", ".cgi"};
-
 vector<string>	split(string& str) {
 	const string	whiteSpace = " \t\n\r\f\v";
 	string			remainingStr;
@@ -18,7 +15,7 @@ vector<string>	split(string& str) {
 		else ++i;
 	}
 	while (str.begin()+pos != str.end()) {
-		remainingStr += *(str.begin()+pos); //movin the string to point to what i ll add to the remaining buffer;
+		remainingStr += *(str.begin()+pos);
 		++pos;
 	}
 	str = remainingStr;
@@ -161,15 +158,8 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isProtocole(comps[2]);
 		if ((rules = getConfigFileRules()))
 			reconstructUri(rules);
-		else {
-			struct stat pathStat;
-			s.path = w_realpath(("." + s.path).c_str());
-			if (stat(s.path.c_str(), & pathStat) || S_ISDIR(pathStat.st_mode)) {
-				s.path += "/index.html";
-				if (stat(s.path.c_str(), &pathStat))
-					throw(statusCodeException(404, "Not Found"));
-			}
-		}
+		else
+			throw(statusCodeException(404, "Not Found"));
 		return true;
 	}
 	remainingBuffer += line;

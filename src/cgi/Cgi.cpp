@@ -109,7 +109,7 @@ void	Cgi::setupCGIProcess() {
 		close(wPipe[0]);
 		executeScript();
 	}
-	wait(0);
+	wait(0);//use waitpid and read from the pipe to free space for the write
 	close(rPipe[1]);
 	close(wPipe[0]);
 }

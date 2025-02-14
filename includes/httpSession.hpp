@@ -23,8 +23,9 @@ struct location {
     vector<string>		methods;
     string				redirection;
     string				alias;
-	map<string, string>	cgi;
+	string				upload;
     string				index;
+	map<string, string>	cgi;
     bool				autoIndex;
 	location() : index("index.html") {}
 };
@@ -51,7 +52,10 @@ public:
 	private:
 		httpSession&	s;
 		string									prvsFieldName;
+		string									prvsContentFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
+		queue<bool(Request::*)(stringstream&)>	bodyParseFunctions;
+		map<string, string>						contentHeaders;
 		int										length;
 		int										fd;
 		string									remainingBuffer;
@@ -68,6 +72,9 @@ public:
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(stringstream&);
 		int										openTargetFile() const;
+		// bool									boundary(stringstream&);
+		// bool									fileHeaders(stringstream&);
+		// bool									fileContent(stringstream&);
 		bool									contentLengthBased(stringstream&);
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);

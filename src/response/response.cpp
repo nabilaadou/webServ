@@ -18,9 +18,10 @@ void	httpSession::Response::sendResponse(const int clientFd) {
 		if (state == PROCESSING) {
 			sendCgiStarterLine(clientFd);
 			if (state == CCLOSEDCON)
-				return ;
+			return ;
 			state = SHEADER;
 			s.cgi->setupCGIProcess();
+			cerr << "here" << endl;
 		}
 		sendCgiOutput(clientFd);
 	}

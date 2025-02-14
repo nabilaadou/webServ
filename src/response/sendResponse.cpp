@@ -155,6 +155,7 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));
     }
+    cerr << buff << endl;
     if (byteRead > 0) {
         if (write(clientFd, buff, byteRead) <= 0) {
 			perror("write failed(sendResponse.cpp 157)");
