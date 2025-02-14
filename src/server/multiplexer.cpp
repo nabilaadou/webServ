@@ -91,7 +91,7 @@ void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& 
 	cerr << "-------new client added-------" << endl;
 }
 
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config) {
+void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<string, configuration>& config) {
 	struct epoll_event		events[MAX_EVENTS];
 	map<int, httpSession*>	sessions;//change httpSession to a pointer so i can be able to free it
 
@@ -109,7 +109,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				if (servrSocks.find(fd) != servrSocks.end())
 					acceptNewClient(epollFd, fd, servrSocks[fd]);
 				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, new httpSession(fd, &config));
+					sessions.try_emplace(fd, new httpSession(fd, &(map[])));
 					sessions[fd]->req.parseMessage(fd);
 					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
 				}

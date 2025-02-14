@@ -8,6 +8,7 @@
 #include <sys/epoll.h>
 #include <netinet/in.h>
 #include <sys/socket.h>
+#include "confiClass.hpp"
 #include "httpSession.hpp"
 #include <statusCodeException.hpp>
 
@@ -19,4 +20,4 @@ typedef struct sockaddr_in t_sockaddr;
 typedef map<int, t_sockaddr>::const_iterator t_sockaddr_it;
 
 int		startServer(map<int, t_sockaddr>& servrSocks);
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config);
+void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<string, configuration>& config);

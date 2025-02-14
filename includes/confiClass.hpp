@@ -29,14 +29,17 @@ enum  Ser2 {
 };
 
 
+string  trim(const string& str);
+
+
 struct location {
-    bool                    autoIndex;
-    bool                    red;
     string                  url;
     string                  aliasRed;
     string                  index;
     vector<string>          methods;
     map<string, string>     cgis;
+    bool                    red;
+    bool                    autoIndex;
     location() : index("index.html") {}
 };
 
@@ -66,7 +69,7 @@ class ConfigFileParser {
 
         map<string, configuration>   parseFile();
         void                    handleServer(ifstream& sFile);
-        void                    printKeyValue();
+        void                    printprint();
 };
 
 

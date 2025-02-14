@@ -36,6 +36,7 @@ int main(int ac, char **av) {
         try {
             ConfigFileParser confi(av[1]);
             config = confi.parseFile();
+            confi.printprint();
         }
         catch (const char *s) {
             cerr << s << endl;

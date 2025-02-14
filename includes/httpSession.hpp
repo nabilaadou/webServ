@@ -18,23 +18,23 @@
 
 using namespace std;
 
-struct location {
-	string				uri;
-    vector<string>		methods;
-    string				redirection;
-    string				alias;
-	string				upload;
-    string				index;
-	map<string, string>	cgi;
-    bool				autoIndex;
-	location() : index("index.html") {}
-};
+// struct location {
+// 	string				uri;
+//     vector<string>		methods;
+//     string				redirection;
+//     string				alias;
+// 	string				upload;
+//     string				index;
+// 	map<string, string>	cgi;
+//     bool				autoIndex;
+// 	location() : index("index.html") {}
+// };
 
-struct configuration {
-    int						bodySize;
-    map<int, string>		errorPages;
-    map<string, location>	locations;
-};
+// struct configuration {
+//     int						bodySize;
+//     map<int, string>		errorPages;
+//     map<string, location>	locations;
+// };
 
 class httpSession {
 private:

@@ -98,6 +98,17 @@ void handleError(string& line, configuration& kv, ifstream& sFile) {
     }
 }
 
+
+string  trim(const string& str) {
+	size_t  start = str.find_first_not_of(" \t\n\r\f\v");
+	if (start == string::npos)  return "";
+
+	size_t  end = str.find_last_not_of(" \t\n\r\f\v");
+
+	return str.substr(start, end - start + 1);
+}
+
+
 /////////////////////// ROOTS
 
 void handleUrl(string& line, location& kv, ifstream& sFile) {
@@ -260,59 +271,59 @@ void handlelocs(string& line, configuration& kv, ifstream& sFile) {
 
 
 
-// void confiClass::printconfiguration() {
-//     map<string, configuration>::iterator it;
-//     map<int, string>::iterator it_errorPages;
-//     int i = 0;
+void ConfigFileParser::printprint() {
+    map<string, configuration>::iterator it;
+    map<int, string>::iterator it_errorPages;
+    int i = 0;
 
-//     for (it = kValue.begin(); it != kValue.end(); ++it) {
-//         if (it != kValue.begin())
-//             cout << "\n\n                              ------------------------------------\n\n" << endl;
-//         cout << "------------------SERVER-" << i << "------------------" << endl;
-//         cout << "---------> Ports: " << it->second.port << endl;
-//         cout << "---------> hosts: " << it->second.host << endl;
-//         cout << "---------> Server Names:";
-//         for (size_t j = 0; j < it->second.serNames.size(); ++j) {
-//             cout << " " << it->second.serNames[j];
-//             if (j + 1 < it->second.serNames.size())
-//                 cout << ",";
-//         }
-//         cout << endl << "---------> Body Size: " << it->second.bodySize << "M";
-//         cout << endl << "---------> Error Pages:" << endl;
-//         for (it_errorPages = it->second.errorPages.begin(); it_errorPages != it->second.errorPages.end(); ++it_errorPages) {
-//             cout << "------------------> " << it_errorPages->first << " | " << it_errorPages->second << endl;
-//         }
-//         cout << endl << "---------> ADDINFO:" << endl;
-//         cout << "---------------------------> ai_addr:       " << it->second.addInfo->ai_addr << endl;
-//         cout << "---------------------------> ai_protocol:   " << it->second.addInfo->ai_protocol << endl;
-//         cout << "---------------------------> ai_flags:      " << it->second.addInfo->ai_flags << endl;
-//         cout << endl << "---------> ROOTS:" << endl;
-//         map<string, root>::iterator rootIt;
-//         for (rootIt = it->second.roots.begin(); rootIt != it->second.roots.end(); ++rootIt) {
-//             cout << "------------------> ROOT:" << endl;
-//             cout << "---------------------------> url:       " << rootIt->second.url << endl;
-//             if (rootIt->second.red == false)
-//                 cout << "---------------------------> alias:     " << rootIt->second.aliasRed << endl;
-//             else
-//                 cout << "---------------------------> redir:     " << rootIt->second.aliasRed << endl;
-//             cout << "---------------------------> Methods:   ";
-//             for (size_t k = 0; k < rootIt->second.methods.size(); ++k) {
-//                 cout << rootIt->second.methods[k];
-//                 if (k + 1 < rootIt->second.methods.size())
-//                     cout << ", ";
-//             }
-//             cout << endl;
-//             cout << "---------------------------> index:     " << rootIt->second.index << endl;
-//             cout << "---------------------------> autoIndex: " << (rootIt->second.autoIndex ? "True" : "False") << endl;
-//             if (!rootIt->second.cgis.empty())
-//                 cout << "---------> Cgi Scripts:" << endl;
-//             map<string, string>::iterator cgiIt;
-//             for (cgiIt = rootIt->second.cgis.begin(); cgiIt != rootIt->second.cgis.end(); ++cgiIt) {
-//                 cout << "------------------> add-handler: " << cgiIt->first << " | " << cgiIt->second << endl;
-//             }
-//             cout << endl;
-//         }
-//         i++;
-//     }
-// }
+    for (it = kValue.begin(); it != kValue.end(); ++it) {
+        if (it != kValue.begin())
+            cout << "\n\n                              ------------------------------------\n\n" << endl;
+        cout << "------------------SERVER-" << i << "------------------" << endl;
+        cout << "---------> Ports: " << it->second.port << endl;
+        cout << "---------> hosts: " << it->second.host << endl;
+        cout << "---------> Server Names:";
+        for (size_t j = 0; j < it->second.serNames.size(); ++j) {
+            cout << " " << it->second.serNames[j];
+            if (j + 1 < it->second.serNames.size())
+                cout << ",";
+        }
+        cout << endl << "---------> Body Size: " << it->second.bodySize << "M";
+        cout << endl << "---------> Error Pages:" << endl;
+        for (it_errorPages = it->second.errorPages.begin(); it_errorPages != it->second.errorPages.end(); ++it_errorPages) {
+            cout << "------------------> " << it_errorPages->first << " | " << it_errorPages->second << endl;
+        }
+        cout << endl << "---------> ADDINFO:" << endl;
+        cout << "---------------------------> ai_addr:       " << it->second.addInfo->ai_addr << endl;
+        cout << "---------------------------> ai_protocol:   " << it->second.addInfo->ai_protocol << endl;
+        cout << "---------------------------> ai_flags:      " << it->second.addInfo->ai_flags << endl;
+        cout << endl << "---------> ROOTS:" << endl;
+        map<string, location>::iterator rootIt;
+        for (rootIt = it->second.locations.begin(); rootIt != it->second.locations.end(); ++rootIt) {
+            cout << "------------------> ROOT:" << endl;
+            cout << "---------------------------> url:       " << rootIt->second.url << endl;
+            if (rootIt->second.red == false)
+                cout << "---------------------------> alias:     " << rootIt->second.aliasRed << endl;
+            else
+                cout << "---------------------------> redir:     " << rootIt->second.aliasRed << endl;
+            cout << "---------------------------> Methods:   ";
+            for (size_t k = 0; k < rootIt->second.methods.size(); ++k) {
+                cout << rootIt->second.methods[k];
+                if (k + 1 < rootIt->second.methods.size())
+                    cout << ", ";
+            }
+            cout << endl;
+            cout << "---------------------------> index:     " << rootIt->second.index << endl;
+            cout << "---------------------------> autoIndex: " << (rootIt->second.autoIndex ? "True" : "False") << endl;
+            if (!rootIt->second.cgis.empty())
+                cout << "---------> Cgi Scripts:" << endl;
+            map<string, string>::iterator cgiIt;
+            for (cgiIt = rootIt->second.cgis.begin(); cgiIt != rootIt->second.cgis.end(); ++cgiIt) {
+                cout << "------------------> add-handler: " << cgiIt->first << " | " << cgiIt->second << endl;
+            }
+            cout << endl;
+        }
+        i++;
+    }
+}
 
