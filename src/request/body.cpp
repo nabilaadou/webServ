@@ -103,6 +103,8 @@ bool	httpSession::Request::fileContent(string& buffer) {
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			break ;
+		} else if (line == boundaryValue + "--") {
+			break ;
 		}
 		if (write(fd, line.c_str(), line.size()) <= 0) {
 			perror("wirte failed(body.cpp 102)");
@@ -124,6 +126,7 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
+	cerr << length << endl;
 	char buff[length+1] = {0};
 	stream.read(buff, length);
 	string	stringBuff = string(buff);

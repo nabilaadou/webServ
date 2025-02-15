@@ -8,6 +8,7 @@ int main(int ac, char **av) {
 
     config.locations["/"].uri = "/";
     config.locations["/"].methods.push_back("GET");
+    config.locations["/"].methods.push_back("POST");
     config.locations["/"].alias = "/www";
     config.locations["/"].upload = "/www/upload";
 
