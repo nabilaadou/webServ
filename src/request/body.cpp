@@ -28,8 +28,9 @@ int	httpSession::Request::openTargetFile(const string& filename) const {
 bool	httpSession::Request::boundary(string& buffer) {
 	string	line;
 
-	if (getlineFromString(buffer, line) && line == boundaryValue)
+	if (!getlineFromString(buffer, line) && line == boundaryValue)
 		return true;
+	cerr << "here" << endl;
 	remainingBuffer = line;
 	return false;
 }
@@ -37,7 +38,6 @@ bool	httpSession::Request::boundary(string& buffer) {
 bool	httpSession::Request::fileHeaders(string& buffer) {
 	string	line;
 	bool	eof;
-
 	while((eof = getlineFromString(buffer, line)) == false && line != " " && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
@@ -67,20 +67,16 @@ bool	httpSession::Request::fileHeaders(string& buffer) {
 static string	retrieveFilename(const string& value) {
 	vector<string>	fieldValueparts;
 	split(value, ';', fieldValueparts);
-	for (const auto& it : fieldValueparts)
-		cerr << it << endl;
-	if (fieldValueparts.size() != 3)
-		return "UNVALID1";
-	if (strncmp("form-data" ,trim(fieldValueparts[0]).c_str(), 9))
-		return "UNVALID2";
+	if (fieldValueparts.size() != 3 || strncmp("form-data" ,trim(fieldValueparts[0]).c_str(), 9))
+		throw(statusCodeException(501, "Not Implemented"));
 	vector<string> keyvalue;
 	split(trim(fieldValueparts[1]), '=', keyvalue);
 	if (keyvalue.size() != 2 || strncmp("name", keyvalue[0].c_str(), 4) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
-		return "UNVALID3";
+		throw(statusCodeException(501, "Not Implemented"));
 	keyvalue.clear();
 	split(trim(fieldValueparts[2]), '=', keyvalue);
 	if (keyvalue.size() != 2 || strncmp("filename", keyvalue[0].c_str(), 8) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
-		return "UNVALID4";
+		throw(statusCodeException(501, "Not Implemented"));
 	keyvalue[1].erase(keyvalue[1].begin());
 	keyvalue[1].erase(keyvalue[1].end()-1);
 	return keyvalue[1];
@@ -91,8 +87,8 @@ bool	httpSession::Request::fileContent(string& buffer) {
 	bool	eof;
 
 	if (fd == -1) {
-		if (s.headers.find("content-disposition") != s.headers.end()) {
-			string filename = retrieveFilename(s.headers["content-disposition"]);
+		if (contentHeaders.find("content-disposition") != contentHeaders.end()) {
+			string filename = retrieveFilename(contentHeaders["content-disposition"]);
 			fd = openTargetFile(filename);
 		} else
 			throw(statusCodeException(501, "Not Implemented"));
@@ -104,8 +100,9 @@ bool	httpSession::Request::fileContent(string& buffer) {
 			bodyParseFunctions.push(&Request::fileContent);
 			break ;
 		} else if (line == boundaryValue + "--") {
-			break ;
+			return true;
 		}
+		line += "\n";
 		if (write(fd, line.c_str(), line.size()) <= 0) {
 			perror("wirte failed(body.cpp 102)");
         	throw(statusCodeException(500, "Internal Server Error"));
@@ -130,12 +127,16 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 	char buff[length+1] = {0};
 	stream.read(buff, length);
 	string	stringBuff = string(buff);
-	while(!parseFunctions.empty()) {
+	// cerr << stringBuff << endl;
+	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
 		if (!(this->*func)(stringBuff))	break;
-		parseFunctions.pop();
+		bodyParseFunctions.pop();
 	}
+	// return true;
 	length -= stream.gcount() - remainingBuffer.size();
+	cerr << stream.gcount() << endl;
+	cerr << "remaining buffer: " <<  remainingBuffer << endl;
 	return (length == 0) ? true : false;
 }
 
@@ -189,6 +190,7 @@ static bool	isMultipartFormData(const string& value) {
 bool	httpSession::Request::parseBody(stringstream& stream) {
 	if (s.method != "POST")
 		return true;
+	remainingBuffer = "";
 	if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
 		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
 		if (s.headers.find("content-length") != s.headers.end())
