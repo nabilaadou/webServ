@@ -73,12 +73,11 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 	}
 }
 
-void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& addrsInfo) {
+void	acceptNewClient(const int& epollFd, const int& serverFd) {
 	struct epoll_event	ev;
 	int					clientFd;
-	socklen_t			addrsLen = sizeof(addrsInfo);
 
-	if ((clientFd = accept(serverFd, (struct sockaddr*)&addrsInfo, &addrsLen)) < 0) {
+	if ((clientFd = accept(serverFd, NULL, NULL)) < 0) {
 		perror("accept faield: ");
         throw(statusCodeException(500, "Internal Server Error"));//i can't send the error page//no fd to send to
     }
@@ -91,7 +90,7 @@ void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& 
 	cerr << "-------new client added-------" << endl;
 }
 
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<string, configuration>& config) {
+void	multiplexerSytm(const vector<int>& servrSocks, const int& epollFd, map<string, configuration>& config) {
 	struct epoll_event		events[MAX_EVENTS];
 	map<int, httpSession*>	sessions;//change httpSession to a pointer so i can be able to free it
 
@@ -106,10 +105,12 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<s
 		for (int i = 0; i < nfds; ++i) {
 			const int fd = events[i].data.fd;
 			try {
-				if (servrSocks.find(fd) != servrSocks.end())
-					acceptNewClient(epollFd, fd, servrSocks[fd]);
+				if (find(servrSocks.begin(), servrSocks.end(), fd) != servrSocks.end()) {
+					cerr << "here" << endl;
+					acceptNewClient(epollFd, fd);
+				}
 				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, new httpSession(fd, &(map[])));
+					sessions.try_emplace(fd, new httpSession(fd, &(config[getsockname(fd)])));
 					sessions[fd]->req.parseMessage(fd);
 					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
 				}
@@ -122,8 +123,8 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<s
 				struct epoll_event	ev;
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
-				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
-					sessions[fd]->reSetPath(w_realpath(("." + config.errorPages.at(exception.code())).c_str()));
+				if (sessions[fd]->config->errorPages.find(exception.code()) != sessions[fd]->config->errorPages.end()) {
+					sessions[fd]->reSetPath(w_realpath(("." + sessions[fd]->config->errorPages.at(exception.code())).c_str()));
 					ev.events = EPOLLOUT;
 					ev.data.fd = fd;
 					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {

@@ -19,5 +19,5 @@ using namespace std;
 typedef struct sockaddr_in t_sockaddr;
 typedef map<int, t_sockaddr>::const_iterator t_sockaddr_it;
 
-int		startServer(map<int, t_sockaddr>& servrSocks);
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, map<string, configuration>& config);
+int		createSockets(map<string, configuration>& config, vector<int>& serverFds);
+void	multiplexerSytm(const vector<int>& serverFds, const int& epollFd, map<string, configuration>& config);

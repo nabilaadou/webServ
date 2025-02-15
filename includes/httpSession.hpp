@@ -12,29 +12,12 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include "wrappers.h"
+#include "confiClass.hpp"
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192
 
 using namespace std;
-
-// struct location {
-// 	string				uri;
-//     vector<string>		methods;
-//     string				redirection;
-//     string				alias;
-// 	string				upload;
-//     string				index;
-// 	map<string, string>	cgi;
-//     bool				autoIndex;
-// 	location() : index("index.html") {}
-// };
-
-// struct configuration {
-//     int						bodySize;
-//     map<int, string>		errorPages;
-//     map<string, location>	locations;
-// };
 
 class httpSession {
 private:
@@ -46,7 +29,6 @@ private:
 	int					statusCode;
 	string				codeMeaning;
 	Cgi*				cgi;
-	configuration*		config;
 public:
 	class Request {
 	private:
@@ -72,9 +54,6 @@ public:
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(stringstream&);
 		int										openTargetFile() const;
-		// bool									boundary(stringstream&);
-		// bool									fileHeaders(stringstream&);
-		// bool									fileContent(stringstream&);
 		bool									contentLengthBased(stringstream&);
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);
@@ -104,6 +83,7 @@ public:
 
 	Request		req;
 	Response	res;
+	configuration*	config;
 
 	httpSession(int clientFd, configuration* confi);
 	httpSession();
