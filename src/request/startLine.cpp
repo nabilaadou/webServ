@@ -58,15 +58,27 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 
 	if (find(rules->methods.begin(), rules->methods.end(), s.method) == rules->methods.end())
 		throw(statusCodeException(405, "Method Not Allowed"));
-	if (!rules->redirection.empty()) {
-		s.statusCode = 301;
-		s.codeMeaning = "Moved Permanently";
-		//adding the location header to the response with the new path;
-		return ;
-	}
-	if (!rules->alias.empty()) {
-		s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size() - 1);
-		s.path = rules->alias + s.path;
+	if (s.method == "GET") {
+		if (!rules->redirection.empty()) {
+			s.statusCode = 301;
+			s.codeMeaning = "Moved Permanently";
+			//adding the location header to the response with the new path;
+			return ;
+		}
+		if (!rules->alias.empty()) {
+			s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size() - 1);
+			s.path = rules->alias + s.path;
+		}
+	} else if (s.method == "POST") {
+		if (!rules->upload.empty()) {
+			s.path = rules->upload;
+			s.path = w_realpath(("." + s.path).c_str());
+			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
+				throw(statusCodeException(403, "Forbidden"));
+			cerr << s.path << endl;
+			return ;
+		} else
+			throw(statusCodeException(403, "Forbidden"));
 	}
 	isCGI(rules);
 	if (s.cgi == NULL) {
@@ -156,6 +168,7 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isMethod(comps[0]);
 		isTarget(comps[1]);
 		isProtocole(comps[2]);
+		cerr << s.method << " " << s.path << " " << s.httpProtocole << endl;
 		if ((rules = getConfigFileRules()))
 			reconstructUri(rules);
 		else

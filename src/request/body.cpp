@@ -30,7 +30,6 @@ bool	httpSession::Request::boundary(string& buffer) {
 
 	if (!getlineFromString(buffer, line) && line == boundaryValue)
 		return true;
-	cerr << "here" << endl;
 	remainingBuffer = line;
 	return false;
 }
@@ -89,7 +88,8 @@ bool	httpSession::Request::fileContent(string& buffer) {
 	if (fd == -1) {
 		if (contentHeaders.find("content-disposition") != contentHeaders.end()) {
 			string filename = retrieveFilename(contentHeaders["content-disposition"]);
-			fd = openTargetFile(filename);
+			cerr << "file name: " << filename << endl;
+			fd = openTargetFile(s.path + "/" + filename);
 		} else
 			throw(statusCodeException(501, "Not Implemented"));
 	}
@@ -128,15 +128,15 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 	stream.read(buff, length);
 	string	stringBuff = string(buff);
 	// cerr << stringBuff << endl;
+	// exit(0);
 	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
 		if (!(this->*func)(stringBuff))	break;
 		bodyParseFunctions.pop();
 	}
-	// return true;
 	length -= stream.gcount() - remainingBuffer.size();
-	cerr << stream.gcount() << endl;
-	cerr << "remaining buffer: " <<  remainingBuffer << endl;
+	// cerr << stream.gcount() << endl;
+	// cerr << length << endl;
 	return (length == 0) ? true : false;
 }
 
