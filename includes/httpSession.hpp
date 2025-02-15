@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include "wrappers.h"
+#include "stringManipulation.h"
 #include "statusCodeException.hpp"
 
 #define BUFFER_SIZE 8192
@@ -50,14 +51,15 @@ private:
 public:
 	class Request {
 	private:
-		httpSession&	s;
+		httpSession&							s;
 		string									prvsFieldName;
 		string									prvsContentFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
-		queue<bool(Request::*)(stringstream&)>	bodyParseFunctions;
+		queue<bool(Request::*)(char*)>			bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
 		int										fd;
+		string									boundaryValue;
 		string									remainingBuffer;
 		t_state									state;
 
@@ -72,9 +74,9 @@ public:
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(stringstream&);
 		int										openTargetFile() const;
-		// bool									boundary(stringstream&);
-		// bool									fileHeaders(stringstream&);
-		// bool									fileContent(stringstream&);
+		bool									boundary(char*);
+		bool									fileHeaders(char*);
+		bool									fileContent(char*);
 		bool									contentLengthBased(stringstream&);
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);

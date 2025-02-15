@@ -4,6 +4,10 @@ httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSI
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseBody);
+
+	bodyParseFunctions.push(&Request::boundary);
+	bodyParseFunctions.push(&Request::fileHeaders);
+	bodyParseFunctions.push(&Request::fileContent);
 }
 
 void	httpSession::Request::parseMessage(const int clientFd) {

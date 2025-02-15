@@ -21,6 +21,8 @@ void	f(stringstream& stream) {
 // POST /upload HTTP/1.1
 // Host: localhost:8080
 // Content-Type: multipart/form-data; boundary=----WebKitFormBoundary12345
+// content-length: 100
+// chunked
 
 // ------WebKitFormBoundary12345
 // Content-Disposition: form-data; name="file1"; filename="image1.jpg"

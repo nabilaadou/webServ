@@ -1,6 +1,6 @@
 #include "httpSession.hpp"
 
-vector<string>	split(string& str) {
+static vector<string>	split(string& str) {
 	const string	whiteSpace = " \t\n\r\f\v";
 	string			remainingStr;
 	int				pos = 0, i = 0;
