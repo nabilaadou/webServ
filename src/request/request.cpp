@@ -17,7 +17,12 @@ void	httpSession::Request::parseMessage(const int clientFd) {
 		state = CCLOSEDCON;
 		return;
 	}
+	int i = 0;
 	remainingBuffer += buffer;
+	// while(remainingBuffer[i]) {
+	// 	cerr << static_cast<int>(remainingBuffer[i]) << endl;
+	// 	++i;
+	// }
 	replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
 	stringstream	stream(remainingBuffer);
 	while(!parseFunctions.empty()) {

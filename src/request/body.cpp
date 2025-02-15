@@ -15,21 +15,14 @@ bool	getlineFromString(string& buffer, string& line) {
 	return false;
 }
 
-int	httpSession::Request::openTargetFile(const string& filename) const {
-	int fd;
-	if (s.cgi != NULL)
-		fd = s.cgi->wFd();
-	else if ((fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
-		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
-	}
-	return (fd);
-}
-
 bool	httpSession::Request::boundary(string& buffer) {
 	string	line;
 
-	if (!getlineFromString(buffer, line) && line == boundaryValue)
+	if (!getlineFromString(buffer, line) && trim(line) == boundaryValue) {
+		cerr << "boundary: " << line << endl;
 		return true;
+	}
+	cerr << "no-boundary: " << line << endl;
 	remainingBuffer = line;
 	return false;
 }
@@ -55,8 +48,10 @@ bool	httpSession::Request::fileHeaders(string& buffer) {
 			throw(statusCodeException(400, "Bad Request"));
 		contentHeaders[fieldName] = filedValue;
 		prvsContentFieldName = fieldName;
+		cerr << fieldName << ": " << filedValue << endl;
 	}
 	if (eof) {
+		cerr << "no-field lines: " << line << endl;
 		remainingBuffer = line;
 		return false;
 	}
@@ -81,6 +76,16 @@ static string	retrieveFilename(const string& value) {
 	return keyvalue[1];
 }
 
+int	httpSession::Request::openTargetFile(const string& filename) const {
+	int fd;
+	if (s.cgi != NULL)
+		fd = s.cgi->wFd();
+	else if ((fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
+		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
+	}
+	return (fd);
+}
+
 bool	httpSession::Request::fileContent(string& buffer) {
 	string	line;
 	bool	eof;
@@ -94,12 +99,14 @@ bool	httpSession::Request::fileContent(string& buffer) {
 			throw(statusCodeException(501, "Not Implemented"));
 	}
 	while ((eof = getlineFromString(buffer, line)) == false) {
-		if (line == boundaryValue) {
+		if (trim(line) == boundaryValue) {
 			fd = -1;
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			break ;
-		} else if (line == boundaryValue + "--") {
+		} else if (trim(line) == boundaryValue + "--") {
+			cerr << "end of content" << endl;
+			remainingBuffer = "";
 			return true;
 		}
 		line += "\n";
@@ -112,7 +119,7 @@ bool	httpSession::Request::fileContent(string& buffer) {
 		remainingBuffer = line;
 		return false;
 	}
-	return true;
+	return false;
 }
 
 bool	httpSession::Request::contentLengthBased(stringstream& stream) {
@@ -123,7 +130,7 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
-	cerr << length << endl;
+	cerr << "bef: " << length << endl;
 	char buff[length+1] = {0};
 	stream.read(buff, length);
 	string	stringBuff = string(buff);
@@ -135,8 +142,9 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 		bodyParseFunctions.pop();
 	}
 	length -= stream.gcount() - remainingBuffer.size();
+	cerr << remainingBuffer << endl;
 	// cerr << stream.gcount() << endl;
-	// cerr << length << endl;
+	cerr << "after: " << length << endl;
 	return (length == 0) ? true : false;
 }
 

@@ -15,7 +15,7 @@ void	split(const string& str, const char delimiter, vector<string>& parts) {
 	parts.push_back(str.substr(pos));
 }
 
-string& trim(string& s) {
+string trim(string s) {
 	s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);
 	s.erase(0, s.find_first_not_of(" \t\n\r\f\v"));
     return s;

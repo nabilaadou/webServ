@@ -160,7 +160,8 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 	string	line;
 	location* rules;
 	char absolutePath[1024];
-	if (getline(stream, line)) {
+	if (getline(stream, line) && !stream.eof()) {
+		cerr << "line: " << line << endl;
 		vector<string>	comps;
 		comps = split(line);
 		if (comps.size() != 3)
@@ -175,6 +176,7 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 			throw(statusCodeException(404, "Not Found"));
 		return true;
 	}
-	remainingBuffer += line;
+	remainingBuffer = line;
+	cerr << "r uffer: " << remainingBuffer << endl;
 	return false;
 }

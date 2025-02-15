@@ -36,7 +36,7 @@ bool	httpSession::Request::parseFileds(stringstream& stream) {
 		remainingBuffer = line;
 		return false;
 	}
-	for (const auto& it:s.headers)
-		cerr << it.first << ": " << it.second << endl;
+	// for (const auto& it:s.headers)
+	// 	cerr << it.first << ": " << it.second << endl;
 	return true;
 }
