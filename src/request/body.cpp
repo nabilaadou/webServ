@@ -1,34 +1,31 @@
 #include "httpSession.hpp"
 
-
-bool	getlineFromString(char* buffer, string& line) {
+bool	getlineFromString(string& buffer, string& line) {
 	line  = "";
-	while (*buffer && *buffer != '\n') {
-		line += *buffer;
-		++buffer;
+	int i = 0;
+	while (buffer[i] && buffer[i] != '\n') {
+		line += buffer[i];
+		++i;
 	}
-	if (*buffer == 0)
-		return false;
-	return true;
+	if (buffer[i] == 0) {
+		buffer.erase(buffer.begin(), buffer.begin()+i);
+		return true;
+	}
+	buffer.erase(buffer.begin(), buffer.begin()+i+1);
+	return false;
 }
 
-inline std::string& trim(std::string& s) {
-	s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);
-	s.erase(0, s.find_first_not_of(" \t\n\r\f\v"));
-    return s;
-}
-
-int	httpSession::Request::openTargetFile() const {
+int	httpSession::Request::openTargetFile(const string& filename) const {
 	int fd;
 	if (s.cgi != NULL)
 		fd = s.cgi->wFd();
-	else if ((fd = open(s.path.c_str(), O_WRONLY | O_CREAT, 0644)) < 0) {
+	else if ((fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
 		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
 	}
 	return (fd);
 }
 
-bool	httpSession::Request::boundary(char* buffer) {
+bool	httpSession::Request::boundary(string& buffer) {
 	string	line;
 
 	if (getlineFromString(buffer, line) && line == boundaryValue)
@@ -37,10 +34,11 @@ bool	httpSession::Request::boundary(char* buffer) {
 	return false;
 }
 
-bool	httpSession::Request::fileHeaders(char* buffer) {
-	string			line;
+bool	httpSession::Request::fileHeaders(string& buffer) {
+	string	line;
+	bool	eof;
 
-	while(getlineFromString(buffer, line)) {
+	while((eof = getlineFromString(buffer, line)) == false && line != " " && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
 
@@ -59,7 +57,59 @@ bool	httpSession::Request::fileHeaders(char* buffer) {
 		contentHeaders[fieldName] = filedValue;
 		prvsContentFieldName = fieldName;
 	}
-	if (stream.eof()) {
+	if (eof) {
+		remainingBuffer = line;
+		return false;
+	}
+	return true;
+}
+
+static string	retrieveFilename(const string& value) {
+	vector<string>	fieldValueparts;
+	split(value, ';', fieldValueparts);
+	for (const auto& it : fieldValueparts)
+		cerr << it << endl;
+	if (fieldValueparts.size() != 3)
+		return "UNVALID1";
+	if (strncmp("form-data" ,trim(fieldValueparts[0]).c_str(), 9))
+		return "UNVALID2";
+	vector<string> keyvalue;
+	split(trim(fieldValueparts[1]), '=', keyvalue);
+	if (keyvalue.size() != 2 || strncmp("name", keyvalue[0].c_str(), 4) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
+		return "UNVALID3";
+	keyvalue.clear();
+	split(trim(fieldValueparts[2]), '=', keyvalue);
+	if (keyvalue.size() != 2 || strncmp("filename", keyvalue[0].c_str(), 8) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
+		return "UNVALID4";
+	keyvalue[1].erase(keyvalue[1].begin());
+	keyvalue[1].erase(keyvalue[1].end()-1);
+	return keyvalue[1];
+}
+
+bool	httpSession::Request::fileContent(string& buffer) {
+	string	line;
+	bool	eof;
+
+	if (fd == -1) {
+		if (s.headers.find("content-disposition") != s.headers.end()) {
+			string filename = retrieveFilename(s.headers["content-disposition"]);
+			fd = openTargetFile(filename);
+		} else
+			throw(statusCodeException(501, "Not Implemented"));
+	}
+	while ((eof = getlineFromString(buffer, line)) == false) {
+		if (line == boundaryValue) {
+			fd = -1;
+			bodyParseFunctions.push(&Request::fileHeaders);
+			bodyParseFunctions.push(&Request::fileContent);
+			break ;
+		}
+		if (write(fd, line.c_str(), line.size()) <= 0) {
+			perror("wirte failed(body.cpp 102)");
+        	throw(statusCodeException(500, "Internal Server Error"));
+		}
+	}
+	if (eof) {
 		remainingBuffer = line;
 		return false;
 	}
@@ -76,23 +126,19 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 	}
 	char buff[length+1] = {0};
 	stream.read(buff, length);
+	string	stringBuff = string(buff);
 	while(!parseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
-		if (!(this->*func)(buff))	return;
+		if (!(this->*func)(stringBuff))	break;
 		parseFunctions.pop();
 	}
-	// length -= stream.gcount();
-	// write(fd, buff, stream.gcount());
-	// if (length == 0) {
-	// 	close(fd);
-	// 	return true;
-	// }
-	// return false;
+	length -= stream.gcount() - remainingBuffer.size();
+	return (length == 0) ? true : false;
 }
 
 bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
 	if (fd == -1)
-		fd = openTargetFile();
+		fd = openTargetFile("test");
 	while (1) {
 		string	line;
 		if (length <= 0) {
@@ -124,16 +170,14 @@ bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
 }
 
 
-bool	isMultipartFormData(const string& value) {
+static bool	isMultipartFormData(const string& value) {
 	vector<string>	fieldValueparts;
 	split(value, ';', fieldValueparts);
 	if (fieldValueparts.size() != 2)
 		return false;
-	fieldValueparts[0] = trim(fieldValueparts[0]);
-	if (fieldValueparts[0] != "multipart/form-data")
+	if (trim(fieldValueparts[0]) != "multipart/form-data")
 		return false;
-	fieldValueparts[1] = trim(fieldValueparts[1]);
-	if (strncmp(fieldValueparts[1].c_str(), "boundary=", 9))
+	if (strncmp(trim(fieldValueparts[1]).c_str(), "boundary=", 9))
 		return false;
 	return true;
 }
@@ -143,7 +187,7 @@ bool	httpSession::Request::parseBody(stringstream& stream) {
 	if (s.method != "POST")
 		return true;
 	if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
-		boundaryValue = s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
+		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
 		if (s.headers.find("content-length") != s.headers.end())
 			parseFunctions.push(&Request::contentLengthBased);
 		else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")

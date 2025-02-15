@@ -55,7 +55,7 @@ public:
 		string									prvsFieldName;
 		string									prvsContentFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;
-		queue<bool(Request::*)(char*)>			bodyParseFunctions;
+		queue<bool(Request::*)(string&)>		bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
 		int										fd;
@@ -73,10 +73,10 @@ public:
 		bool									parseStartLine(stringstream&);
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(stringstream&);
-		int										openTargetFile() const;
-		bool									boundary(char*);
-		bool									fileHeaders(char*);
-		bool									fileContent(char*);
+		int										openTargetFile(const string& filename) const;
+		bool									boundary(string&);
+		bool									fileHeaders(string&);
+		bool									fileContent(string&);
 		bool									contentLengthBased(stringstream&);
 		bool									transferEncodingChunkedBased(stringstream&);
 		bool									parseBody(stringstream&);
@@ -109,7 +109,6 @@ public:
 
 	httpSession(int clientFd, configuration* confi);
 	httpSession();
-
 	void		reSetPath(const string& newPath);
 
 };

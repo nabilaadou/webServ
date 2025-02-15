@@ -9,13 +9,13 @@ void	split(const string& str, const char delimiter, vector<string>& parts) {
 			while (str[i] && str[i] == delimiter)
 				++i;
 			pos = i;
-		}
-		else
+		} else
 			++i;
 	}
+	parts.push_back(str.substr(pos));
 }
 
-inline std::string& trim(std::string& s) {
+string& trim(string& s) {
 	s.erase(s.find_last_not_of(" \t\n\r\f\v") + 1);
 	s.erase(0, s.find_first_not_of(" \t\n\r\f\v"));
     return s;
