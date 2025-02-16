@@ -1,5 +1,10 @@
 #include "httpSession.hpp"
 
+enum progress {
+	NL = 10,
+	BR = 9,
+};
+
 inline bool	cmpget(char c1, char c2, char c3) {
 	if (c1 == 'G' && c2 == 'E' && c3 == 'T')
 		return true;
@@ -123,7 +128,7 @@ void	httpSession::Request::isProtocole(string& http) {
 		return ;
 	}
 	else if (http.size() == 8 && !strncmp(http.c_str(), "HTTP/", 5) && isdigit(http[5]) && http[6] == '.' && isdigit(http[7]))
-	throw(statusCodeException(505, "HTTP Version Not Supported"));
+		throw(statusCodeException(505, "HTTP Version Not Supported"));
 	throw(statusCodeException(400, "Bad Request"));
 }
 
@@ -161,29 +166,25 @@ void	httpSession::Request::isMethod(string& method) {
 }
 
 
-bool	httpSession::Request::parseStartLine(char* buffer) {
-	char c;
-	for (int i = 0; i < byteread; ++i) {
-		c = buffer[i];
-	}
-}
+bool	httpSession::Request::parseStartLine(bstring& buffer) {
+	bstring		line;
+	bool		eof;
+	location*	rules;
+	char		absolutePath[1024];
 
-// string	line;
-// location* rules;
-// char absolutePath[1024];
-// if (getline(stream, line) && !stream.eof()) {
-// 	vector<string>	comps;
-// 	comps = split(line);
-// 	if (comps.size() != 3)
-// 		throw(statusCodeException(400, "Bad Request"));
-// 	isMethod(comps[0]);
-// 	isTarget(comps[1]);
-// 	isProtocole(comps[2]);
-// 	if ((rules = getConfigFileRules()))
-// 		reconstructUri(rules);
-// 	else
-// 		throw(statusCodeException(404, "Not Found"));
-// 	return true;
-// }
-// remainingBuffer = line;
-// return false;
+	if (buffer.getline(line)) {
+		vector<bstring>	list = line.split();
+		if (list.size() != 3)
+			throw(statusCodeException(400, "Bad Request"));
+		isMethod(comps[0]);
+		isTarget(comps[1]);
+		isProtocole(comps[2]);
+		if ((rules = getConfigFileRules()))
+			reconstructUri(rules);
+		else
+			throw(statusCodeException(404, "Not Found"));
+		return true;
+	}
+	remainingBuffer = line;
+	return false;
+}

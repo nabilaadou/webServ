@@ -12,18 +12,16 @@ httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSI
 
 void	httpSession::Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
+	ssize_t byteread;
 
 	if ((byteread = read(clientFd, buffer, BUFFER_SIZE)) <= 0) {
 		state = CCLOSEDCON;
 		return;
 	}
-	// remainingBuffer += buffer;
-	// replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
-	// stringstream	stream(remainingBuffer);
-	// remainingBuffer.clear();
+	bstring clientRequest(buffer, byteread);
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.front();
-		if (!(this->*func)(buffer))	return;
+		if (!(this->*func)(clientRequest))	return;
 		parseFunctions.pop();
 	}
 	state = DONE;

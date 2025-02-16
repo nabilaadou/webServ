@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include "wrappers.h"
+#include "binarystring.hpp"
 #include "stringManipulation.h"
 #include "statusCodeException.hpp"
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
@@ -53,10 +54,9 @@ public:
 	class Request {
 	private:
 		httpSession&							s;
-		ssize_t									byteread;
 		string									prvsFieldName;
 		string									prvsContentFieldName;
-		queue<bool(Request::*)(char*)>	parseFunctions;
+		queue<bool(Request::*)(bstring&)>		parseFunctions;
 		queue<bool(Request::*)(string&)>		bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
@@ -72,9 +72,9 @@ public:
 		void									isTarget(string& target);
 		void									isMethod(string& method);
 		location*								getConfigFileRules();
-		bool									parseStartLine(char*);
+		bool									parseStartLine(bstring&);
 		bool									validFieldName(string& str) const;
-		bool									parseFileds(char*);
+		bool									parseFileds(bstring&);
 		int										openTargetFile(const string& filename) const;
 		bool									boundary(string&);
 		bool									fileHeaders(string&);

@@ -1,18 +1,14 @@
 #include "server.h"
+#include "binarystring.hpp"
+
+// c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes
 
 int main() {
-	char buff[1024] = {0};
-    string t = "hello";
-	stringstream ss(t);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	ss.read(buff, 10);
-	cerr << buff << endl;
+	bstring s("1 2 3", 5);
+
+	vector<bstring> list = s.split();
+	// for (const auto& it : list)
+	// 	cerr << it.c_str() << endl;
 }
 
 
