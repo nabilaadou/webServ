@@ -53,6 +53,7 @@ public:
 	class Request {
 	private:
 		httpSession&							s;
+		ssize_t									byteread;
 		string									prvsFieldName;
 		string									prvsContentFieldName;
 		queue<bool(Request::*)(stringstream&)>	parseFunctions;

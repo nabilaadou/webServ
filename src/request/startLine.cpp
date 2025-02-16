@@ -75,7 +75,6 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 			s.path = w_realpath(("." + s.path).c_str());
 			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
 				throw(statusCodeException(403, "Forbidden"));
-			cerr << s.path << endl;
 			return ;
 		} else
 			throw(statusCodeException(403, "Forbidden"));
@@ -161,7 +160,6 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 	location* rules;
 	char absolutePath[1024];
 	if (getline(stream, line) && !stream.eof()) {
-		cerr << "line: " << line << endl;
 		vector<string>	comps;
 		comps = split(line);
 		if (comps.size() != 3)
@@ -169,7 +167,6 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		isMethod(comps[0]);
 		isTarget(comps[1]);
 		isProtocole(comps[2]);
-		cerr << s.method << " " << s.path << " " << s.httpProtocole << endl;
 		if ((rules = getConfigFileRules()))
 			reconstructUri(rules);
 		else
@@ -177,6 +174,5 @@ bool	httpSession::Request::parseStartLine(stringstream& stream) {
 		return true;
 	}
 	remainingBuffer = line;
-	cerr << "r uffer: " << remainingBuffer << endl;
 	return false;
 }

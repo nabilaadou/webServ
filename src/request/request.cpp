@@ -13,18 +13,15 @@ httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSI
 void	httpSession::Request::parseMessage(const int clientFd) {
 	char	buffer[BUFFER_SIZE+1] = {0};
 
-	if (read(clientFd, buffer, BUFFER_SIZE) <= 0) {
+	if ((byteread = read(clientFd, buffer, BUFFER_SIZE)) <= 0) {
 		state = CCLOSEDCON;
 		return;
 	}
 	int i = 0;
 	remainingBuffer += buffer;
-	// while(remainingBuffer[i]) {
-	// 	cerr << static_cast<int>(remainingBuffer[i]) << endl;
-	// 	++i;
-	// }
 	replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
 	stringstream	stream(remainingBuffer);
+	remainingBuffer.clear();
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.front();
 		if (!(this->*func)(stream))	return;

@@ -97,7 +97,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 
 	while (1) {
 		int nfds;
-		cerr << "waiting for requests..." << endl;
+		// cerr << "waiting for requests..." << endl;
 		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
 			//send the internal error page to all current clients
 			//close all connections and start over

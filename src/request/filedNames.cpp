@@ -11,7 +11,7 @@ bool    httpSession::Request::validFieldName(string& str) const {
 bool	httpSession::Request::parseFileds(stringstream& stream) {
 	string			line;
 
-	while(getline(stream, line) && line != " " && !line.empty()) {
+	while(getline(stream, line) && !stream.eof() && line != " " && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
 
@@ -36,7 +36,5 @@ bool	httpSession::Request::parseFileds(stringstream& stream) {
 		remainingBuffer = line;
 		return false;
 	}
-	// for (const auto& it:s.headers)
-	// 	cerr << it.first << ": " << it.second << endl;
 	return true;
 }

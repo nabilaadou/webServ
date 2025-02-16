@@ -1,32 +1,18 @@
 #include "server.h"
 
-bool	getlineFromString(string& buffer, string& line) {
-	line  = "";
-	int i = 0;
-	while (buffer[i] && buffer[i] != '\n') {
-		line += buffer[i];
-		++i;
-	}
-	if (buffer[i] == 0) {
-		buffer.erase(buffer.begin(), buffer.begin()+i);
-		return true;
-	}
-	buffer.erase(buffer.begin(), buffer.begin()+i+1);
-	return false;
-}
-
 int main() {
-    std::string data = "Hello, world!";  // No newline at the end
-    std::stringstream ss(data);
-
-    std::string line;
-    std::getline(ss, line);
-
-    std::cout << "Line: \"" << line << "\"\n";
-
-    if (ss.eof()) {
-        std::cout << "EOF reached.\n";
-    }
+	char buff[1024] = {0};
+    string t = "hello";
+	stringstream ss(t);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	ss.read(buff, 10);
+	cerr << buff << endl;
 }
 
 

@@ -18,11 +18,8 @@ bool	getlineFromString(string& buffer, string& line) {
 bool	httpSession::Request::boundary(string& buffer) {
 	string	line;
 
-	if (!getlineFromString(buffer, line) && trim(line) == boundaryValue) {
-		cerr << "boundary: " << line << endl;
+	if (!getlineFromString(buffer, line) && trim(line) == boundaryValue)
 		return true;
-	}
-	cerr << "no-boundary: " << line << endl;
 	remainingBuffer = line;
 	return false;
 }
@@ -48,10 +45,8 @@ bool	httpSession::Request::fileHeaders(string& buffer) {
 			throw(statusCodeException(400, "Bad Request"));
 		contentHeaders[fieldName] = filedValue;
 		prvsContentFieldName = fieldName;
-		cerr << fieldName << ": " << filedValue << endl;
 	}
 	if (eof) {
-		cerr << "no-field lines: " << line << endl;
 		remainingBuffer = line;
 		return false;
 	}
@@ -93,32 +88,26 @@ bool	httpSession::Request::fileContent(string& buffer) {
 	if (fd == -1) {
 		if (contentHeaders.find("content-disposition") != contentHeaders.end()) {
 			string filename = retrieveFilename(contentHeaders["content-disposition"]);
-			cerr << "file name: " << filename << endl;
 			fd = openTargetFile(s.path + "/" + filename);
 		} else
 			throw(statusCodeException(501, "Not Implemented"));
 	}
-	while ((eof = getlineFromString(buffer, line)) == false) {
+	while (1) {
+		eof = getlineFromString(buffer, line);
+		if (eof && (!strncmp(boundaryValue.c_str(), line.c_str(), line.size()) || !strncmp((boundaryValue+"--").c_str(), line.c_str(), line.size())))
+			break ;
 		if (trim(line) == boundaryValue) {
 			fd = -1;
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
-			break ;
-		} else if (trim(line) == boundaryValue + "--") {
-			cerr << "end of content" << endl;
-			remainingBuffer = "";
 			return true;
-		}
-		line += "\n";
-		if (write(fd, line.c_str(), line.size()) <= 0) {
-			perror("wirte failed(body.cpp 102)");
-        	throw(statusCodeException(500, "Internal Server Error"));
-		}
+		} else if (trim(line) == boundaryValue + "--")
+			return true;
+		if (!eof)
+			line += "\n";
+		w_write(fd, line.c_str(), line.size());
 	}
-	if (eof) {
-		remainingBuffer = line;
-		return false;
-	}
+	remainingBuffer = line;
 	return false;
 }
 
@@ -127,24 +116,24 @@ bool	httpSession::Request::contentLengthBased(stringstream& stream) {
 		try {
 			length = stoi(s.headers["content-length"]);
 		} catch(...) {
-			perror("unvalid number in content length"); throw(statusCodeException(500, "Internal Server Error"));
+			perror("unvalid number in content length");
+			throw(statusCodeException(400, "Bad Request"));
 		}
 	}
-	cerr << "bef: " << length << endl;
+	// cerr << "-----length: " << length << endl;
 	char buff[length+1] = {0};
 	stream.read(buff, length);
 	string	stringBuff = string(buff);
+	// cerr << "---s-content---" << endl;
 	// cerr << stringBuff << endl;
-	// exit(0);
+	// cerr << "---e-content---" << endl;
 	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
 		if (!(this->*func)(stringBuff))	break;
 		bodyParseFunctions.pop();
 	}
 	length -= stream.gcount() - remainingBuffer.size();
-	cerr << remainingBuffer << endl;
-	// cerr << stream.gcount() << endl;
-	cerr << "after: " << length << endl;
+	// cerr << "-----after-length: " << length << endl;
 	return (length == 0) ? true : false;
 }
 
@@ -176,7 +165,7 @@ bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
 		stream.read(buff, length);
 		if (stream.gcount() == 0) return false;
 		length -= stream.gcount();
-		write(fd, buff, stream.gcount());
+		w_write(fd, buff, stream.gcount());
 		getline(stream, line); // consume the \n(its not included n the length)
 	}
 }
@@ -198,7 +187,6 @@ static bool	isMultipartFormData(const string& value) {
 bool	httpSession::Request::parseBody(stringstream& stream) {
 	if (s.method != "POST")
 		return true;
-	remainingBuffer = "";
 	if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
 		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
 		if (s.headers.find("content-length") != s.headers.end())
