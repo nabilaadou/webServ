@@ -1,5 +1,11 @@
 #include "httpSession.hpp"
 
+inline bool	cmpget(char c1, char c2, char c3) {
+	if (c1 == 'G' && c2 == 'E' && c3 == 'T')
+		return true;
+	return false;
+}
+
 static vector<string>	split(string& str) {
 	const string	whiteSpace = " \t\n\r\f\v";
 	string			remainingStr;
@@ -155,24 +161,29 @@ void	httpSession::Request::isMethod(string& method) {
 }
 
 
-bool	httpSession::Request::parseStartLine(stringstream& stream) {
-	string	line;
-	location* rules;
-	char absolutePath[1024];
-	if (getline(stream, line) && !stream.eof()) {
-		vector<string>	comps;
-		comps = split(line);
-		if (comps.size() != 3)
-			throw(statusCodeException(400, "Bad Request"));
-		isMethod(comps[0]);
-		isTarget(comps[1]);
-		isProtocole(comps[2]);
-		if ((rules = getConfigFileRules()))
-			reconstructUri(rules);
-		else
-			throw(statusCodeException(404, "Not Found"));
-		return true;
+bool	httpSession::Request::parseStartLine(char* buffer) {
+	char c;
+	for (int i = 0; i < byteread; ++i) {
+		c = buffer[i];
 	}
-	remainingBuffer = line;
-	return false;
 }
+
+// string	line;
+// location* rules;
+// char absolutePath[1024];
+// if (getline(stream, line) && !stream.eof()) {
+// 	vector<string>	comps;
+// 	comps = split(line);
+// 	if (comps.size() != 3)
+// 		throw(statusCodeException(400, "Bad Request"));
+// 	isMethod(comps[0]);
+// 	isTarget(comps[1]);
+// 	isProtocole(comps[2]);
+// 	if ((rules = getConfigFileRules()))
+// 		reconstructUri(rules);
+// 	else
+// 		throw(statusCodeException(404, "Not Found"));
+// 	return true;
+// }
+// remainingBuffer = line;
+// return false;

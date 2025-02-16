@@ -56,13 +56,13 @@ public:
 		ssize_t									byteread;
 		string									prvsFieldName;
 		string									prvsContentFieldName;
-		queue<bool(Request::*)(stringstream&)>	parseFunctions;
+		queue<bool(Request::*)(char*)>	parseFunctions;
 		queue<bool(Request::*)(string&)>		bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
 		int										fd;
 		string									boundaryValue;
-		string									remainingBuffer;
+		// string									remainingBuffer;
 		t_state									state;
 
 		void									isProtocole(string& httpVersion);
@@ -72,9 +72,9 @@ public:
 		void									isTarget(string& target);
 		void									isMethod(string& method);
 		location*								getConfigFileRules();
-		bool									parseStartLine(stringstream&);
+		bool									parseStartLine(char*);
 		bool									validFieldName(string& str) const;
-		bool									parseFileds(stringstream&);
+		bool									parseFileds(char*);
 		int										openTargetFile(const string& filename) const;
 		bool									boundary(string&);
 		bool									fileHeaders(string&);

@@ -3,7 +3,7 @@
 httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSING), length(0), fd(-1) {
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
-	parseFunctions.push(&Request::parseBody);
+	// parseFunctions.push(&Request::parseBody);
 
 	bodyParseFunctions.push(&Request::boundary);
 	bodyParseFunctions.push(&Request::fileHeaders);
@@ -17,14 +17,13 @@ void	httpSession::Request::parseMessage(const int clientFd) {
 		state = CCLOSEDCON;
 		return;
 	}
-	int i = 0;
-	remainingBuffer += buffer;
-	replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
-	stringstream	stream(remainingBuffer);
-	remainingBuffer.clear();
+	// remainingBuffer += buffer;
+	// replace(remainingBuffer.begin(), remainingBuffer.end(), '\r', ' ');
+	// stringstream	stream(remainingBuffer);
+	// remainingBuffer.clear();
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.front();
-		if (!(this->*func)(stream))	return;
+		if (!(this->*func)(buffer))	return;
 		parseFunctions.pop();
 	}
 	state = DONE;
