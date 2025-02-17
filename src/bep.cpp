@@ -4,11 +4,11 @@
 // c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes
 
 int main() {
-	bstring s("1 2 3", 5);
+	bstring s("1 22 333 ", 5);
 
 	vector<bstring> list = s.split();
-	// for (const auto& it : list)
-	// 	cerr << it.c_str() << endl;
+	for (const auto& it : list)
+		cerr << "here: " << it.size() << endl;
 }
 
 

@@ -35,7 +35,10 @@ bstring::bstring(const bstring& other) {
 // }
 
 bstring::~bstring() {
-	cerr << "bstring::destructor called" << endl;
+	cerr << "bstring::destructor called-> ";
+	for (int i = 0; i < stringSize; ++i)
+		cerr << __string[i];
+	cerr << endl;
 	delete []__string;
 }
 
@@ -52,17 +55,15 @@ vector<bstring>	bstring::split(const char seperator) {
 	size_t			i = 0, pos = 0;
 	while(i < stringSize) {
 		if (__string[i] == seperator) {
-			cerr << "bef" << endl;
 			list.push_back(substr(pos, i-pos));
-			cerr << "aft" << endl;
 			while (i < stringSize && __string[i] == seperator)
 				++i;
 			pos = i;
 		} else
 			++i;
 	}
-	if (pos < stringSize)
-		list.push_back(substr(pos));
+	// if (pos < stringSize)
+	// 	list.push_back(substr(pos));
 	return list;
 }
 
