@@ -1,14 +1,21 @@
 #include "httpSession.hpp"
 
-enum progress {
-	NL = 10,
-	BR = 9,
-};
-
-inline bool	cmpget(char c1, char c2, char c3) {
+inline void	cmpget(char c1, char c2, char c3) {
 	if (c1 == 'G' && c2 == 'E' && c3 == 'T')
-		return true;
-	return false;
+		return ;
+	throw(statusCodeException(400, "Bad Request"));
+}
+
+inline void	cmppost(char c1, char c2, char c3, char c4) {
+	if (c1 == 'P' && c2 == 'O' && c3 == 'S' && c4 == 'T')
+		return ;
+	throw(statusCodeException(400, "Bad Request"));
+}
+
+inline void	cmpdelete(char c1, char c2, char c3, char c4, char c5, char c6) {
+	if (c1 == 'D' && c2 == 'E' && c3 == 'L' && c4 == 'E' && c5 = 'T' && c6 == 'E')
+		return ;
+	throw(statusCodeException(400, "Bad Request"));
 }
 
 static vector<string>	split(string& str) {
@@ -132,7 +139,7 @@ void	httpSession::Request::isProtocole(string& http) {
 	throw(statusCodeException(400, "Bad Request"));
 }
 
-void	httpSession::Request::extractPathQuery(string& uri) {
+void	httpSession::Request::extractPathQuery(bstring& uri) {
 	if (uri[0] != '/') {
 		size_t pos = uri.find('/', 7);
 		if (pos == string::npos)
@@ -146,23 +153,39 @@ void	httpSession::Request::extractPathQuery(string& uri) {
 		s.query = uri.substr(pos+1);
 }
 
-void	httpSession::Request::isTarget(string& target) {
+void	httpSession::Request::isTarget(bstring& target) {
 	const string	validCharachters = "-._~:/?#[]@!$&'()*+,;=";
 
-	if (strncmp(target.c_str(), "http://", 7) && target[0] != '/')
+	if (target.ncmp("http://", 7) && target[0] != '/')
 		throw(statusCodeException(400, "Bad Request"));
-	for (const auto& c : target) {
-		if (!iswalnum(c) && validCharachters.find(c) == string::npos)
+	for (int i = 0; i < target.size(); ++i) {
+		if (!iswalnum(target[i]) && validCharachters.find(target[i]) == string::npos)
 			throw(statusCodeException(400, "Bad Request"));
 	}
 	extractPathQuery(target);
 }
 
-void	httpSession::Request::isMethod(string& method) {
-	if (method == "GET" || method == "POST" || method == "DELETE")
-		s.method = method;
-	else
+void	httpSession::Request::isMethod(bstring& method) {
+	switch (method.size())
+	{
+	case 5: {
+		cmpdelete(method[0], method[1], method[2], method[3], method[4], method[5]);
+		s.method = DELETE;
+		break;
+	}
+	case 4: {
+		cmppost(method[0], method[1], method[2], method[3]);
+		s.method = POST;
+		break;
+	}
+	case 3: {
+		cmpget(method[0], method[1], method[2]);
+		s.method = GET;
+		break;
+	}
+	default:
 		throw(statusCodeException(400, "Bad Request"));
+	}
 }
 
 
@@ -176,15 +199,15 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 		vector<bstring>	list = line.split();
 		if (list.size() != 3)
 			throw(statusCodeException(400, "Bad Request"));
-		isMethod(comps[0]);
-		isTarget(comps[1]);
-		isProtocole(comps[2]);
+		isMethod(list[0]);
+		isTarget(list[1]);
+		isProtocole(list[2]);
 		if ((rules = getConfigFileRules()))
 			reconstructUri(rules);
 		else
 			throw(statusCodeException(404, "Not Found"));
 		return true;
 	}
-	remainingBuffer = line;
+	// remainingBuffer = line;
 	return false;
 }

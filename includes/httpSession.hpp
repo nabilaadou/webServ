@@ -21,6 +21,12 @@
 
 using namespace std;
 
+enum methods {
+	GET,
+	POST,
+	DELETE,
+};
+
 struct location {
 	string				uri;
     vector<string>		methods;
@@ -41,7 +47,7 @@ struct configuration {
 
 class httpSession {
 private:
-	string				method;
+	methods				method;
 	string				path;
 	string				query;
 	string				httpProtocole;
@@ -68,9 +74,9 @@ public:
 		void									isProtocole(string& httpVersion);
 		void									isCGI(location*);
 		void									reconstructUri(location* rules);
-		void									extractPathQuery(string& uri);
-		void									isTarget(string& target);
-		void									isMethod(string& method);
+		void									extractPathQuery(bstring& uri);
+		void									isTarget(bstring& target);
+		void									isMethod(bstring& method);
 		location*								getConfigFileRules();
 		bool									parseStartLine(bstring&);
 		bool									validFieldName(string& str) const;

@@ -1,14 +1,15 @@
 #include "server.h"
 #include "binarystring.hpp"
 
-// c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes
+// c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes && ./a.out
 
 int main() {
-	bstring s("1 22 333 ", 5);
+	bstring s("1$$2$$$3", 8);
 
-	vector<bstring> list = s.split();
+	// cerr << ((s.ncmp("$$", 2, 1) == 0) ? "equal" : "not equal") << endl;
+	vector<bstring> list = s.split("$$");
 	for (const auto& it : list)
-		cerr << "here: " << it.size() << endl;
+		cerr << it << endl;
 }
 
 
