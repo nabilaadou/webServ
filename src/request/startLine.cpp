@@ -76,7 +76,7 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 
 	if (find(rules->methods.begin(), rules->methods.end(), s.method) == rules->methods.end())
 		throw(statusCodeException(405, "Method Not Allowed"));
-	if (s.method == "GET") {
+	if (s.method == GET) {
 		if (!rules->redirection.empty()) {
 			s.statusCode = 301;
 			s.codeMeaning = "Moved Permanently";
@@ -87,7 +87,7 @@ void	httpSession::Request::reconstructUri(location*	rules) {
 			s.path.erase(s.path.begin(), s.path.begin()+rules->uri.size() - 1);
 			s.path = rules->alias + s.path;
 		}
-	} else if (s.method == "POST") {
+	} else if (s.method == POST) {
 		if (!rules->upload.empty()) {
 			s.path = rules->upload;
 			s.path = w_realpath(("." + s.path).c_str());
@@ -129,28 +129,28 @@ location*	httpSession::Request::getConfigFileRules() {
 	return loc;
 }
 
-void	httpSession::Request::isProtocole(string& http) {
-	if (http == "HTTP/1.1") {
-		s.httpProtocole = http;
+void	httpSession::Request::isProtocole(bstring& http) {
+	if (http.cmp("HTTP/1.1")) {
+		s.httpProtocole = http.cppstring();
 		return ;
 	}
-	else if (http.size() == 8 && !strncmp(http.c_str(), "HTTP/", 5) && isdigit(http[5]) && http[6] == '.' && isdigit(http[7]))
+	else if (http.size() == 8 && http.ncmp("HTTP/", 5) == 0 && isdigit(http[5]) && http[6] == '.' && isdigit(http[7]))
 		throw(statusCodeException(505, "HTTP Version Not Supported"));
 	throw(statusCodeException(400, "Bad Request"));
 }
 
 void	httpSession::Request::extractPathQuery(bstring& uri) {
 	if (uri[0] != '/') {
-		size_t pos = uri.find('/', 7);
+		size_t pos = uri.find("/", 7);
 		if (pos == string::npos)
 			uri = "/";
 		else
 			uri = uri.substr(pos);
 	}
-	size_t pos = uri.find('?');
-	s.path = uri.substr(0, pos);
+	size_t pos = uri.find("?");
+	s.path = uri.substr(0, pos).cppstring();
 	if (pos != string::npos)
-		s.query = uri.substr(pos+1);
+		s.query = uri.substr(pos+1).cppstring();
 }
 
 void	httpSession::Request::isTarget(bstring& target) {

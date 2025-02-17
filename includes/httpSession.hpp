@@ -29,7 +29,7 @@ enum methods {
 
 struct location {
 	string				uri;
-    vector<string>		methods;
+    vector<methods>		methods;
     string				redirection;
     string				alias;
 	string				upload;
@@ -71,9 +71,9 @@ public:
 		// string									remainingBuffer;
 		t_state									state;
 
-		void									isProtocole(string& httpVersion);
 		void									isCGI(location*);
 		void									reconstructUri(location* rules);
+		void									isProtocole(bstring& httpVersion);
 		void									extractPathQuery(bstring& uri);
 		void									isTarget(bstring& target);
 		void									isMethod(bstring& method);
@@ -85,9 +85,9 @@ public:
 		bool									boundary(string&);
 		bool									fileHeaders(string&);
 		bool									fileContent(string&);
-		bool									contentLengthBased(stringstream&);
-		bool									transferEncodingChunkedBased(stringstream&);
-		bool									parseBody(stringstream&);
+		bool									contentLengthBased(bstring&);
+		bool									transferEncodingChunkedBased(bstring&);
+		bool									parseBody(bstring&);
 	public:
 		Request(httpSession& session);
 		void									parseMessage(const int clientFd);

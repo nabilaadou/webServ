@@ -111,7 +111,7 @@ bool	httpSession::Request::fileContent(string& buffer) {
 	return false;
 }
 
-bool	httpSession::Request::contentLengthBased(stringstream& stream) {
+bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 	if (!length) {
 		try {
 			length = stoi(s.headers["content-length"]);
@@ -184,8 +184,8 @@ static bool	isMultipartFormData(const string& value) {
 }
 
 
-bool	httpSession::Request::parseBody(stringstream& stream) {
-	if (s.method != "POST")
+bool	httpSession::Request::parseBody(bstring& buffer) {
+	if (s.method != POST)
 		return true;
 	if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
 		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);

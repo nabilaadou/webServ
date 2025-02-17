@@ -8,22 +8,22 @@ bool    httpSession::Request::validFieldName(string& str) const {
 	return true;
 }
 
-bool	httpSession::Request::parseFileds(stringstream& stream) {
-	string			line;
+bool	httpSession::Request::parseFileds(bstring& buffer) {
+	bstring	line;
 
-	while(getline(stream, line) && !stream.eof() && line != " " && !line.empty()) {
+	while(buffer.getline(line) && !line.null()) {
 		string	fieldName;
 		string	filedValue;
 
 		if (!s.headers.empty() && (line[0] == ' ' || line[0] == '\t')) {
-			s.headers[prvsFieldName] += " " + trim(line);
+			s.headers[prvsFieldName] += " " + trim(line.cppstring());
 			continue ;
 		}
 
-		size_t colonIndex = line.find(':');
-		fieldName = line.substr(0, colonIndex);
+		size_t colonIndex = line.find(":");
+		fieldName = line.substr(0, colonIndex).cppstring();
 		if (colonIndex != string::npos && colonIndex+1 < line.size()) {
-			filedValue = line.substr(colonIndex+1);
+			filedValue = line.substr(colonIndex+1).cppstring();
 			filedValue = trim(filedValue);
 		}
 		if (colonIndex == string::npos || !validFieldName(fieldName)) {
@@ -32,9 +32,9 @@ bool	httpSession::Request::parseFileds(stringstream& stream) {
 		s.headers[fieldName] = filedValue;
 		prvsFieldName = fieldName;
 	}
-	if (stream.eof()) {
-		remainingBuffer = line;
-		return false;
-	}
+	// if (stream.eof()) {
+	// 	remainingBuffer = line;
+	// 	return false;
+	// }
 	return true;
 }

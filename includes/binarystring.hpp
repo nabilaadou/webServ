@@ -10,7 +10,7 @@
 
 class bstring {
 protected:
-	size_t	stringSize;
+	size_t	stringsize;
 	char*	__string;
 public:
 	class bstringExceptions : std::exception {
@@ -31,7 +31,8 @@ public:
 	bstring			substr(unsigned int start, size_t len=std::string::npos);
 	vector<bstring>	split(const char* seperator = " ");
 	bool			getline(bstring&);
-	// size_t			find(const char);
+	void			erase(const size_t start, size_t n);
+	size_t			find(const char*, const size_t startpos = 0);
 	// size_t			rfind();
 	bool			cmp(const char* str);
 	bool			ncmp(const char* str1, const size_t n, const size_t startpos = 0);

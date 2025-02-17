@@ -3,7 +3,7 @@
 httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSING), length(0), fd(-1) {
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
-	// parseFunctions.push(&Request::parseBody);
+	parseFunctions.push(&Request::parseBody);
 
 	bodyParseFunctions.push(&Request::boundary);
 	bodyParseFunctions.push(&Request::fileHeaders);

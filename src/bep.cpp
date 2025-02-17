@@ -4,9 +4,9 @@
 // c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes && ./a.out
 
 int main() {
-	bstring s("1$$2$$$3", 8);
-
-	// cerr << ((s.ncmp("$$", 2, 1) == 0) ? "equal" : "not equal") << endl;
+	bstring s;
+	bstring line;
+	s = "1$$2$3";
 	vector<bstring> list = s.split("$$");
 	for (const auto& it : list)
 		cerr << it << endl;
