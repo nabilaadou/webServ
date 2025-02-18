@@ -1,24 +1,9 @@
 #include "httpSession.hpp"
 
-bool	getlineFromString(string& buffer, string& line) {
-	line  = "";
-	int i = 0;
-	while (buffer[i] && buffer[i] != '\n') {
-		line += buffer[i];
-		++i;
-	}
-	if (buffer[i] == 0) {
-		buffer.erase(buffer.begin(), buffer.begin()+i);
-		return true;
-	}
-	buffer.erase(buffer.begin(), buffer.begin()+i+1);
-	return false;
-}
-
 bool	httpSession::Request::boundary(bstring& buffer) {
 	bstring	line;
 
-	if (buffer.getline(line) && line.cppstring() == boundaryValue)
+	if (buffer.getheaderline(line) && line.cppstring() == boundaryValue)
 		return true;
 	remainingBuffer = line;
 	return false;
@@ -26,7 +11,7 @@ bool	httpSession::Request::boundary(bstring& buffer) {
 
 bool	httpSession::Request::fileHeaders(bstring& buffer) {
 	bstring	line;
-	while(buffer.getline(line) && !line.null()) {
+	while(buffer.getheaderline(line) && !line.null()) {
 		string	fieldName;
 		string	filedValue;
 
@@ -93,17 +78,20 @@ bool	httpSession::Request::fileContent(bstring& buffer) {
 	}
 	while (1) {
 		eof = buffer.getline(line);
-		if (eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size())))
+		if (line.null())
+			break;
+		if (!eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size())))
 			break ;
-		if (line.cppstring() == boundaryValue) {
+		if (!line.ncmp(boundaryValue.c_str(), boundaryValue.size())) {
+			close(fd);
 			fd = -1;
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			return true;
-		} else if (line.cppstring() == boundaryValue + "--")
+		} else if (!line.ncmp((boundaryValue + "--").c_str(), boundaryValue.size()+2)) {
+			close(fd);
 			return true;
-		if (eof)
-			line += "\n";
+		}
 		w_write(fd, line.c_str(), line.size());
 	}
 	remainingBuffer = line;
@@ -119,19 +107,20 @@ bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 			throw(statusCodeException(400, "Bad Request"));
 		}
 	}
-	// cerr << "-----length: " << length << endl;
-	char buff[length+1] = {0};
-	buffer.erase(length, std::string::npos);
+	cerr << "-----length: " << length << endl;
 	// cerr << "---s-content---" << endl;
-	// cerr << stringBuff << endl;
+	// cerr << buffer << endl;
 	// cerr << "---e-content---" << endl;
+	// buffer.erase(length, std::string::npos);//wtffffffffffffffff
+	int buffersize = buffer.size();
+	cerr << "buffer size: " << buffersize << endl;
 	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
 		if (!(this->*func)(buffer))	break;
 		bodyParseFunctions.pop();
 	}
-	// length -= stream.gcount() - remainingBuffer.size();
-	// cerr << "-----after-length: " << length << endl;
+	length -= buffersize - remainingBuffer.size();
+	cerr << "-----after-length: " << length << endl;
 	return (length == 0) ? true : false;
 }
 

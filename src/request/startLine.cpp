@@ -195,7 +195,7 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 	location*	rules;
 	char		absolutePath[1024];
 
-	if (buffer.getline(line)) {
+	if (buffer.getheaderline(line)) {
 		vector<bstring>	list = line.split();
 		if (list.size() != 3)
 		throw(statusCodeException(400, "Bad Request"));

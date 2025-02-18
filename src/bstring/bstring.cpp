@@ -78,7 +78,7 @@ bstring	bstring::substr(size_t start, size_t len) {
 	return bstring(substring, len);
 }
 
-bool	bstring::getline(bstring& line) {
+bool	bstring::getheaderline(bstring& line) {
 	char	ch;
 	bool	br = false;
 	for (int i = 0; i < stringsize; ++i) {
@@ -101,9 +101,25 @@ bool	bstring::getline(bstring& line) {
 			}
 		}
 		default:
-			if (br)
-				cerr << "err" << endl;
-				// throw(statusCodeException(400, "Bad Request"));
+			if (br) {
+				cerr << "brbrbrbrbr" << endl;
+				throw(statusCodeException(400, "Bad Request"));
+			}
+		}
+	}
+	line = substr(0);
+	erase(0, std::string::npos);
+	return false;
+}
+
+bool	bstring::getline(bstring& line) {
+	char	ch;
+	for (int i = 0; i < stringsize; ++i) {
+		ch = __string[i];
+		if (ch == '\n') {
+			line = substr(0, i+1);
+			erase(0, i+1);
+			return true;
 		}
 	}
 	line = substr(0);
@@ -215,6 +231,25 @@ std::ostream& operator<<(std::ostream &out, const bstring &bs) {
 	for (int i = 0; i < bs.size(); ++i)
 		out << bs[i];
 	return out;
+}
+
+const bstring&	bstring::operator+=(const bstring& buff) {
+	if (buff.null())
+		return *this;
+	char* newstring = new char[stringsize+buff.size()];
+	int	newstringpos = 0;
+	for (int i = 0; i < stringsize; ++i) {
+		newstring[newstringpos] = __string[i];
+		++newstringpos;
+	}
+	for (int i = 0; i < buff.size(); ++i) {
+		newstring[newstringpos] = buff[i];
+		++newstringpos;
+	}
+	delete[] __string;
+	__string = newstring;
+	stringsize += buff.size();
+	return *this;
 }
 
 const char*	bstring::operator+=(const char* buff) {

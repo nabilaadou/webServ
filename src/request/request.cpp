@@ -19,12 +19,13 @@ void	httpSession::Request::parseMessage(const int clientFd) {
 		return;
 	}
 	bstring clientRequest(buffer, byteread);
-	cerr << "ss-----Request-----" << endl;
-	cerr << clientRequest << endl;
-	cerr << "ee-----Request-----" << endl;
+	remainingBuffer += clientRequest;
+	// cerr << "ss-----Request-----" << endl;
+	// cerr << clientRequest << endl;
+	// cerr << "ee-----Request-----" << endl;
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.front();
-		if (!(this->*func)(clientRequest))	return;
+		if (!(this->*func)(remainingBuffer))	return;
 		parseFunctions.pop();
 	}
 	state = DONE;
