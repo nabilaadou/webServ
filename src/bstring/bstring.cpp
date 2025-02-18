@@ -41,6 +41,10 @@ const string	bstring::cppstring() const {
 	return s;
 }
 
+const char*	bstring::c_str() const {//add \0 in the end
+	return __string;
+}
+
 vector<bstring>	bstring::split(const char* seperator) {
 	vector<bstring> list;
 	size_t			i = 0, pos = 0;
@@ -59,10 +63,10 @@ vector<bstring>	bstring::split(const char* seperator) {
 	return list;
 }
 
-bstring	bstring::substr(unsigned int start, size_t len) {
+bstring	bstring::substr(size_t start, size_t len) {
 	size_t	i = 0;
 
-	if (__string == NULL || start >= stringsize)
+	if (__string == NULL || start >= stringsize || len == start)
 		return bstring();//default constructer just like returning NULL;
 	if (len > stringsize - start || len == std::string::npos)
 		len = stringsize - start;
@@ -82,11 +86,15 @@ bool	bstring::getline(bstring& line) {
 		switch (static_cast<int>(ch))
 		{
 		case 10: {
-			line = substr(0, i);
+			if (br == true) {
+				line = substr(0, i-1);
+			}
+			else
+				line = substr(0, i);
 			erase(0, i+1);
 			return true;
 		}
-		case 9: {
+		case 13: {
 			if (br == false) {
 				br = true;
 				break;
@@ -109,7 +117,7 @@ void	bstring::erase(const size_t start, size_t n) {
 	else if (n >= stringsize) {
 		n = stringsize - start;
 	}
-	if (start+n >= stringsize) {
+	if (stringsize - n == 0) {
 		delete []__string;
 		__string = NULL;
 		stringsize = 0;
@@ -167,15 +175,21 @@ bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) {
 
 
 bool	bstring::null() const {
-	return __string == NULL;
+	if (__string == NULL)
+		return true;
+	return false;
 }
 
 const bstring& bstring::operator=(const bstring& other) {
 	if (this != &other) {
 		delete[] __string;
 		stringsize = other.size();
-		__string = new char[stringsize];
-		strncpy(__string, other.__string, stringsize);
+		if (other.null())
+			__string = NULL;
+		else {
+			__string = new char[stringsize];
+			strncpy(__string, other.__string, stringsize);
+		}
 	}
 	return *this;
 }
@@ -203,6 +217,21 @@ std::ostream& operator<<(std::ostream &out, const bstring &bs) {
 	return out;
 }
 
-// const char*	bstring::operator+=(const char* buff) {
-
-// }
+const char*	bstring::operator+=(const char* buff) {
+	if (buff == NULL)
+		return __string;
+	char* newstring = new char[stringsize+strlen(buff)];
+	int	newstringpos = 0;
+	for (int i = 0; i < stringsize; ++i) {
+		newstring[newstringpos] = __string[i];
+		++newstringpos;
+	}
+	for (int i = 0; i < strlen(buff); ++i) {
+		newstring[newstringpos] = buff[i];
+		++newstringpos;
+	}
+	delete[] __string;
+	__string = newstring;
+	stringsize += strlen(buff);
+	return __string;
+}

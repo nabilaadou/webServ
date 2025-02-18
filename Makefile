@@ -2,7 +2,7 @@ NAME = webServ
 
 SRCS =  src/wrappers.cpp src/stringManipulation.cpp src/cgi/*.cpp \
 		src/exceptions/*.cpp src/request/*.cpp src/response/*.cpp \
-		src/server/*.cpp
+		src/server/*.cpp src/bstring/*.cpp
 
 
 CC = g++

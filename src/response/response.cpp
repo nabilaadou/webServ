@@ -10,7 +10,7 @@ void	httpSession::Response::sendResponse(const int clientFd) {
 				return ;
 			state = SHEADER;
 		}
-		if (s.method != "POST")
+		if (s.method != POST)
 			sendBody(clientFd);
 		else
 			state = DONE;

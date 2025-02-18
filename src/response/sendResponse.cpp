@@ -81,7 +81,7 @@ void	httpSession::Response::sendHeader(const int clientFd) {
 	string header;
 
 	header += s.httpProtocole + " " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (s.method != "POST") {
+    if (s.method != POST) {
 	    header += contentTypeHeader();
 	    header += "Transfer-Encoding: chunked\r\n";
     } else
@@ -165,6 +165,6 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
     } else {
         state = DONE;
 		close(s.cgi->rFd());
-		cerr << "done sending response" << endl;
+		cerr << "done sending response cgi" << endl;
     }
 }

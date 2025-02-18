@@ -13,7 +13,7 @@ inline void	cmppost(char c1, char c2, char c3, char c4) {
 }
 
 inline void	cmpdelete(char c1, char c2, char c3, char c4, char c5, char c6) {
-	if (c1 == 'D' && c2 == 'E' && c3 == 'L' && c4 == 'E' && c5 = 'T' && c6 == 'E')
+	if (c1 == 'D' && c2 == 'E' && c3 == 'L' && c4 == 'E' && c5 == 'T' && c6 == 'E')
 		return ;
 	throw(statusCodeException(400, "Bad Request"));
 }
@@ -130,7 +130,7 @@ location*	httpSession::Request::getConfigFileRules() {
 }
 
 void	httpSession::Request::isProtocole(bstring& http) {
-	if (http.cmp("HTTP/1.1")) {
+	if (!http.cmp("HTTP/1.1")) {
 		s.httpProtocole = http.cppstring();
 		return ;
 	}
@@ -198,7 +198,7 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 	if (buffer.getline(line)) {
 		vector<bstring>	list = line.split();
 		if (list.size() != 3)
-			throw(statusCodeException(400, "Bad Request"));
+		throw(statusCodeException(400, "Bad Request"));
 		isMethod(list[0]);
 		isTarget(list[1]);
 		isProtocole(list[2]);
@@ -208,6 +208,6 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 			throw(statusCodeException(404, "Not Found"));
 		return true;
 	}
-	// remainingBuffer = line;
+	remainingBuffer = line;
 	return false;
 }

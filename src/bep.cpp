@@ -6,10 +6,13 @@
 int main() {
 	bstring s;
 	bstring line;
-	s = "1$$2$3";
-	vector<bstring> list = s.split("$$");
-	for (const auto& it : list)
-		cerr << it << endl;
+	s = "t\r\n\r\n";
+	s.getline(line);
+	cerr << "size: " << line.size() << endl;
+	cerr << line.null() << endl;
+	s.getline(line);
+	cerr << "size: " << line.size() << endl;
+	cerr << line.null() << endl;
 }
 
 

@@ -10,11 +10,10 @@ bool    httpSession::Request::validFieldName(string& str) const {
 
 bool	httpSession::Request::parseFileds(bstring& buffer) {
 	bstring	line;
-
-	while(buffer.getline(line) && !line.null()) {
+	bool	eof;
+	while((eof = buffer.getline(line)) && !line.null()) {
 		string	fieldName;
 		string	filedValue;
-
 		if (!s.headers.empty() && (line[0] == ' ' || line[0] == '\t')) {
 			s.headers[prvsFieldName] += " " + trim(line.cppstring());
 			continue ;
@@ -27,14 +26,16 @@ bool	httpSession::Request::parseFileds(bstring& buffer) {
 			filedValue = trim(filedValue);
 		}
 		if (colonIndex == string::npos || !validFieldName(fieldName)) {
+			cerr << line << endl;
+			cerr << fieldName << endl;
 			throw(statusCodeException(400, "Bad Request"));
 		}
 		s.headers[fieldName] = filedValue;
 		prvsFieldName = fieldName;
 	}
-	// if (stream.eof()) {
-	// 	remainingBuffer = line;
-	// 	return false;
-	// }
+	if (!eof) {
+		remainingBuffer = line;
+		return false;
+	}
 	return true;
 }

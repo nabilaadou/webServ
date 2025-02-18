@@ -21,7 +21,7 @@
 
 using namespace std;
 
-enum methods {
+enum e_methods {
 	GET,
 	POST,
 	DELETE,
@@ -29,7 +29,7 @@ enum methods {
 
 struct location {
 	string				uri;
-    vector<methods>		methods;
+    vector<e_methods>		methods;
     string				redirection;
     string				alias;
 	string				upload;
@@ -47,7 +47,7 @@ struct configuration {
 
 class httpSession {
 private:
-	methods				method;
+	e_methods				method;
 	string				path;
 	string				query;
 	string				httpProtocole;
@@ -63,12 +63,12 @@ public:
 		string									prvsFieldName;
 		string									prvsContentFieldName;
 		queue<bool(Request::*)(bstring&)>		parseFunctions;
-		queue<bool(Request::*)(string&)>		bodyParseFunctions;
+		queue<bool(Request::*)(bstring&)>		bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
 		int										fd;
 		string									boundaryValue;
-		// string									remainingBuffer;
+		bstring									remainingBuffer;
 		t_state									state;
 
 		void									isCGI(location*);
@@ -82,9 +82,9 @@ public:
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(bstring&);
 		int										openTargetFile(const string& filename) const;
-		bool									boundary(string&);
-		bool									fileHeaders(string&);
-		bool									fileContent(string&);
+		bool									boundary(bstring&);
+		bool									fileHeaders(bstring&);
+		bool									fileContent(bstring&);
 		bool									contentLengthBased(bstring&);
 		bool									transferEncodingChunkedBased(bstring&);
 		bool									parseBody(bstring&);

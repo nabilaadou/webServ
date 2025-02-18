@@ -15,30 +15,29 @@ bool	getlineFromString(string& buffer, string& line) {
 	return false;
 }
 
-bool	httpSession::Request::boundary(string& buffer) {
-	string	line;
+bool	httpSession::Request::boundary(bstring& buffer) {
+	bstring	line;
 
-	if (!getlineFromString(buffer, line) && trim(line) == boundaryValue)
+	if (buffer.getline(line) && line.cppstring() == boundaryValue)
 		return true;
 	remainingBuffer = line;
 	return false;
 }
 
-bool	httpSession::Request::fileHeaders(string& buffer) {
-	string	line;
-	bool	eof;
-	while((eof = getlineFromString(buffer, line)) == false && line != " " && !line.empty()) {
+bool	httpSession::Request::fileHeaders(bstring& buffer) {
+	bstring	line;
+	while(buffer.getline(line) && !line.null()) {
 		string	fieldName;
 		string	filedValue;
 
 		if (!contentHeaders.empty() && (line[0] == ' ' || line[0] == '\t')) {
-			contentHeaders[prvsContentFieldName] += " " + trim(line);
+			contentHeaders[prvsContentFieldName] += " " + trim(line.cppstring());
 			continue ;
 		}
-		size_t colonIndex = line.find(':');
-		fieldName = line.substr(0, colonIndex);
+		size_t colonIndex = line.find(":");
+		fieldName = line.substr(0, colonIndex).cppstring();
 		if (colonIndex != string::npos && colonIndex+1 < line.size()) {
-			filedValue = line.substr(colonIndex+1);
+			filedValue = line.substr(colonIndex+1).cppstring();
 			filedValue = trim(filedValue);
 		}
 		if (colonIndex == string::npos || !validFieldName(fieldName))
@@ -46,10 +45,10 @@ bool	httpSession::Request::fileHeaders(string& buffer) {
 		contentHeaders[fieldName] = filedValue;
 		prvsContentFieldName = fieldName;
 	}
-	if (eof) {
-		remainingBuffer = line;
-		return false;
-	}
+	// if (eof) {
+	// 	remainingBuffer = line;
+	// 	return false;
+	// }
 	return true;
 }
 
@@ -81,8 +80,8 @@ int	httpSession::Request::openTargetFile(const string& filename) const {
 	return (fd);
 }
 
-bool	httpSession::Request::fileContent(string& buffer) {
-	string	line;
+bool	httpSession::Request::fileContent(bstring& buffer) {
+	bstring	line;
 	bool	eof;
 
 	if (fd == -1) {
@@ -93,17 +92,17 @@ bool	httpSession::Request::fileContent(string& buffer) {
 			throw(statusCodeException(501, "Not Implemented"));
 	}
 	while (1) {
-		eof = getlineFromString(buffer, line);
-		if (eof && (!strncmp(boundaryValue.c_str(), line.c_str(), line.size()) || !strncmp((boundaryValue+"--").c_str(), line.c_str(), line.size())))
+		eof = buffer.getline(line);
+		if (eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size())))
 			break ;
-		if (trim(line) == boundaryValue) {
+		if (line.cppstring() == boundaryValue) {
 			fd = -1;
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			return true;
-		} else if (trim(line) == boundaryValue + "--")
+		} else if (line.cppstring() == boundaryValue + "--")
 			return true;
-		if (!eof)
+		if (eof)
 			line += "\n";
 		w_write(fd, line.c_str(), line.size());
 	}
@@ -122,53 +121,52 @@ bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 	}
 	// cerr << "-----length: " << length << endl;
 	char buff[length+1] = {0};
-	stream.read(buff, length);
-	string	stringBuff = string(buff);
+	buffer.erase(length, std::string::npos);
 	// cerr << "---s-content---" << endl;
 	// cerr << stringBuff << endl;
 	// cerr << "---e-content---" << endl;
 	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
-		if (!(this->*func)(stringBuff))	break;
+		if (!(this->*func)(buffer))	break;
 		bodyParseFunctions.pop();
 	}
-	length -= stream.gcount() - remainingBuffer.size();
+	// length -= stream.gcount() - remainingBuffer.size();
 	// cerr << "-----after-length: " << length << endl;
 	return (length == 0) ? true : false;
 }
 
-bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
-	if (fd == -1)
-		fd = openTargetFile("test");
-	while (1) {
-		string	line;
-		if (length <= 0) {
-			if (getline(stream, line)) {
-				if (stream.eof()) {
-					remainingBuffer = line;
-					return false;
-				}
-				perror("getline failed"); throw(statusCodeException(500, "Internal Server Error"));
-			}
-			try {
-				length = stoi(line);
-			}
-			catch(...) {
-				perror("unvalid number in chunked length"); throw(statusCodeException(500, "Internal Server Error"));
-			}
-			if (line == "0") {
-				close(fd);
-				return true;
-			}
-		}
-		char buff[length+1] = {0};
-		stream.read(buff, length);
-		if (stream.gcount() == 0) return false;
-		length -= stream.gcount();
-		w_write(fd, buff, stream.gcount());
-		getline(stream, line); // consume the \n(its not included n the length)
-	}
-}
+// bool	httpSession::Request::transferEncodingChunkedBased(stringstream& stream) {
+// 	if (fd == -1)
+// 		fd = openTargetFile("test");
+// 	while (1) {
+// 		string	line;
+// 		if (length <= 0) {
+// 			if (getline(stream, line)) {
+// 				if (stream.eof()) {
+// 					remainingBuffer = line;
+// 					return false;
+// 				}
+// 				perror("getline failed"); throw(statusCodeException(500, "Internal Server Error"));
+// 			}
+// 			try {
+// 				length = stoi(line);
+// 			}
+// 			catch(...) {
+// 				perror("unvalid number in chunked length"); throw(statusCodeException(500, "Internal Server Error"));
+// 			}
+// 			if (line == "0") {
+// 				close(fd);
+// 				return true;
+// 			}
+// 		}
+// 		char buff[length+1] = {0};
+// 		stream.read(buff, length);
+// 		if (stream.gcount() == 0) return false;
+// 		length -= stream.gcount();
+// 		w_write(fd, buff, stream.gcount());
+// 		getline(stream, line); // consume the \n(its not included n the length)
+// 	}
+// }
 
 
 static bool	isMultipartFormData(const string& value) {
@@ -191,8 +189,8 @@ bool	httpSession::Request::parseBody(bstring& buffer) {
 		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
 		if (s.headers.find("content-length") != s.headers.end())
 			parseFunctions.push(&Request::contentLengthBased);
-		else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
-			parseFunctions.push(&Request::transferEncodingChunkedBased);
+		// else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
+		// 	parseFunctions.push(&Request::transferEncodingChunkedBased);
 	}
 	else
 		throw(statusCodeException(501, "Not Implemented"));

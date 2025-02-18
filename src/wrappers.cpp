@@ -11,7 +11,7 @@ string	w_realpath(const char * file_name) {
 ssize_t w_write(int fildes, const void *buf, size_t nbyte) {
 	int bytewrite;
 	if ((bytewrite = write(fildes, buf,nbyte)) <= 0) {
-		perror("wait failed");
+		perror("write failed");
 		//close client connection gracefully
 	}
 	return bytewrite;
