@@ -14,7 +14,7 @@ bstring::bstring(const char* str, const size_t size) : stringsize(size) {
 
 bstring::bstring(const bstring& other) {
 	// cerr << "bstring::copy constructer called" << endl;
-	if (other.null() == false) {
+	if (other.empty() == false) {
 		stringsize = other.size();
 		__string = new char[stringsize];
 		strncpy(__string, other.__string, stringsize);
@@ -215,7 +215,7 @@ bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) cons
 }
 
 
-bool	bstring::null() const {
+bool	bstring::empty() const {
 	if (__string == NULL)
 		return true;
 	return false;
@@ -225,7 +225,7 @@ const bstring& bstring::operator=(const bstring& other) {
 	if (this != &other) {
 		delete[] __string;
 		stringsize = other.size();
-		if (other.null())
+		if (other.empty())
 			__string = NULL;
 		else {
 			__string = new char[stringsize];
@@ -238,8 +238,11 @@ const bstring& bstring::operator=(const bstring& other) {
 const char*	bstring::operator=(const char* newstring) {
 	if (__string)
 		delete []__string;
-	if (newstring == NULL)
+	if (newstring == NULL) {
+		stringsize = 0;
+		__string = NULL;
 		return NULL;
+	}
 	stringsize = strlen(newstring);
 	__string = new char[stringsize];
 	strncpy(__string, newstring, stringsize);
@@ -259,7 +262,7 @@ std::ostream& operator<<(std::ostream &out, const bstring &bs) {
 }
 
 const bstring&	bstring::operator+=(const bstring& buff) {
-	if (buff.null())
+	if (buff.empty())
 		return *this;
 	char* newstring = new char[stringsize+buff.size()];
 	int	newstringpos = 0;

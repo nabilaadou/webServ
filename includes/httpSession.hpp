@@ -6,6 +6,7 @@
 #include "cgi.hpp"
 #include <fcntl.h>
 #include <sstream>
+#include <fstream>
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
@@ -17,7 +18,7 @@
 #include "statusCodeException.hpp"
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
 
-#define BUFFER_SIZE 8192
+#define BUFFER_SIZE 3295114
 
 using namespace std;
 
@@ -66,7 +67,7 @@ public:
 		queue<bool(Request::*)(bstring&)>		bodyParseFunctions;
 		map<string, string>						contentHeaders;
 		int										length;
-		int										fd;
+		ofstream								fd;
 		string									boundaryValue;
 		bstring									remainingBuffer;
 		t_state									state;
@@ -81,7 +82,7 @@ public:
 		bool									parseStartLine(bstring&);
 		bool									validFieldName(string& str) const;
 		bool									parseFileds(bstring&);
-		int										openTargetFile(const string& filename) const;
+		void									openTargetFile(const string& filename, ofstream& fd) const;
 		bool									boundary(bstring&);
 		bool									fileHeaders(bstring&);
 		bool									fileContent(bstring&);

@@ -11,7 +11,7 @@ bool	httpSession::Request::boundary(bstring& buffer) {
 
 bool	httpSession::Request::fileHeaders(bstring& buffer) {
 	bstring	line;
-	while(buffer.getheaderline(line) && !line.null()) {
+	while(buffer.getheaderline(line) && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
 
@@ -55,44 +55,50 @@ static string	retrieveFilename(const string& value) {
 	return keyvalue[1];
 }
 
-int	httpSession::Request::openTargetFile(const string& filename) const {
-	int fd;
-	if (s.cgi != NULL)
-		fd = s.cgi->wFd();
-	else if ((fd = open(filename.c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
+void	httpSession::Request::openTargetFile(const string& filename, ofstream& fd) const {
+	// if (s.cgi != NULL)
+	// 	fd = s.cgi->wFd();
+	fd.open(filename.c_str(), ios::binary);
+	if (!fd) {
 		perror("open failed"); throw(statusCodeException(500, "Internal Server Error"));
-	}
-	return (fd);
+    }
 }
 
 bool	httpSession::Request::fileContent(bstring& buffer) {
 	bstring	line;
 	bool	eof;
-
-	if (fd == -1) {
+	bstring	emptyline;
+	if (!fd.is_open()) {
 		if (contentHeaders.find("content-disposition") != contentHeaders.end()) {
 			string filename = retrieveFilename(contentHeaders["content-disposition"]);
-			fd = openTargetFile(s.path + "/" + filename);
+			openTargetFile(s.path + "/" + filename, fd);
 		} else
 			throw(statusCodeException(501, "Not Implemented"));
 	}
 	while (1) {
 		eof = buffer.getline(line);
-		if (line.null())
-			break;
-		if (!eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size())))
+		if (!eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size()) || line.empty()))
 			break ;
-		if (!line.trimend().cmp(boundaryValue.c_str())) {
-			close(fd);
-			fd = -1;
+		else if (!line.trimend().cmp(boundaryValue.c_str())) {
+			fd.close();
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			return true;
 		} else if (!line.trimend().cmp((boundaryValue + "--").c_str())) {
-			close(fd);
+			fd.close();
 			return true;
+		} else if (line.trimend().empty()) {
+			if (!eof)
+				break;
+			if (!emptyline.empty())
+				fd.write(emptyline.c_str(), emptyline.size());
+			emptyline = line;
+		} else {
+			if (!emptyline.empty())
+				fd.write(emptyline.c_str(), emptyline.size());
+			fd.write(line.c_str(), line.size());
+			emptyline = NULL;
 		}
-		w_write(fd, line.c_str(), line.size());
 	}
 	remainingBuffer = line;
 	return false;
@@ -113,7 +119,7 @@ bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 	// cerr << "---e-content---" << endl;
 	// buffer.erase(length, std::string::npos);//wtffffffffffffffff
 	int buffersize = buffer.size();
-	cerr << "buffer size: " << buffersize << endl;
+	cerr << "buffer size: " << buffersize << endl; //weird shit here
 	while(!bodyParseFunctions.empty()) {
 		const auto& func = bodyParseFunctions.front();
 		if (!(this->*func)(buffer))	break;

@@ -42,12 +42,13 @@ public:
 	// bstring			trim() const;
 	bool			cmp(const char* str) const;
 	bool			ncmp(const char* str1, const size_t n, const size_t startpos = 0) const;
-	bool			null() const;
+	bool			empty() const;
 	const char* 	operator=(const char*);
 	const bstring& 	operator=(const bstring&);
 	const char& 	operator[](const int) const;
 	const bstring&	operator+=(const bstring&);
 	const char*		operator+=(const char*);
+	// const char*		operator+(const char*);
 };
 
 std::ostream& operator<<(std::ostream &out, const bstring &fixed);

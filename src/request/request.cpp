@@ -1,6 +1,6 @@
 #include "httpSession.hpp"
 
-httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSING), length(0), fd(-1) {
+httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSING), length(0) {
 	parseFunctions.push(&Request::parseStartLine);
 	parseFunctions.push(&Request::parseFileds);
 	parseFunctions.push(&Request::parseBody);
