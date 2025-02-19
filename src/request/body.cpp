@@ -82,13 +82,13 @@ bool	httpSession::Request::fileContent(bstring& buffer) {
 			break;
 		if (!eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size())))
 			break ;
-		if (!line.ncmp(boundaryValue.c_str(), boundaryValue.size())) {
+		if (!line.trimend().cmp(boundaryValue.c_str())) {
 			close(fd);
 			fd = -1;
 			bodyParseFunctions.push(&Request::fileHeaders);
 			bodyParseFunctions.push(&Request::fileContent);
 			return true;
-		} else if (!line.ncmp((boundaryValue + "--").c_str(), boundaryValue.size()+2)) {
+		} else if (!line.trimend().cmp((boundaryValue + "--").c_str())) {
 			close(fd);
 			return true;
 		}

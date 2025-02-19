@@ -45,7 +45,7 @@ const char*	bstring::c_str() const {//add \0 in the end
 	return __string;
 }
 
-vector<bstring>	bstring::split(const char* seperator) {
+vector<bstring>	bstring::split(const char* seperator) const {
 	vector<bstring> list;
 	size_t			i = 0, pos = 0;
 	while(i < stringsize) {
@@ -63,7 +63,7 @@ vector<bstring>	bstring::split(const char* seperator) {
 	return list;
 }
 
-bstring	bstring::substr(size_t start, size_t len) {
+bstring	bstring::substr(size_t start, size_t len) const {
 	size_t	i = 0;
 
 	if (__string == NULL || start >= stringsize || len == start)
@@ -103,7 +103,7 @@ bool	bstring::getheaderline(bstring& line) {
 		default:
 			if (br) {
 				cerr << "brbrbrbrbr" << endl;
-				throw(statusCodeException(400, "Bad Request"));
+				// throw(statusCodeException(400, "Bad Request"));
 			}
 		}
 	}
@@ -157,7 +157,7 @@ void	bstring::erase(const size_t start, size_t n) {
 	stringsize = stringsize - n;
 }
 
-size_t	bstring::find(const char* needle, const size_t startpos) {
+size_t	bstring::find(const char* needle, const size_t startpos) const {
 	if (startpos >= stringsize)
 		return std::string::npos;
 	for (int i = startpos; i < stringsize; ++i) {
@@ -167,7 +167,32 @@ size_t	bstring::find(const char* needle, const size_t startpos) {
 	return std::string::npos;
 }
 
-bool	bstring::cmp(const char* str) {
+size_t	bstring::find(const char needle, const size_t startpos) const {
+	if (startpos >= stringsize)
+		return std::string::npos;
+	for (int i = startpos; i < stringsize; ++i) {
+		if (__string[i] == needle)
+			return i;
+	}
+	return std::string::npos;
+}
+
+bstring bstring::trimend(const char* chars) const{
+	ssize_t i = stringsize - 1;
+	bstring bstringchars(chars, strlen(chars));
+	bstring	objectcopy(*this);
+
+	while (i >= 0) {
+		if (bstringchars.find(__string[i]) != std::string::npos)
+			--i;
+		else
+			break;
+	}
+	objectcopy.erase(i+1, std::string::npos);
+	return objectcopy;
+}
+
+bool	bstring::cmp(const char* str) const {
 	size_t	i = 0;
 	if (strlen(str) != stringsize)
 		return true;
@@ -176,7 +201,7 @@ bool	bstring::cmp(const char* str) {
 	return __string[i] - str[i];
 }
 
-bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) {
+bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) const {
 	if (startpos >= stringsize)
 		return true;
 	const char* str2 = &(__string[startpos]);
