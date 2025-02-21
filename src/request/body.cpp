@@ -99,7 +99,7 @@ bool	httpSession::Request::fileContent(bstring& buffer) {
 		buffer = remainingBuffer;
 		remainingBuffer = NULL;
 		return true;
-	} else if (endboundarypos < startboundarypos) {
+	} else if (endboundarypos <= startboundarypos && endboundarypos != string::npos) {
 		--endboundarypos;//newline;
 		if (buffer[endboundarypos-1] == '\r')
 			--endboundarypos;
