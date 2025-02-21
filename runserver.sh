@@ -1,5 +1,5 @@
 #!/bin/bash
 rm www/upload/*
-make
+make re
 clear
 ./webServ a

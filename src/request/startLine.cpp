@@ -158,7 +158,7 @@ void	httpSession::Request::isTarget(bstring& target) {
 
 	if (target.ncmp("http://", 7) && target[0] != '/')
 		throw(statusCodeException(400, "Bad Request"));
-	for (int i = 0; i < target.size(); ++i) {
+	for (size_t i = 0; i < target.size(); ++i) {
 		if (!iswalnum(target[i]) && validCharachters.find(target[i]) == string::npos)
 			throw(statusCodeException(400, "Bad Request"));
 	}
@@ -198,7 +198,7 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 	if (buffer.getheaderline(line)) {
 		vector<bstring>	list = line.split();
 		if (list.size() != 3)
-		throw(statusCodeException(400, "Bad Request"));
+			throw(statusCodeException(400, "Bad Request"));
 		isMethod(list[0]);
 		isTarget(list[1]);
 		isProtocole(list[2]);
@@ -208,6 +208,6 @@ bool	httpSession::Request::parseStartLine(bstring& buffer) {
 			throw(statusCodeException(404, "Not Found"));
 		return true;
 	}
-	remainingBuffer = line;
+	remainingBuffer = line;//GET / HTTP\0
 	return false;
 }

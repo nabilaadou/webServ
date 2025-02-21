@@ -22,7 +22,7 @@ int	startServer(map<int, t_sockaddr>& servrSocks) {
 
 	ports.push_back(8080);
 	ports.push_back(4040);
-	for (int i = 0; i < ports.size(); ++i) {
+	for (size_t i = 0; i < ports.size(); ++i) {
 		t_sockaddr	sockInfo;
 		int 		sockFd;
 		int			opt = 1;

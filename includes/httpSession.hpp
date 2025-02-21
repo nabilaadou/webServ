@@ -13,12 +13,13 @@
 #include <algorithm>
 #include <sys/stat.h>
 #include "wrappers.h"
+#include <sys/socket.h>
 #include "binarystring.hpp"
 #include "stringManipulation.h"
 #include "statusCodeException.hpp"
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
 
-#define BUFFER_SIZE 3295114
+#define BUFFER_SIZE 9999999999
 
 using namespace std;
 
@@ -60,39 +61,39 @@ private:
 public:
 	class Request {
 	private:
-		httpSession&							s;
-		string									prvsFieldName;
-		string									prvsContentFieldName;
-		queue<bool(Request::*)(bstring&)>		parseFunctions;
-		queue<bool(Request::*)(bstring&)>		bodyParseFunctions;
-		map<string, string>						contentHeaders;
-		int										length;
-		ofstream								fd;
-		string									boundaryValue;
-		bstring									remainingBuffer;
-		t_state									state;
+		httpSession&						s;
+		string								prvsFieldName;
+		string								prvsContentFieldName;
+		queue<bool(Request::*)(bstring&)>	parseFunctions;
+		queue<bool(Request::*)(bstring&)>	bodyParseFunctions;
+		map<string, string>					contentHeaders;
+		int									length;
+		ofstream							fd;
+		string								boundaryValue;
+		bstring								remainingBuffer;
+		t_state								state;
 
-		void									isCGI(location*);
-		void									reconstructUri(location* rules);
-		void									isProtocole(bstring& httpVersion);
-		void									extractPathQuery(bstring& uri);
-		void									isTarget(bstring& target);
-		void									isMethod(bstring& method);
-		location*								getConfigFileRules();
-		bool									parseStartLine(bstring&);
-		bool									validFieldName(string& str) const;
-		bool									parseFileds(bstring&);
-		void									openTargetFile(const string& filename, ofstream& fd) const;
-		bool									boundary(bstring&);
-		bool									fileHeaders(bstring&);
-		bool									fileContent(bstring&);
-		bool									contentLengthBased(bstring&);
-		bool									transferEncodingChunkedBased(bstring&);
-		bool									parseBody(bstring&);
+		void								isCGI(location*);
+		void								reconstructUri(location* rules);
+		void								isProtocole(bstring& httpVersion);
+		void								extractPathQuery(bstring& uri);
+		void								isTarget(bstring& target);
+		void								isMethod(bstring& method);
+		location*							getConfigFileRules();
+		bool								parseStartLine(bstring&);
+		bool								validFieldName(string& str) const;
+		bool								parseFileds(bstring&);
+		void								openTargetFile(const string& filename, ofstream& fd) const;
+		bool								boundary(bstring&);
+		bool								fileHeaders(bstring&);
+		bool								fileContent(bstring&);
+		bool								contentLengthBased(bstring&);
+		bool								transferEncodingChunkedBased(bstring&);
+		bool								parseBody(bstring&);
 	public:
 		Request(httpSession& session);
-		void									parseMessage(const int clientFd);
-		const t_state&							status() const;
+		void								parseMessage(const int clientFd);
+		const t_state&						status() const;
 	};
 
 	class Response {

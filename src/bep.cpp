@@ -4,10 +4,11 @@
 // c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes && ./a.out
 
 int main() {
-	bstring s("test\r\n", 6);
-	cerr << s.size() << endl;
-	bstring t = s.trimend();
-	cerr << t.size() << endl;
+	bstring s("-1-2", 4);
+	bstring s1;
+	s1 += s;
+
+	cerr << s1 << endl;
 }
 
 

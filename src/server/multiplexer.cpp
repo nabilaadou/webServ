@@ -103,7 +103,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 			//close all connections and start over
 			perror("epoll_wait failed(setUpserver.cpp): ");
 		}
-		for (int i = 0; i < nfds; ++i) {
+		for (size_t i = 0; i < nfds; ++i) {
 			const int fd = events[i].data.fd;
 			try {
 				if (servrSocks.find(fd) != servrSocks.end())

@@ -11,7 +11,9 @@ bool	httpSession::Request::boundary(bstring& buffer) {
 
 bool	httpSession::Request::fileHeaders(bstring& buffer) {
 	bstring	line;
-	while(buffer.getheaderline(line) && !line.empty()) {
+	bool	eof;
+
+	while((eof = buffer.getheaderline(line)) && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
 
@@ -30,10 +32,10 @@ bool	httpSession::Request::fileHeaders(bstring& buffer) {
 		contentHeaders[fieldName] = filedValue;
 		prvsContentFieldName = fieldName;
 	}
-	// if (eof) {
-	// 	remainingBuffer = line;
-	// 	return false;
-	// }
+	if (!eof) {
+		remainingBuffer = line;
+		return false;
+	}
 	return true;
 }
 
@@ -65,9 +67,12 @@ void	httpSession::Request::openTargetFile(const string& filename, ofstream& fd) 
 }
 
 bool	httpSession::Request::fileContent(bstring& buffer) {
-	bstring	line;
-	bool	eof;
-	bstring	emptyline;
+	size_t	endboundarypos;
+	size_t	startboundarypos;
+	size_t	newlinepos;
+	bstring	subbuffer;
+	//when manually testing segvs can occure as i assume the bondaries are structered correctly
+
 	if (!fd.is_open()) {
 		if (contentHeaders.find("content-disposition") != contentHeaders.end()) {
 			string filename = retrieveFilename(contentHeaders["content-disposition"]);
@@ -75,32 +80,43 @@ bool	httpSession::Request::fileContent(bstring& buffer) {
 		} else
 			throw(statusCodeException(501, "Not Implemented"));
 	}
-	while (1) {
-		eof = buffer.getline(line);
-		if (!eof && (!line.ncmp(boundaryValue.c_str(), line.size()) || !line.ncmp((boundaryValue+"--").c_str(), line.size()) || line.empty()))
-			break ;
-		else if (!line.trimend().cmp(boundaryValue.c_str())) {
-			fd.close();
-			bodyParseFunctions.push(&Request::fileHeaders);
-			bodyParseFunctions.push(&Request::fileContent);
-			return true;
-		} else if (!line.trimend().cmp((boundaryValue + "--").c_str())) {
-			fd.close();
-			return true;
-		} else if (line.trimend().empty()) {
-			if (!eof)
-				break;
-			if (!emptyline.empty())
-				fd.write(emptyline.c_str(), emptyline.size());
-			emptyline = line;
-		} else {
-			if (!emptyline.empty())
-				fd.write(emptyline.c_str(), emptyline.size());
-			fd.write(line.c_str(), line.size());
-			emptyline = NULL;
-		}
+	startboundarypos = buffer.find(boundaryValue.c_str());
+	endboundarypos = buffer.find((boundaryValue+"--").c_str());
+	if (startboundarypos < endboundarypos) {
+		cerr << "found the mid boundary" << endl;
+		remainingBuffer = buffer.substr(startboundarypos, string::npos);
+		// cerr << "s-------remaining" << endl;
+		// cerr << remainingBuffer << endl;
+		// cerr << "e-------remaining" << endl;
+		--startboundarypos;//newline;
+		if (buffer[startboundarypos-1] == '\r')
+			--startboundarypos;
+		fd.write(buffer.c_str(), startboundarypos);
+		fd.close();
+		bodyParseFunctions.push(&Request::boundary);
+		bodyParseFunctions.push(&Request::fileHeaders);
+		bodyParseFunctions.push(&Request::fileContent);
+		buffer = remainingBuffer;
+		remainingBuffer = NULL;
+		return true;
+	} else if (endboundarypos < startboundarypos) {
+		--endboundarypos;//newline;
+		if (buffer[endboundarypos-1] == '\r')
+			--endboundarypos;
+		cerr << "found the end boundary" << endl;
+		buffer.erase(endboundarypos, string::npos);
+		fd.write(buffer.c_str(), buffer.size());
+		fd.close();
+		return true;
+	} else if ((newlinepos = buffer.rfind('\n')) != string::npos && !(subbuffer = buffer.substr(newlinepos+1)).ncmp(boundaryValue.c_str(), subbuffer.size())) {
+		//binary'\n'boundary
+		cerr << "found potentiel unfinished boundary" << endl;
+		if (buffer[newlinepos-1] == '\r')
+			--newlinepos;
+		fd.write(buffer.c_str(), newlinepos);
+		remainingBuffer = buffer.substr(newlinepos, string::npos);
 	}
-	remainingBuffer = line;
+		fd.write(buffer.c_str(), buffer.size());
 	return false;
 }
 
@@ -113,11 +129,10 @@ bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 			throw(statusCodeException(400, "Bad Request"));
 		}
 	}
-	cerr << "-----length: " << length << endl;
+	cerr << "before-length: " << length << endl;
 	// cerr << "---s-content---" << endl;
 	// cerr << buffer << endl;
 	// cerr << "---e-content---" << endl;
-	// buffer.erase(length, std::string::npos);//wtffffffffffffffff
 	int buffersize = buffer.size();
 	cerr << "buffer size: " << buffersize << endl; //weird shit here
 	while(!bodyParseFunctions.empty()) {
@@ -126,7 +141,7 @@ bool	httpSession::Request::contentLengthBased(bstring& buffer) {
 		bodyParseFunctions.pop();
 	}
 	length -= buffersize - remainingBuffer.size();
-	cerr << "-----after-length: " << length << endl;
+	cerr << "after-length: " << length << endl;
 	return (length == 0) ? true : false;
 }
 

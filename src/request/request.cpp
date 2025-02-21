@@ -11,21 +11,24 @@ httpSession::Request::Request(httpSession& session) : s(session), state(PROCESSI
 }
 
 void	httpSession::Request::parseMessage(const int clientFd) {
-	char	buffer[BUFFER_SIZE+1] = {0};
+	char*	buffer = new char[BUFFER_SIZE];
 	ssize_t byteread;
 
-	if ((byteread = read(clientFd, buffer, BUFFER_SIZE)) <= 0) {
+	if ((byteread = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT)) <= 0) {
 		state = CCLOSEDCON;
 		return;
 	}
+	// cerr << "bytesread: " << byteread << endl;
 	bstring clientRequest(buffer, byteread);
-	remainingBuffer += clientRequest;
-	// cerr << "ss-----Request-----" << endl;
+	delete[] buffer;
+	clientRequest = remainingBuffer + clientRequest;
+	remainingBuffer = NULL;
+	// cerr << "---s-rawdata" << endl;
 	// cerr << clientRequest << endl;
-	// cerr << "ee-----Request-----" << endl;
+	// cerr << "---e-rawdata" << endl;
 	while(!parseFunctions.empty()) {
 		const auto& func = parseFunctions.front();
-		if (!(this->*func)(remainingBuffer))	return;
+		if (!(this->*func)(clientRequest))	return;
 		parseFunctions.pop();
 	}
 	state = DONE;
@@ -35,3 +38,6 @@ void	httpSession::Request::parseMessage(const int clientFd) {
 const t_state& httpSession::Request::status() const {
 	return state;
 }
+
+// GET / HTTP1.1\r\n
+//headersbody

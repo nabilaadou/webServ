@@ -8,7 +8,9 @@ bstring::bstring(const char* str, const size_t size) : stringsize(size) {
 		stringsize = 0;
 	} else {
 		__string = new char[stringsize];
-		strncpy(__string, str, stringsize);
+		for (size_t i = 0; i < stringsize; ++i) {
+			__string[i] = str[i];
+		}
 	}
 }
 
@@ -17,7 +19,9 @@ bstring::bstring(const bstring& other) {
 	if (other.empty() == false) {
 		stringsize = other.size();
 		__string = new char[stringsize];
-		strncpy(__string, other.__string, stringsize);
+		for (size_t i = 0; i < stringsize; ++i) {
+			__string[i] = other.__string[i];
+		}
 	} else {
 		stringsize = 0;
 		__string = NULL;
@@ -36,7 +40,7 @@ const size_t&	bstring::size() const {
 
 const string	bstring::cppstring() const {
 	std::string s;
-	for (int i = 0; i < stringsize; ++i)
+	for (size_t i = 0; i < stringsize; ++i)
 		s += __string[i];
 	return s;
 }
@@ -81,14 +85,13 @@ bstring	bstring::substr(size_t start, size_t len) const {
 bool	bstring::getheaderline(bstring& line) {
 	char	ch;
 	bool	br = false;
-	for (int i = 0; i < stringsize; ++i) {
+	for (size_t i = 0; i < stringsize; ++i) {
 		ch = __string[i];
 		switch (static_cast<int>(ch))
 		{
 		case 10: {
-			if (br == true) {
+			if (br == true)
 				line = substr(0, i-1);
-			}
 			else
 				line = substr(0, i);
 			erase(0, i+1);
@@ -102,7 +105,7 @@ bool	bstring::getheaderline(bstring& line) {
 		}
 		default:
 			if (br) {
-				cerr << "brbrbrbrbr" << endl;
+				cerr << "www" << endl;
 				// throw(statusCodeException(400, "Bad Request"));
 			}
 		}
@@ -114,7 +117,7 @@ bool	bstring::getheaderline(bstring& line) {
 
 bool	bstring::getline(bstring& line) {
 	char	ch;
-	for (int i = 0; i < stringsize; ++i) {
+	for (size_t i = 0; i < stringsize; ++i) {
 		ch = __string[i];
 		if (ch == '\n') {
 			line = substr(0, i+1);
@@ -160,7 +163,7 @@ void	bstring::erase(const size_t start, size_t n) {
 size_t	bstring::find(const char* needle, const size_t startpos) const {
 	if (startpos >= stringsize)
 		return std::string::npos;
-	for (int i = startpos; i < stringsize; ++i) {
+	for (size_t i = startpos; i < stringsize; ++i) {
 		if (ncmp(needle, strlen(needle), i) == 0)
 			return i;
 	}
@@ -170,7 +173,17 @@ size_t	bstring::find(const char* needle, const size_t startpos) const {
 size_t	bstring::find(const char needle, const size_t startpos) const {
 	if (startpos >= stringsize)
 		return std::string::npos;
-	for (int i = startpos; i < stringsize; ++i) {
+	for (size_t i = startpos; i < stringsize; ++i) {
+		if (__string[i] == needle)
+			return i;
+	}
+	return std::string::npos;
+}
+
+size_t	bstring::rfind(const char needle, size_t startpos) const {
+	if (startpos > stringsize-1)
+		startpos = stringsize - 1;
+	for (ssize_t i = startpos; i >= 0; --i) {
 		if (__string[i] == needle)
 			return i;
 	}
@@ -202,17 +215,32 @@ bool	bstring::cmp(const char* str) const {
 }
 
 bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) const {
+	int i = 0;
+
 	if (startpos >= stringsize)
 		return true;
 	const char* str2 = &(__string[startpos]);
 	size_t str2size = stringsize - startpos;
 	if (n > str2size)
 		return true;
-	int i = 0;
 	while (i+1 < n && i+1 < str2size && str1[i] && str2[i] == str1[i])
 		++i;
 	return str1[i] - str2[i];
 }
+
+// bool	bstring::ncmp(const bstring& str1, const size_t n, const size_t startpos) const {
+// 	int i = 0;
+
+// 	if (startpos >= stringsize)
+// 		return true;
+// 	const char* str2 = &(__string[startpos]);
+// 	size_t str2size = stringsize - startpos;
+// 	if (n > str2size)
+// 		return true;
+// 	while (i < n && i+1 < str2size && i+1 < str1.size() && str2[i] == str1[i])
+// 		++i;
+// 	return str1[i] - str2[i];
+// }
 
 
 bool	bstring::empty() const {
@@ -229,15 +257,16 @@ const bstring& bstring::operator=(const bstring& other) {
 			__string = NULL;
 		else {
 			__string = new char[stringsize];
-			strncpy(__string, other.__string, stringsize);
+			for (size_t i = 0; i < stringsize; ++i) {
+				__string[i] = other.__string[i];
+			}
 		}
 	}
 	return *this;
 }
 
 const char*	bstring::operator=(const char* newstring) {
-	if (__string)
-		delete []__string;
+	delete []__string;
 	if (newstring == NULL) {
 		stringsize = 0;
 		__string = NULL;
@@ -245,7 +274,9 @@ const char*	bstring::operator=(const char* newstring) {
 	}
 	stringsize = strlen(newstring);
 	__string = new char[stringsize];
-	strncpy(__string, newstring, stringsize);
+	for (size_t i = 0; i < stringsize; ++i) {
+		__string[i] = newstring[i];
+	}
 	return __string;
 }
 
@@ -256,7 +287,7 @@ const char&	bstring::operator[](const int index) const{
 }
 
 std::ostream& operator<<(std::ostream &out, const bstring &bs) {
-	for (int i = 0; i < bs.size(); ++i)
+	for (size_t i = 0; i < bs.size(); ++i)
 		out << bs[i];
 	return out;
 }
@@ -266,11 +297,11 @@ const bstring&	bstring::operator+=(const bstring& buff) {
 		return *this;
 	char* newstring = new char[stringsize+buff.size()];
 	int	newstringpos = 0;
-	for (int i = 0; i < stringsize; ++i) {
+	for (size_t i = 0; i < stringsize; ++i) {
 		newstring[newstringpos] = __string[i];
 		++newstringpos;
 	}
-	for (int i = 0; i < buff.size(); ++i) {
+	for (size_t i = 0; i < buff.size(); ++i) {
 		newstring[newstringpos] = buff[i];
 		++newstringpos;
 	}
@@ -285,11 +316,11 @@ const char*	bstring::operator+=(const char* buff) {
 		return __string;
 	char* newstring = new char[stringsize+strlen(buff)];
 	int	newstringpos = 0;
-	for (int i = 0; i < stringsize; ++i) {
+	for (size_t i = 0; i < stringsize; ++i) {
 		newstring[newstringpos] = __string[i];
 		++newstringpos;
 	}
-	for (int i = 0; i < strlen(buff); ++i) {
+	for (size_t i = 0; i < strlen(buff); ++i) {
 		newstring[newstringpos] = buff[i];
 		++newstringpos;
 	}
@@ -297,4 +328,20 @@ const char*	bstring::operator+=(const char* buff) {
 	__string = newstring;
 	stringsize += strlen(buff);
 	return __string;
+}
+
+const bstring	bstring::operator+(const bstring& buff) {
+	if (buff.empty())
+		return *this;
+	char* newstring = new char[stringsize+buff.size()];
+	int	newstringpos = 0;
+	for (size_t i = 0; i < stringsize; ++i) {
+		newstring[newstringpos] = __string[i];
+		++newstringpos;
+	}
+	for (size_t i = 0; i < buff.size(); ++i) {
+		newstring[newstringpos] = buff[i];
+		++newstringpos;
+	}
+	return bstring(newstring, stringsize+buff.size());
 }

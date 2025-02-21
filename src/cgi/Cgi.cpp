@@ -55,7 +55,7 @@ void	Cgi::createPipes() {
 static char**	transformVectorToChar(vector<string>& vec) {
 	char** 	strs = new char*[vec.size() + 1];
 
-	for (int i = 0; i < vec.size(); ++i) {
+	for (size_t i = 0; i < vec.size(); ++i) {
 		strs[i] = new char[vec[i].size()+1];
 		strcpy(strs[i], vec[i].c_str());
 	}
@@ -83,7 +83,7 @@ void	Cgi::executeScript() {
 	vecArgv.push_back(infos.scriptUri);
 	argv = transformVectorToChar(vecArgv);
 	if (execve(argv[0], argv, NULL) == -1) {
-		for (int i = 0; argv[i]; ++i) {
+		for (size_t i = 0; argv[i]; ++i) {
 			delete argv[i];
 		}
 		delete []argv;

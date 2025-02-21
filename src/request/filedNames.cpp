@@ -14,11 +14,11 @@ bool	httpSession::Request::parseFileds(bstring& buffer) {
 	while((eof = buffer.getheaderline(line)) && !line.empty()) {
 		string	fieldName;
 		string	filedValue;
+
 		if (!s.headers.empty() && (line[0] == ' ' || line[0] == '\t')) {
 			s.headers[prvsFieldName] += " " + trim(line.cppstring());
 			continue ;
 		}
-
 		size_t colonIndex = line.find(":");
 		fieldName = line.substr(0, colonIndex).cppstring();
 		if (colonIndex != string::npos && colonIndex+1 < line.size()) {
@@ -26,8 +26,6 @@ bool	httpSession::Request::parseFileds(bstring& buffer) {
 			filedValue = trim(filedValue);
 		}
 		if (colonIndex == string::npos || !validFieldName(fieldName)) {
-			cerr << line << endl;
-			cerr << fieldName << endl;
 			throw(statusCodeException(400, "Bad Request"));
 		}
 		s.headers[fieldName] = filedValue;
