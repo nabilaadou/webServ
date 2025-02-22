@@ -1,24 +1,27 @@
-NAME = webServ
-
-SRCS =  src/wrappers.cpp src/stringManipulation.cpp src/cgi/*.cpp \
-		src/exceptions/*.cpp src/request/*.cpp src/response/*.cpp \
-		src/server/*.cpp src/bstring/*.cpp
-
-
-CC = g++
-
-CFLAGS = -Wall -Wextra -I./includes -fsanitize=address -w -g3 #-Werror #-std=c++98
-
-all : $(NAME)
-
-$(NAME): $(SRCS)
-	$(CC) $(CFLAGS) $(SRCS) -o $(NAME)
-
+NAME = webserv
+CPP = g++
+INC = -I ./includes
+SRC = $(wildcard src/*.cpp src/cgi/*.cpp src/exceptions/*.cpp \
+        src/request/*.cpp src/response/*.cpp src/server/*.cpp src/bstring/*.cpp)
+OBJ = $(SRC:.cpp=.o)
+CPPFLAGS = -fsanitize=address#-Wall -Wextra -Werror -std=c++98
 
 %.o: %.cpp
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CPP) $(INC) -c -o $@ $<
 
-fclean :
-		@rm -rf $(NAME) $(CONFI)
+all: $(NAME)
 
-re : fclean all
+$(NAME): $(OBJ)
+	$(CPP) $(CFLAGS) $(OBJ) -o $(NAME)
+
+clean:
+	rm -rf $(OBJ)
+
+fclean: clean
+	rm -rf $(NAME)
+
+re: fclean all
+
+.PHONY: clean re all fclean
+
+.SECONDARY: $(OBJ)

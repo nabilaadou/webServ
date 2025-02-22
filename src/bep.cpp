@@ -1,15 +1,15 @@
-#include "server.h"
-#include "binarystring.hpp"
+// #include "server.h"
+// #include "binarystring.hpp"
 
-// c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes && ./a.out
+// // c++ -fsanitize=address src/bstring/*.cpp  src/bep.cpp -I includes && ./a.out
 
-int main() {
-	bstring s("-1-2", 4);
-	bstring s1;
-	s1 += s;
+// int main() {
+// 	bstring s("-1-2", 4);
+// 	bstring s1;
+// 	s1 += s;
 
-	cerr << s1 << endl;
-}
+// 	cerr << s1 << endl;
+// }
 
 
 

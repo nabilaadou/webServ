@@ -19,7 +19,7 @@
 #include "statusCodeException.hpp"
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
 
-#define BUFFER_SIZE 9999999999
+#define BUFFER_SIZE 8192
 
 using namespace std;
 
