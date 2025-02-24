@@ -20,6 +20,8 @@
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
 
 #define BUFFER_SIZE 8192
+#define URI_MAXSIZE 1024
+#define HEADER_FIELD_MAXSIZE 5120
 
 using namespace std;
 
@@ -29,9 +31,34 @@ enum e_methods {
 	DELETE,
 };
 
+enum e_headersStat {
+	fieldLine = 0,
+	filedName,
+	nl,
+};
+
+enum e_sstat {//session stat
+	method=0,
+	spBeforeUri,
+	uri,
+	httpversion,
+	starterlineNl,
+	headers,
+};
+
+struct componentlength {
+	size_t	s_method;
+	size_t	s_uri;
+	size_t	s_httpversion;
+	size_t	s_starterlineNl;
+	size_t	s_headerfields;
+
+	componentlength() : s_method(0), s_uri(0), s_httpversion(0), s_starterlineNl(0), s_headerfields(0) {}
+};
+
 struct location {
 	string				uri;
-    vector<e_methods>		methods;
+    vector<e_methods>	methods;
     string				redirection;
     string				alias;
 	string				upload;
@@ -49,7 +76,7 @@ struct configuration {
 
 class httpSession {
 private:
-	e_methods				method;
+	e_methods			method;
 	string				path;
 	string				query;
 	string				httpProtocole;
@@ -61,39 +88,13 @@ private:
 public:
 	class Request {
 	private:
-		httpSession&						s;
-		string								prvsFieldName;
-		string								prvsContentFieldName;
-		queue<bool(Request::*)(bstring&)>	parseFunctions;
-		queue<bool(Request::*)(bstring&)>	bodyParseFunctions;
-		map<string, string>					contentHeaders;
-		int									length;
-		ofstream							fd;
-		string								boundaryValue;
-		bstring								remainingBuffer;
-		t_state								state;
+		httpSession&	s;
+		e_sstat			stat;
 
-		void								isCGI(location*);
-		void								reconstructUri(location* rules);
-		void								isProtocole(bstring& httpVersion);
-		void								extractPathQuery(bstring& uri);
-		void								isTarget(bstring& target);
-		void								isMethod(bstring& method);
-		location*							getConfigFileRules();
-		bool								parseStartLine(bstring&);
-		bool								validFieldName(string& str) const;
-		bool								parseFileds(bstring&);
-		void								openTargetFile(const string& filename, ofstream& fd) const;
-		bool								boundary(bstring&);
-		bool								fileHeaders(bstring&);
-		bool								fileContent(bstring&);
-		bool								contentLengthBased(bstring&);
-		bool								transferEncodingChunkedBased(bstring&);
-		bool								parseBody(bstring&);
+		void			parseRequest(const char* buffer, const size_t size);
 	public:
+		void			readfromsock(const int clientFd);
 		Request(httpSession& session);
-		void								parseMessage(const int clientFd);
-		const t_state&						status() const;
 	};
 
 	class Response {

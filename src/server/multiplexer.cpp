@@ -110,12 +110,12 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 					acceptNewClient(epollFd, fd, servrSocks[fd]);
 				else if (events[i].events & EPOLLIN) {
 					sessions.try_emplace(fd, new httpSession(fd, &config));
-					sessions[fd]->req.parseMessage(fd);
-					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
+					sessions[fd]->req.readfromsock(fd);
+					// reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
 				}
 				else if (events[i].events & EPOLLOUT) {
 					sessions[fd]->res.sendResponse(fd);
-					resSessionStatus(epollFd, fd, sessions, sessions[fd]->res.status());
+					// resSessionStatus(epollFd, fd, sessions, sessions[fd]->res.status());
 				}
 			}
 			catch (const statusCodeException& exception) {
