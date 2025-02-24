@@ -92,14 +92,17 @@ private:
 	int					statusCode;
 	string				codeMeaning;
 	Cgi*				cgi;
+	location*			rules;
 	configuration*		config;
 public:
 	class Request {
 	private:
 		httpSession&	s;
-		string			rawUri;
 
 		void			parseRequest(bstring& buffer);
+		void			reconstructUri();
+		void			getConfigFileRules();
+		void			extractPathQuery(const bstring rawUri);
 	public:
 		void			readfromsock(const int clientFd);
 		Request(httpSession& session);

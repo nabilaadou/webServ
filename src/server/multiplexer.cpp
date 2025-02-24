@@ -1,6 +1,6 @@
 #include "server.h"
 
-httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), stat(e_sstat::method), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), stat(e_sstat::method), cgi(NULL), rules(NULL), statusCode(200), codeMeaning("OK") {}
 
 httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), stat(e_sstat::method), statusCode(200), codeMeaning("OK") {}
 

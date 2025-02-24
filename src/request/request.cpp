@@ -12,8 +12,8 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 	}
 	bstring bbuffer(buffer, byteread);
 	parseRequest(bbuffer);
-	cerr << "m: " << s.method << endl;
-	cerr << "uri: " << rawUri << endl;
-	for (const auto& it : s.headers) 
-		cerr << it.first << ": " << it.second << endl; 
+	// cerr << "m: " << s.method << endl;
+	// cerr << "uri: " << s.path << endl;
+	// for (const auto& it : s.headers) 
+	// 	cerr << it.first << ": " << it.second << endl; 
 }
