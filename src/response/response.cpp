@@ -1,32 +1,27 @@
 #include "httpSession.hpp"
 
-httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1), state(PROCESSING) {}
+httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1) {}
 
 void	httpSession::Response::sendResponse(const int clientFd) {
 	if (s.cgi == NULL) {
-		if (state == PROCESSING) {
+		if (s.stat == sHeader) {
 			sendHeader(clientFd);
-			if (state == CCLOSEDCON)
+			if (s.stat == CCLOSEDCON)
 				return ;
-			state = SHEADER;
+			s.stat = sBody;
 		}
 		if (s.method != POST)
 			sendBody(clientFd);
 		else
-			state = DONE;
+			s.stat = done;
 	} else {
-		if (state == PROCESSING) {
+		if (s.stat == sHeader) {
 			sendCgiStarterLine(clientFd);
-			if (state == CCLOSEDCON)
+			if (s.stat == CCLOSEDCON)
 			return ;
-			state = SHEADER;
+		s.stat = sBody;
 			s.cgi->setupCGIProcess();
 		}
 		sendCgiOutput(clientFd);
 	}
 }
-
-const t_state&	httpSession::Response::status() const {
-	return state;
-}
-

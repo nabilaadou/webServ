@@ -31,19 +31,22 @@ enum e_methods {
 	DELETE,
 };
 
-enum e_headersStat {
-	fieldLine = 0,
-	filedName,
-	nl,
-};
-
 enum e_sstat {//session stat
 	method=0,
 	spBeforeUri,
 	uri,
 	httpversion,
 	starterlineNl,
-	headers,
+	fieldLine,
+	wssBeforeFieldName,
+	filedName,
+	fieldNl,
+	emptyLine,
+	body,
+	sHeader,
+	sBody,
+	done,
+	CCLOSEDCON,
 };
 
 struct componentlength {
@@ -52,8 +55,13 @@ struct componentlength {
 	size_t	s_httpversion;
 	size_t	s_starterlineNl;
 	size_t	s_headerfields;
+	size_t	s_field;
+	size_t	s_headersEnd;
 
-	componentlength() : s_method(0), s_uri(0), s_httpversion(0), s_starterlineNl(0), s_headerfields(0) {}
+	componentlength() : 
+		s_method(0), s_uri(0), s_httpversion(0)
+		, s_starterlineNl(0), s_headerfields(0)
+		, s_field(0) , s_headersEnd(0) {}
 };
 
 struct location {
@@ -76,10 +84,10 @@ struct configuration {
 
 class httpSession {
 private:
+	e_sstat				stat;
 	e_methods			method;
 	string				path;
 	string				query;
-	string				httpProtocole;
 	map<string, string>	headers;
 	int					statusCode;
 	string				codeMeaning;
@@ -89,9 +97,9 @@ public:
 	class Request {
 	private:
 		httpSession&	s;
-		e_sstat			stat;
+		string			rawUri;
 
-		void			parseRequest(const char* buffer, const size_t size);
+		void			parseRequest(bstring& buffer);
 	public:
 		void			readfromsock(const int clientFd);
 		Request(httpSession& session);
@@ -101,7 +109,6 @@ public:
 	private:
 		httpSession&	s;
 		int				contentFd;
-		t_state			state;
 		
 		static string	getSupportedeExtensions(const string&);
 		string			contentTypeHeader() const;
@@ -112,14 +119,14 @@ public:
 	public:
 		Response(httpSession& session);
 		void			sendResponse(const int clientFd);
-		const t_state&	status() const;
 	};
 
-	Request		req;
-	Response	res;
+	Request			req;
+	Response		res;
 
+	const e_sstat&	status() const;
+	void			reSetPath(const string& newPath);
 	httpSession(int clientFd, configuration* confi);
 	httpSession();
-	void		reSetPath(const string& newPath);
 
 };

@@ -1,8 +1,13 @@
 #include "server.h"
 
-httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), stat(e_sstat::method), cgi(NULL), statusCode(200), codeMeaning("OK") {}
 
-httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), stat(e_sstat::method), statusCode(200), codeMeaning("OK") {}
+
+const e_sstat& httpSession::status() const {
+	return stat;
+}
+
 
 void	httpSession::reSetPath(const string& newPath) {
 	path = newPath;
@@ -27,10 +32,10 @@ void	sendError(const int clientFd, const int statusCode, const string codeMeanin
 }
 
 
-void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
+void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const e_sstat& status) {
 	struct epoll_event	ev;
 
-	if (status == DONE) {
+	if (status == sHeader) {
 		ev.events = EPOLLIN;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -51,10 +56,10 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 	}
 }
 
-void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
+void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const e_sstat& status) {
 	struct epoll_event	ev;
 
-	if (status == DONE) {
+	if (status == done) {
 		ev.events = EPOLLOUT;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -97,7 +102,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 
 	while (1) {
 		int nfds;
-		// cerr << "waiting for requests..." << endl;
+		cerr << "waiting for requests..." << endl;
 		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
 			//send the internal error page to all current clients
 			//close all connections and start over
@@ -111,11 +116,11 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				else if (events[i].events & EPOLLIN) {
 					sessions.try_emplace(fd, new httpSession(fd, &config));
 					sessions[fd]->req.readfromsock(fd);
-					// reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
+					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->status());
 				}
 				else if (events[i].events & EPOLLOUT) {
 					sessions[fd]->res.sendResponse(fd);
-					// resSessionStatus(epollFd, fd, sessions, sessions[fd]->res.status());
+					resSessionStatus(epollFd, fd, sessions, sessions[fd]->status());
 				}
 			}
 			catch (const statusCodeException& exception) {
