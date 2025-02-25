@@ -190,16 +190,3 @@
 // 		return false;
 // 	return true;
 // }
-
-
-void	httpSession::Request::parseBody() {
-	if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
-		boundaryValue = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
-		if (s.headers.find("content-length") != s.headers.end())
-			parseFunctions.push(&Request::contentLengthBased);
-		// else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
-		// 	parseFunctions.push(&Request::transferEncodingChunkedBased);
-	}
-	else
-		throw(statusCodeException(501, "Not Implemented"));
-}

@@ -1,6 +1,6 @@
 #include "httpSession.hpp"
 
-httpSession::Request::Request(httpSession& session) : s(session) {}
+httpSession::Request::Request(httpSession& session) : s(session), fd(-1), bodyFormat(-1) {}
 
 void	httpSession::Request::readfromsock(const int clientFd) {
 	char	buffer[BUFFER_SIZE];

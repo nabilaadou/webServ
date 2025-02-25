@@ -1,5 +1,39 @@
 #include "httpSession.hpp"
 
+static bool	isMultipartFormData(const string& value) {
+	vector<string>	fieldValueparts;
+	split(value, ';', fieldValueparts);
+	if (fieldValueparts.size() != 2)
+		return false;
+	if (trim(fieldValueparts[0]) != "multipart/form-data")
+		return false;
+	if (strncmp(trim(fieldValueparts[1]).c_str(), "boundary=", 9))
+		return false;
+	return true;
+}
+
+static int	openFile(const string& value) {
+	int				fd;
+	vector<string>	fieldValueparts;
+	vector<string> keyvalue;
+
+	split(value, ';', fieldValueparts);
+	if (fieldValueparts.size() != 3 || strncmp("form-data" ,trim(fieldValueparts[0]).c_str(), 9))
+		throw(statusCodeException(501, "Not Implemented"));
+	split(trim(fieldValueparts[1]), '=', keyvalue);
+	if (keyvalue.size() != 2 || strncmp("name", keyvalue[0].c_str(), 4) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
+		throw(statusCodeException(501, "Not Implemented"));
+	keyvalue.clear();
+	split(trim(fieldValueparts[2]), '=', keyvalue);
+	if (keyvalue.size() != 2 || strncmp("filename", keyvalue[0].c_str(), 8) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
+		throw(statusCodeException(501, "Not Implemented"));
+	keyvalue[1].erase(keyvalue[1].begin());
+	keyvalue[1].erase(keyvalue[1].end()-1);
+	if ((fd = open(keyvalue[1].c_str(), O_WRONLY, 0644)) < 0)
+		throw(statusCodeException(500, "Internal Server Error"));
+	return fd;
+}
+
 // void	httpSession::Request::isCGI() {
 // 	size_t		pos = 0;
 // 	cgiInfo		cgiVars;
@@ -144,10 +178,6 @@ void	httpSession::Request::parseHeaders(bstring& buffer) {
 			case 6:
 				throw(statusCodeException(400, "Bad Request"));
 			}
-			// if (s.sstat == e_sstat::method)
-			// 	++xlength.s_method;
-			// else
-			// 	xlength.s_method = 0;
 			++xlength.s_method;
 			break;
 		}
@@ -355,7 +385,7 @@ void	httpSession::Request::parseHeaders(bstring& buffer) {
 				switch (s.method)
 				{
 					case POST: {
-						s.sstat = e_sstat::body;
+						s.sstat = e_sstat::bodyFormat;
 						break;
 					}
 					default:
@@ -382,8 +412,43 @@ void	httpSession::Request::parseHeaders(bstring& buffer) {
 			++xlength.s_headerfields;
 			break;
 		}
-		case e_sstat::body: {
-			
+		case e_sstat::bodyFormat: {
+			if (bodyFormat != -1) {
+				s.sstat = (bodyFormat == 1) ? s.sstat = e_sstat::contentLengthBased : s.sstat = e_sstat::transferEncodingChunkedBased;
+				fd = openFile(s.headers["content-disposition"]);
+			}
+			else if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
+				boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
+				if (s.headers.find("content-length") != s.headers.end()) {
+					s.sstat = e_sstat::contentLengthBased;
+					length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
+					bodyFormat = 1;
+				} else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked") {
+					s.sstat = e_sstat::contentLengthBased;
+					bodyFormat = 2;
+				}
+			}
+			else
+				throw(statusCodeException(501, "Not Implemented"));
+		}
+		case e_sstat::contentLengthBased: {
+			switch (ch)
+			{
+				case '\n': {
+					if (buffer[i-1] == '\r')
+						--xlength.s_bodyLine;
+					if (!buffer.ncmp(boundary.c_str(), xlength.s_bodyLine+1, i-xlength.s_bodyLine))
+						s.sstat = e_sstat::emptyLine;
+					// else if (!buffer.ncmp((boundary+"--").c_str(), xlength.s_bodyLine+1, i-xlength.s_bodyLine))
+					// 	//end
+					// else
+					// 	//write to the file
+					xlength.s_bodyLine = 0;
+					continue;
+				}
+			}
+			++xlength.s_bodyLine;
+			break;
 		}
 		}
 		if (xlength.s_headerfields > HEADER_FIELD_MAXSIZE)

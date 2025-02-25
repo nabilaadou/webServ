@@ -37,6 +37,9 @@ enum e_sstat {//session stat
 	filedName,
 	fieldNl,
 	emptyLine,
+	bodyFormat,
+	contentLengthBased,
+	transferEncodingChunkedBased,
 	body,
 	sHeader,
 	sBody,
@@ -52,11 +55,12 @@ struct componentlength {
 	size_t	s_headerfields;
 	size_t	s_field;
 	size_t	s_headersEnd;
+	size_t	s_bodyLine;
 
 	componentlength() : 
 		s_method(0), s_uri(0), s_httpversion(0)
 		, s_starterlineNl(0), s_headerfields(0)
-		, s_field(0) , s_headersEnd(0) {}
+		, s_field(0) , s_headersEnd(0), s_bodyLine(0) {}
 };
 
 class httpSession {
@@ -75,7 +79,10 @@ public:
 	class Request {
 	private:
 		httpSession&	s;
-		string			boundary
+		int				bodyFormat;
+		string			boundary;
+		size_t			length;
+		int				fd;
 
 		void			parseHeaders(bstring& buffer);
 		// void			isCGI();
