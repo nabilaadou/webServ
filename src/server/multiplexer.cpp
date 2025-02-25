@@ -1,11 +1,11 @@
 #include "server.h"
 
-httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), stat(e_sstat::method), cgi(NULL), rules(NULL), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), sstat(e_sstat::method), cgi(NULL), rules(NULL), statusCode(200), codeMeaning("OK") {}
 
-httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), stat(e_sstat::method), statusCode(200), codeMeaning("OK") {}
+httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), sstat(e_sstat::method), statusCode(200), codeMeaning("OK") {}
 
 const e_sstat& httpSession::status() const {
-	return stat;
+	return sstat;
 }
 
 
@@ -35,7 +35,8 @@ void	sendError(const int clientFd, const int statusCode, const string codeMeanin
 void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const e_sstat& status) {
 	struct epoll_event	ev;
 
-	if (status == sHeader) {
+	if (status == done) {
+		cerr << "done sending the response" << endl;
 		ev.events = EPOLLIN;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -59,7 +60,7 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const e_sstat& status) {
 	struct epoll_event	ev;
 
-	if (status == done) {
+	if (status == sHeader) {
 		ev.events = EPOLLOUT;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
@@ -78,12 +79,11 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 	}
 }
 
-void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& addrsInfo) {
+void	acceptNewClient(const int& epollFd, const int& serverFd) {
 	struct epoll_event	ev;
 	int					clientFd;
-	socklen_t			addrsLen = sizeof(addrsInfo);
 
-	if ((clientFd = accept(serverFd, (struct sockaddr*)&addrsInfo, &addrsLen)) < 0) {
+	if ((clientFd = accept(serverFd, NULL, NULL)) < 0) {
 		perror("accept faield: ");
         throw(statusCodeException(500, "Internal Server Error"));//i can't send the error page//no fd to send to
     }
@@ -93,15 +93,15 @@ void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& 
 		perror("epoll_ctl faield(setUpserver.cpp): ");
 		throw(statusCodeException(500, "Internal Server Error"));
 	}
-	cerr << "-------new client added-------" << endl;
+	cerr << "--------------new client added--------------" << endl;
 }
 
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config) {
+void	multiplexerSytm(const vector<int>& servrSocks, const int& epollFd, map<string, configuration>& config) {
 	struct epoll_event		events[MAX_EVENTS];
 	map<int, httpSession*>	sessions;//change httpSession to a pointer so i can be able to free it
+	int nfds;
 
 	while (1) {
-		int nfds;
 		cerr << "waiting for requests..." << endl;
 		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
 			//send the internal error page to all current clients
@@ -111,10 +111,10 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 		for (size_t i = 0; i < nfds; ++i) {
 			const int fd = events[i].data.fd;
 			try {
-				if (servrSocks.find(fd) != servrSocks.end())
-					acceptNewClient(epollFd, fd, servrSocks[fd]);
+				if (find(servrSocks.begin(), servrSocks.end(), fd) != servrSocks.end())
+					acceptNewClient(epollFd, fd);
 				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, new httpSession(fd, &config));
+					sessions.try_emplace(fd, new httpSession(fd, &(config[getsockname(fd)])));
 					sessions[fd]->req.readfromsock(fd);
 					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->status());
 				}
@@ -127,14 +127,14 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 				struct epoll_event	ev;
 				cerr << "code--> " << exception.code() << endl;
 				cerr << "reason--> " << exception.meaning() << endl;
-				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
-					sessions[fd]->reSetPath(w_realpath(("." + config.errorPages.at(exception.code())).c_str()));
-					ev.events = EPOLLOUT;
-					ev.data.fd = fd;
-					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
-					}
-				} else {
+				// if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
+				// 	sessions[fd]->reSetPath(w_realpath(("." + config.errorPages.at(exception.code())).c_str()));
+				// 	ev.events = EPOLLOUT;
+				// 	ev.data.fd = fd;
+				// 	if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
+				// 		perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
+				// 	}
+				// } else {
 					sendError(fd, exception.code(), exception.meaning());
 					ev.events = EPOLLIN;
 					ev.data.fd = fd;
@@ -142,7 +142,7 @@ void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, confi
 						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
 					}
 					sessions.erase(sessions.find(fd));
-				}
+				// }
 			}
 		}
 	}

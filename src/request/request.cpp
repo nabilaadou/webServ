@@ -7,7 +7,7 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 	ssize_t byteread;
 
 	if ((byteread = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT)) <= 0) {
-		s.stat = CCLOSEDCON;
+		s.sstat = CCLOSEDCON;
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);

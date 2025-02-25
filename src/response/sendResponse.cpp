@@ -91,7 +91,7 @@ void	httpSession::Response::sendHeader(const int clientFd) {
 	header += "\r\n";
 	if (write(clientFd, header.c_str(), header.size()) <= 0) {
 		perror("write failed(sendResponse.cpp 24)");
-		s.stat = CCLOSEDCON;
+		s.sstat = CCLOSEDCON;
 		return ;
 	}
 }
@@ -115,28 +115,27 @@ void	httpSession::Response::sendBody(const int clientFd) {
 		chunkSize << hex << sizeRead << "\r\n";
 		if (write(clientFd, chunkSize.str().c_str(), chunkSize.str().size()) <= 0) {//not good wrapper good
 			perror("write failed(sendResponse.cpp 50)");
-			s.stat = CCLOSEDCON;
+			s.sstat = CCLOSEDCON;
 			return ;
 		}
 		if (write(clientFd, buff, sizeRead) <= 0) {
 			perror("write failed(sendResponse.cpp 50)");
-			s.stat = CCLOSEDCON;
+			s.sstat = CCLOSEDCON;
 			return ;
 		}
 		if (write(clientFd, "\r\n", 2) <= 0) {
 			perror("write failed(sendResponse.cpp 50)");
-			s.stat = CCLOSEDCON;
+			s.sstat = CCLOSEDCON;
 			return ;
 		}
 	} else {
 		if (write(clientFd, "0\r\n\r\n", 5) <= 0) {
 			perror("write failed(sendResponse.cpp 56)");
-			s.stat = CCLOSEDCON;
+			s.sstat = CCLOSEDCON;
 			return ;
 		}
-		s.stat = done;
+		s.sstat = done;
 		close(contentFd);
-		cerr << "done sending response" << endl;
 	}
 }
 
@@ -144,7 +143,7 @@ void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
     string starterLine = "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
     if (write(clientFd, starterLine.c_str(), starterLine.size()) <= 0) {
 		perror("write failed(sendResponse.cpp 143)");
-		s.stat = CCLOSEDCON;
+		s.sstat = CCLOSEDCON;
 	}
 }
 
@@ -155,16 +154,14 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));
     }
-    cerr << buff << endl;
     if (byteRead > 0) {
         if (write(clientFd, buff, byteRead) <= 0) {
 			perror("write failed(sendResponse.cpp 157)");
-			s.stat = CCLOSEDCON;
+			s.sstat = CCLOSEDCON;
 			return ;
 		}
     } else {
-        s.stat = done;
+        s.sstat = done;
 		close(s.cgi->rFd());
-		cerr << "done sending response cgi" << endl;
     }
 }

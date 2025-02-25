@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include "wrappers.h"
 #include <sys/socket.h>
+#include "confiClass.hpp"
 #include "binarystring.hpp"
 #include "stringManipulation.h"
 #include "statusCodeException.hpp"
@@ -24,12 +25,6 @@
 #define HEADER_FIELD_MAXSIZE 5120
 
 using namespace std;
-
-enum e_methods {
-	GET,
-	POST,
-	DELETE,
-};
 
 enum e_sstat {//session stat
 	method=0,
@@ -64,27 +59,9 @@ struct componentlength {
 		, s_field(0) , s_headersEnd(0) {}
 };
 
-struct location {
-	string				uri;
-    vector<e_methods>	methods;
-    string				redirection;
-    string				alias;
-	string				upload;
-    string				index;
-	map<string, string>	cgi;
-    bool				autoIndex;
-	location() : index("index.html") {}
-};
-
-struct configuration {
-    int						bodySize;
-    map<int, string>		errorPages;
-    map<string, location>	locations;
-};
-
 class httpSession {
 private:
-	e_sstat				stat;
+	e_sstat				sstat;
 	e_methods			method;
 	string				path;
 	string				query;
@@ -100,6 +77,7 @@ public:
 		httpSession&	s;
 
 		void			parseRequest(bstring& buffer);
+		void			isCGI();
 		void			reconstructUri();
 		void			getConfigFileRules();
 		void			extractPathQuery(const bstring rawUri);

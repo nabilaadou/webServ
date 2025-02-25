@@ -1,7 +1,7 @@
 NAME = webserv
 CPP = g++
 INC = -I ./includes
-SRC = $(wildcard src/*.cpp src/cgi/*.cpp src/exceptions/*.cpp \
+SRC = $(wildcard src/*.cpp src/cgi/*.cpp src/exceptions/*.cpp src/confi/*.cpp\
         src/request/*.cpp src/response/*.cpp src/server/*.cpp src/bstring/*.cpp)
 OBJ = $(SRC:.cpp=.o)
 CPPFLAGS = -fsanitize=address#-Wall -Wextra -Werror -std=c++98

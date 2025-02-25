@@ -1,74 +1,82 @@
 #include "httpSession.hpp"
 
-// void	httpSession::Request::isCGI(location* loc) {
-// 	size_t		pos = 0;
-// 	cgiInfo		cgiVars;
-// 	bool		foundAMatch = false;
+void	httpSession::Request::isCGI() {
+	size_t		pos = 0;
+	cgiInfo		cgiVars;
+	bool		foundAMatch = false;
 
-// 	while (1) {
-// 		pos = s.path.find('/', pos);
-// 		string subUri = s.path.substr(0, pos);
-// 		if (subUri == loc->alias || (subUri + '/') == loc->uri)
-// 			subUri += '/' + loc->index;
-// 		size_t	dotPos = subUri.rfind('.');
-// 		string subUriExt = "";
-// 		if (dotPos != string::npos)
-// 			subUriExt = subUri.substr(dotPos);
-// 		if (loc->cgi.find(subUriExt) != loc->cgi.end() && !access(("." + subUri).c_str() ,F_OK)) {
-// 			cgiVars.scriptUri = w_realpath(("." + subUri).c_str());
-// 			size_t barPos = subUri.rfind('/');
-// 			cgiVars.scriptName = subUri.substr(barPos+1);
-// 			cgiVars.exec = loc->cgi[subUriExt];
-// 			if (s.path.size() > subUri.size()+1)
-// 				cgiVars.path = s.path.substr(pos);
-// 			cgiVars.query = s.query;
-// 			foundAMatch = true;
-// 		}
-// 		if (pos++ == string::npos)
-// 			break;
-// 	}
-// 	if (foundAMatch == true)
-// 		s.cgi = new Cgi(cgiVars);
-// }
+	while (1) {
+		pos = s.path.find('/', pos);
+		string subUri = s.path.substr(0, pos);
+		// if (subUri == s.rules->alias || (subUri + '/') == loc->uri)
+		// 	subUri += '/' + loc->index;
+		size_t	dotPos = subUri.rfind('.');
+		string subUriExt = "";
+		if (dotPos != string::npos)
+			subUriExt = subUri.substr(dotPos);
+		if (s.rules->cgis.find(subUriExt) != s.rules->cgis.end() && !access(("." + subUri).c_str() ,F_OK)) {
+			cgiVars.scriptUri = w_realpath(("." + subUri).c_str());
+			size_t barPos = subUri.rfind('/');
+			cgiVars.scriptName = subUri.substr(barPos+1);
+			cgiVars.exec = s.rules->cgis[subUriExt];
+			if (s.path.size() > subUri.size()+1)
+				cgiVars.path = s.path.substr(pos);
+			cgiVars.query = s.query;
+			foundAMatch = true;
+		}
+		if (pos++ == string::npos)
+			break;
+	}
+	if (foundAMatch == true)
+		s.cgi = new Cgi(cgiVars);
+}
 
-// void	httpSession::Request::reconstructUri() {
-// 	struct stat pathStat;
-
-// 	if (find(s.rules->methods.begin(), s.rules->methods.end(), s.method) == s.rules->methods.end())
-// 		throw(statusCodeException(405, "Method Not Allowed"));
-// 	if (s.method == GET) {
-// 		if (!s.rules->redirection.empty()) {
-// 			s.statusCode = 301;
-// 			s.codeMeaning = "Moved Permanently";
-// 			//adding the location header to the response with the new path;
-// 			return ;
-// 		}
-// 		if (!s.rules->alias.empty()) {
-// 			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size() - 1);
-// 			s.path = s.rules->alias + s.path;
-// 		}
-// 	} else if (s.method == POST) {
-// 		if (!s.rules->upload.empty()) {
-// 			s.path = s.rules->upload;
-// 			s.path = w_realpath(("." + s.path).c_str());
-// 			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
-// 				throw(statusCodeException(403, "Forbidden"));
-// 			return ;
-// 		} else
-// 			throw(statusCodeException(403, "Forbidden"));
-// 	}
-// 	isCGI(s.rules);
-// 	if (s.cgi == NULL) {
-// 		s.path = w_realpath(("." + s.path).c_str());
-//     	if (stat(s.path.c_str(), &pathStat))
-// 			throw(statusCodeException(404, "Not Found"));
-// 		if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
-// 			s.path += "/" + s.rules->index;
-// 			if (stat(s.path.c_str(), &pathStat))
-// 				throw(statusCodeException(404, "Not Found"));
-// 		}
-// 	}
-// }
+void	httpSession::Request::reconstructUri() {
+	struct stat pathStat;
+//use switch cases
+	if (find(s.rules->methods.begin(), s.rules->methods.end(), s.method) == s.rules->methods.end())
+		throw(statusCodeException(405, "Method Not Allowed"));
+	switch (s.method)
+	{
+	case GET: {
+		if (s.rules->redirection) {
+			s.statusCode = 301;
+			s.codeMeaning = "Moved Permanently";
+			//adding the location header to the response with the new path;
+			return ;
+		} else {
+			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size() - 1);
+			s.path = s.rules->reconfigurer + s.path;
+		}
+		break;
+	}
+	case POST: {
+		if (!s.rules->uploads.empty()) {
+			s.path = s.rules->uploads;
+			s.path = w_realpath(("." + s.path).c_str());
+			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
+				throw(statusCodeException(403, "Forbidden"));
+		} else
+			throw(statusCodeException(403, "Forbidden"));
+		break;
+	}
+	case DELETE: {
+		if (!s.rules->uploads.empty()) {
+			s.path = s.rules->uploads + s.path;
+			s.path = w_realpath(("." + s.path).c_str());
+		} else
+			throw(statusCodeException(403, "Forbidden"));
+	}
+	}
+	s.path = w_realpath(("." + s.path).c_str());
+    stat(s.path.c_str(), &pathStat);
+	if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
+		s.path += "/" + s.rules->index;
+		if (stat(s.path.c_str(), &pathStat))
+		throw(statusCodeException(404, "Not Found"));
+	}
+	// isCGI();
+}
 
 void	httpSession::Request::getConfigFileRules() {
 	size_t		pos = 0;
@@ -85,10 +93,13 @@ void	httpSession::Request::getConfigFileRules() {
 		if (pos++ == string::npos)
 			break;
 	}
+	if (s.rules == NULL)
+		throw(statusCodeException(404, "Not Found"));
 }
 
 
 void	httpSession::Request::extractPathQuery(const bstring rawUri) {
+	cerr << "raww: " << rawUri << endl;
 	size_t pos = rawUri.find('?');
 	s.path = rawUri.substr(0, pos).cppstring();
 	if (pos != string::npos)
@@ -129,27 +140,27 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 	for (size_t i = 0; i < size; ++i) {
 		ch = buffer[i];
 		//component are seperated by a SINGLE space
-		switch (s.stat) {
+		switch (s.sstat) {
 		case e_sstat::method: {
 			switch (xlength.s_method)
 			{
 			case 2:{
 				if (!buffer.ncmp("GET", 3)) {
-					s.stat = spBeforeUri;
+					s.sstat = spBeforeUri;
 					s.method = GET;
 				}
 				break;
 			}
 			case 3: {
 				if (!buffer.ncmp("POST", 4)) {
-					s.stat = spBeforeUri;
+					s.sstat = spBeforeUri;
 					s.method = POST;
 				}
 				break;
 			}
 			case 5: {
 				if (!buffer.ncmp("DELETE", 6)) {
-					s.stat = spBeforeUri;
+					s.sstat = spBeforeUri;
 					s.method = DELETE;
 				}
 				break;
@@ -163,7 +174,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 		case e_sstat::spBeforeUri: {
 			if (ch != ' ')
 				throw(statusCodeException(400, "Bad Request"));
-			s.stat = uri;
+			s.sstat = uri;
 			break;
 		}
 		case e_sstat::uri: {
@@ -180,13 +191,14 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 				switch (ch)
 				{
 					case ' ': {
-						if (buffer[i-1] != '/')
-							throw(statusCodeException(400, "Bad Request"));
+						// if (buffer[i-1] != '/')
+						// 	throw(statusCodeException(400, "Bad Requestss"));
 						extractPathQuery(buffer.substr(i-xlength.s_uri, xlength.s_uri));
 						getConfigFileRules();
-						if (s.rules == NULL)
-							throw(statusCodeException(404, "Not Found"));
-						s.stat = e_sstat::httpversion;
+						reconstructUri();
+						cerr << s.path << endl;
+						// exit(0);
+						s.sstat = e_sstat::httpversion;
 						break;
 					}
 					case '-':
@@ -243,7 +255,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			case 7: {
 				if (ch != '1')
 					throw(statusCodeException(400, "Bad Request"));
-				s.stat = e_sstat::starterlineNl;
+				s.sstat = e_sstat::starterlineNl;
 				break;
 			}
 			}
@@ -261,7 +273,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			case '\n': {
 				if (xlength.s_starterlineNl > 1)
 					throw(statusCodeException(400, "Bad Request"));
-				s.stat = e_sstat::emptyLine;
+				s.sstat = e_sstat::emptyLine;
 				break;
 			}
 			default:
@@ -275,7 +287,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			{
 			case ':': { //test-> : field name ? valid?
 				fieldline = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-				s.stat = e_sstat::wssBeforeFieldName;
+				s.sstat = e_sstat::wssBeforeFieldName;
 				break;
 			}
 			case '-':
@@ -294,11 +306,11 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			switch (ch)
 			{
 			case '\r': {
-				s.stat = e_sstat::fieldNl;
+				s.sstat = e_sstat::fieldNl;
 				break;
 			}
 			case '\n':
-				s.stat = e_sstat::emptyLine;
+				s.sstat = e_sstat::emptyLine;
 			case ' ':
 			case '\t':
 			case '\f':
@@ -306,7 +318,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 				break;
 			default: {
 				--i;
-				s.stat = e_sstat::filedName;
+				s.sstat = e_sstat::filedName;
 				xlength.s_field = 0;
 				continue;
 			}
@@ -319,12 +331,12 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			{
 			case '\r': {
 				fieldname = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-				s.stat = e_sstat::fieldNl;
+				s.sstat = e_sstat::fieldNl;
 				break;
 			}
 			case '\n': {
 				fieldname = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-				s.stat = e_sstat::emptyLine;
+				s.sstat = e_sstat::emptyLine;
 			}
 			}
 			++xlength.s_field;
@@ -334,7 +346,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 		case e_sstat::fieldNl: {
 			if (ch != '\n')
 				throw(statusCodeException(400, "Bad Request"));
-			s.stat = e_sstat::emptyLine;
+			s.sstat = e_sstat::emptyLine;
 			++xlength.s_headerfields;
 			break;
 		}
@@ -349,7 +361,15 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 			case '\n': {
 				if (xlength.s_headersEnd > 1)
 					throw(statusCodeException(400, "Bad Request"));
-				s.stat = e_sstat::body;
+				switch (s.method)
+				{
+					case POST: {
+						s.sstat = e_sstat::body;
+						break;
+					}
+					default:
+						s.sstat = e_sstat::sHeader;
+				}
 				if (!fieldline.empty())
 					s.headers[fieldline] = fieldname;
 				break;
@@ -358,7 +378,7 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 				if (xlength.s_headersEnd != 0)
 					throw(statusCodeException(400, "Bad Request"));
 				--i;//goin back to the prev index so i can check if the char is valid in fieldname terms
-				s.stat = e_sstat::fieldLine;
+				s.sstat = e_sstat::fieldLine;
 				xlength.s_field = 0;
 				if (!fieldline.empty())
 					s.headers[fieldline] = fieldname;
@@ -375,5 +395,4 @@ void	httpSession::Request::parseRequest(bstring& buffer) {
 		if (xlength.s_headerfields > HEADER_FIELD_MAXSIZE)
 			throw(statusCodeException(431, "Request Header Fields Too Large"));
 	}
-	s.stat = CCLOSEDCON;//remove
 }

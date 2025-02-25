@@ -4,22 +4,22 @@ httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1
 
 void	httpSession::Response::sendResponse(const int clientFd) {
 	if (s.cgi == NULL) {
-		if (s.stat == sHeader) {
+		if (s.sstat == sHeader) {
 			sendHeader(clientFd);
-			if (s.stat == CCLOSEDCON)
+			if (s.sstat == CCLOSEDCON)
 				return ;
-			s.stat = sBody;
+			s.sstat = sBody;
 		}
 		if (s.method != POST)
 			sendBody(clientFd);
 		else
-			s.stat = done;
+			s.sstat = done;
 	} else {
-		if (s.stat == sHeader) {
+		if (s.sstat == sHeader) {
 			sendCgiStarterLine(clientFd);
-			if (s.stat == CCLOSEDCON)
+			if (s.sstat == CCLOSEDCON)
 			return ;
-		s.stat = sBody;
+		s.sstat = sBody;
 			s.cgi->setupCGIProcess();
 		}
 		sendCgiOutput(clientFd);
