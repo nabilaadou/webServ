@@ -19,7 +19,7 @@
 #include "stringManipulation.h"
 #include "statusCodeException.hpp"
 // echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
-
+// host-spawn
 #define BUFFER_SIZE 8192
 #define URI_MAXSIZE 1024
 #define HEADER_FIELD_MAXSIZE 5120
@@ -75,12 +75,14 @@ public:
 	class Request {
 	private:
 		httpSession&	s;
+		string			boundary
 
-		void			parseRequest(bstring& buffer);
-		void			isCGI();
+		void			parseHeaders(bstring& buffer);
+		// void			isCGI();
 		void			reconstructUri();
 		void			getConfigFileRules();
-		void			extractPathQuery(const bstring rawUri);
+		void			extractPathQuery(const bstring& rawUri);
+		void			parseBody();
 	public:
 		void			readfromsock(const int clientFd);
 		Request(httpSession& session);

@@ -39,7 +39,7 @@ int main(int ac, char **av) {
     try {
         ConfigFileParser confi(av[1]);
         config = confi.parseFile();
-        confi.printprint();
+        // confi.printprint();
         epollFd = createSockets(config, servrSocks);
         multiplexerSytm(servrSocks, epollFd, config);
     }
