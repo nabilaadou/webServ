@@ -12,7 +12,7 @@ CPPFLAGS = -fsanitize=address#-Wall -Wextra -Werror -std=c++98
 all: $(NAME)
 
 $(NAME): $(OBJ)
-	$(CPP) $(CFLAGS) $(OBJ) -o $(NAME)
+	$(CPP) $(CPPFLAGS) $(OBJ) -o $(NAME)
 
 clean:
 	rm -rf $(OBJ)

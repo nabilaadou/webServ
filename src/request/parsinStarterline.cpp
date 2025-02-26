@@ -79,7 +79,7 @@ void	httpSession::Request::reconstructUri() {
 			//adding the location header to the response with the new path;
 			return ;
 		} else {
-			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size());
+			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size()-1);
 			s.path = s.rules->reconfigurer + s.path;
 		}
 		break;
@@ -130,16 +130,19 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				case 3: {
 					if (buffer.ncmp("GET", 3, i-len))
 						throw(statusCodeException(400, "Bad Request"));
+					s.method = GET;
 					break;
 				}
 				case 4:{
 					if (buffer.ncmp("POST", 4, i-len))
 						throw(statusCodeException(400, "Bad Request"));
+						s.method = POST;
 					break;
 				}
 				case 6:{
 					if (buffer.ncmp("DELETE", 6, i-len))
 						throw(statusCodeException(400, "Bad Request"));
+					s.method = DELETE;
 				}
 				}
 				s.sstat = e_sstat::uri;
@@ -199,6 +202,7 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				else
 					s.query = buffer.substr(i-len+1, len).cppstring();
 				s.path.erase(s.path.end()-1);
+				reconstructUri();
 				s.sstat = e_sstat::httpversion;
 				len = 0;
 				continue;
@@ -210,7 +214,8 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 			case '+': case ',': case ';': case '=':
 				break;
 			default:
-				throw(statusCodeException(400, "Bad Request"));
+				if (!iswalnum(ch))
+					throw(statusCodeException(400, "Bad Request"));
 			}
 			++len;
 			break;
@@ -241,7 +246,7 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 			}
 			case '\n': {
 				s.sstat = e_sstat::emptyline;
-				return i;
+				return i+1;
 			}
 			default:
 				throw(statusCodeException(400, "Bad Request"));
@@ -253,115 +258,6 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 	}
 	return -1;
 }
-	// 	case e_sstat::fieldLine: {
-	// 		switch (ch)
-	// 		{
-	// 		case ':': { //test-> : field name ? valid?
-	// 			fieldline = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-	// 			s.sstat = e_sstat::wssBeforeFieldName;
-	// 			break;
-	// 		}
-	// 		case '-':
-	// 		case '_':
-	// 			break;
-	// 		default: {
-	// 			if (!iswalnum(ch))
-	// 				throw(statusCodeException(400, "Bad Request"));
-	// 		}
-	// 		}
-	// 		++xlength.s_field;
-	// 		++xlength.s_headerfields;
-	// 		break;
-	// 	}
-	// 	case e_sstat::wssBeforeFieldName: {
-	// 		switch (ch)
-	// 		{
-	// 		case '\r': {
-	// 			s.sstat = e_sstat::fieldNl;
-	// 			break;
-	// 		}
-	// 		case '\n':
-	// 			s.sstat = e_sstat::emptyLine;
-	// 		case ' ':
-	// 		case '\t':
-	// 		case '\f':
-	// 		case '\v':
-	// 			break;
-	// 		default: {
-	// 			--i;
-	// 			s.sstat = e_sstat::filedName;
-	// 			xlength.s_field = 0;
-	// 			continue;
-	// 		}
-	// 		}
-	// 		++xlength.s_headerfields;
-	// 		break;
-	// 	}
-	// 	case e_sstat::filedName: {
-	// 		switch (ch)
-	// 		{
-	// 		case '\r': {
-	// 			fieldname = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-	// 			s.sstat = e_sstat::fieldNl;
-	// 			break;
-	// 		}
-	// 		case '\n': {
-	// 			fieldname = buffer.substr(i-xlength.s_field, xlength.s_field).cppstring();
-	// 			s.sstat = e_sstat::emptyLine;
-	// 		}
-	// 		}
-	// 		++xlength.s_field;
-	// 		++xlength.s_headerfields;
-	// 		break ;
-	// 	}
-	// 	case e_sstat::fieldNl: {
-	// 		if (ch != '\n')
-	// 			throw(statusCodeException(400, "Bad Request"));
-	// 		s.sstat = e_sstat::emptyLine;
-	// 		++xlength.s_headerfields;
-	// 		break;
-	// 	}
-	// 	case e_sstat::emptyLine: {
-	// 		switch (ch)
-	// 		{
-	// 		case '\r': {
-	// 			if (xlength.s_headersEnd != 0)
-	// 				throw(statusCodeException(400, "Bad Request"));
-	// 			break;
-	// 		}
-	// 		case '\n': {
-	// 			if (xlength.s_headersEnd > 1)
-	// 				throw(statusCodeException(400, "Bad Request"));
-	// 			switch (s.method)
-	// 			{
-	// 				case POST: {
-	// 					s.sstat = e_sstat::bodyFormat;
-	// 					break;
-	// 				}
-	// 				default:
-	// 					s.sstat = e_sstat::sHeader;
-	// 			}
-	// 			if (!fieldline.empty())
-	// 				s.headers[fieldline] = fieldname;
-	// 			break;
-	// 		}
-	// 		default: {
-	// 			if (xlength.s_headersEnd != 0)
-	// 				throw(statusCodeException(400, "Bad Request"));
-	// 			--i;//goin back to the prev index so i can check if the char is valid in fieldname terms
-	// 			s.sstat = e_sstat::fieldLine;
-	// 			xlength.s_field = 0;
-	// 			if (!fieldline.empty())
-	// 				s.headers[fieldline] = fieldname;
-	// 			fieldline = "";
-	// 			fieldname = "";
-	// 			continue;
-	// 		}
-	// 		}
-	// 		++xlength.s_headersEnd;
-	// 		++xlength.s_headerfields;
-	// 		break;
-	// 	}
 	// 	case e_sstat::bodyFormat: {
 	// 		if (bodyFormat != -1) {
 	// 			s.sstat = (bodyFormat == 1) ? s.sstat = e_sstat::contentLengthBased : s.sstat = e_sstat::transferEncodingChunkedBased;

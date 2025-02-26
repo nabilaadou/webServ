@@ -39,11 +39,15 @@ enum e_sstat {//session stat
 	bodyFormat,
 	contentLengthBased,
 	transferEncodingChunkedBased,
-	body,
 	sHeader,
 	sBody,
 	done,
 	CCLOSEDCON,
+};
+
+enum e_requestStat {
+	headers,
+	body,
 };
 
 // struct componentlength {
@@ -78,13 +82,14 @@ public:
 	class Request {
 	private:
 		httpSession&	s;
-		int				bodyFormat;
+		e_requestStat	requestStat;
 		string			boundary;
 		size_t			length;
 		int				fd;
 
 		int				parseStarterLine(const bstring& buffer);
 		int				parseFields(const bstring& buffer, size_t pos);
+		void			parsebody(const bstring& buffer, size_t pos);
 		// void			isCGI();
 		void			reconstructUri();
 		void			getConfigFileRules();
