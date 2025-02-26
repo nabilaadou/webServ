@@ -240,7 +240,7 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				break;
 			}
 			case '\n': {
-				s.sstat = e_sstat::emptyLine;
+				s.sstat = e_sstat::emptyline;
 				return i;
 			}
 			default:
