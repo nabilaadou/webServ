@@ -88,13 +88,12 @@ public:
 		int				fd;
 
 		int				parseStarterLine(const bstring& buffer);
-		int				parseFields(const bstring& buffer, size_t pos);
-		void			parsebody(const bstring& buffer, size_t pos);
+		int				parseFields(const bstring& buffer, size_t pos, map<string, string>& headers);
+		void			parseBody(const bstring& buffer, size_t pos);
 		// void			isCGI();
 		void			reconstructUri();
 		void			getConfigFileRules();
 		void			extractPathQuery(const bstring& rawUri);
-		void			parseBody();
 	public:
 		void			readfromsock(const int clientFd);
 		Request(httpSession& session);

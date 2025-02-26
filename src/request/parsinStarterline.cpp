@@ -1,39 +1,5 @@
 #include "httpSession.hpp"
 
-static bool	isMultipartFormData(const string& value) {
-	vector<string>	fieldValueparts;
-	split(value, ';', fieldValueparts);
-	if (fieldValueparts.size() != 2)
-		return false;
-	if (trim(fieldValueparts[0]) != "multipart/form-data")
-		return false;
-	if (strncmp(trim(fieldValueparts[1]).c_str(), "boundary=", 9))
-		return false;
-	return true;
-}
-
-static int	openFile(const string& value) {
-	int				fd;
-	vector<string>	fieldValueparts;
-	vector<string> keyvalue;
-
-	split(value, ';', fieldValueparts);
-	if (fieldValueparts.size() != 3 || strncmp("form-data" ,trim(fieldValueparts[0]).c_str(), 9))
-		throw(statusCodeException(501, "Not Implemented"));
-	split(trim(fieldValueparts[1]), '=', keyvalue);
-	if (keyvalue.size() != 2 || strncmp("name", keyvalue[0].c_str(), 4) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
-		throw(statusCodeException(501, "Not Implemented"));
-	keyvalue.clear();
-	split(trim(fieldValueparts[2]), '=', keyvalue);
-	if (keyvalue.size() != 2 || strncmp("filename", keyvalue[0].c_str(), 8) || keyvalue[1][0] != '"' || keyvalue[1][keyvalue[1].size()-1] != '"')
-		throw(statusCodeException(501, "Not Implemented"));
-	keyvalue[1].erase(keyvalue[1].begin());
-	keyvalue[1].erase(keyvalue[1].end()-1);
-	if ((fd = open(keyvalue[1].c_str(), O_WRONLY, 0644)) < 0)
-		throw(statusCodeException(500, "Internal Server Error"));
-	return fd;
-}
-
 // void	httpSession::Request::isCGI() {
 // 	size_t		pos = 0;
 // 	cgiInfo		cgiVars;
@@ -87,12 +53,13 @@ void	httpSession::Request::reconstructUri() {
 	case POST: {
 		if (!s.rules->uploads.empty()) {
 			s.path = s.rules->uploads;
+			s.path.erase(s.path.end()-1);
 			s.path = w_realpath(("." + s.path).c_str());
 			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
 				throw(statusCodeException(403, "Forbidden"));
 		} else
 			throw(statusCodeException(403, "Forbidden"));
-		break;
+		return ;
 	}
 	case DELETE: {
 		if (!s.rules->uploads.empty()) {
