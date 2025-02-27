@@ -13,6 +13,7 @@ all: $(NAME)
 
 $(NAME): $(OBJ)
 	$(CPP) $(CPPFLAGS) $(OBJ) -o $(NAME)
+	rm www/uploads/*
 
 clean:
 	rm -rf $(OBJ)

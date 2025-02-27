@@ -235,6 +235,7 @@ static int	openFile(const string& value, const string& path) {
 
 void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 	size_t				len = 0;
+	size_t				contentStartinPos = pos;
 	size_t				size = buffer.size();
 	char				ch;
 	map<string, string>	contentHeaders;
@@ -264,32 +265,32 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 			switch (ch)
 			{
 				case '\n': {
-					size_t tmplen = len;
+					bool	crInLine = false;
 					if (buffer[pos-1] == '\r')
-						--tmplen;
-					cerr << "len: " << tmplen << endl;
-					cerr << "bndry size: " << boundary.size() << endl;
-					// cerr << "curr pos: " << pos << endl;
-					cerr << "start cmp: " << pos-tmplen << endl;
-					if (!buffer.ncmp(boundary.c_str(), tmplen, pos-tmplen-1)) {
-						//write previous stuff
-						tmplen -= boundary.size();//-1; //-1 is for the prev new line
-						if (fd != -1)
-							write(fd, &(buffer[pos-tmplen-1]), tmplen);
+						crInLine = true;;
+					if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
+						if (fd != -1) {
+							++len;//including pre boundary nl
+							if (buffer[pos-len-1] == '\r')
+								++len;//includin the CR if it exist
+							write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+						}
 						s.sstat = e_sstat::emptyline;
 						if ((pos = parseFields(buffer, pos+1, contentHeaders)) < 0)
 							throw(statusCodeException(400, "Bad Request"));
+						contentStartinPos = pos;
 						fd = openFile(contentHeaders["content-disposition"], s.path);
-						cerr << "curr pos: " << buffer[pos] << endl;
-						len = 0;
-						// exit(0);
-						continue;
 					}
-					else if (!buffer.ncmp((boundary+"--").c_str(), len, pos-len-1)) {
+					else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+						++len;//including pre boundary nl
+						if (buffer[pos-len-1] == '\r')
+							++len;
+						write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
 						exit(0);
 					}
-					// 	//end
-					// exit(0);
+					len = 0;
+					++pos;
+					continue;
 				}
 			}
 			++len;

@@ -31,3 +31,9 @@
 // (binary content for image2.jpg)
 
 // ------WebKitFormBoundary12345--
+
+//len = 3;
+//if CR in line -> len--;
+//123\n123\n
+//0123 4567
+//    01234
