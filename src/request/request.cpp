@@ -5,15 +5,15 @@ httpSession::Request::Request(httpSession& session) : s(session), fd(-1), reques
 void	httpSession::Request::readfromsock(const int clientFd) {
 	char	buffer[BUFFER_SIZE];
 	ssize_t byteread;
-	ssize_t bufferPos;
+	ssize_t bufferPos = 0;
 
 	if ((byteread = recv(clientFd, buffer, BUFFER_SIZE, MSG_DONTWAIT)) <= 0) {
 		s.sstat = CCLOSEDCON;
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);
-	cerr << bbuffer << endl;
-	cerr << "---------------" << endl;
+	cerr << "byte read -->" << byteread << endl;
+	// cerr << "---------------" << endl;
 	switch (requestStat)
 	{
 	case e_requestStat::headers: {
@@ -26,11 +26,13 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 		requestStat = e_requestStat::body;
 	}
 	case e_requestStat::body: {
+		bbuffer = remainingBody + bbuffer;
+		remainingBody = NULL;
 		parseBody(bbuffer, bufferPos);
 	}
 	}
 	
-	
+	 
 	// cerr << "m: " << s.method << endl;
 	// cerr << "uri: " << s.path << endl;
 	// for (const auto& it : s.headers)

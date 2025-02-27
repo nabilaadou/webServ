@@ -83,6 +83,7 @@ public:
 	private:
 		httpSession&	s;
 		e_requestStat	requestStat;
+		bstring			remainingBody;
 		string			boundary;
 		size_t			length;
 		int				fd;
