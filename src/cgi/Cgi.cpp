@@ -57,33 +57,33 @@ static char**	transformVectorToChar(vector<string>& vec) {
 	return strs;
 }
 
-// HTTP/1.1 200 OK
-
 void	Cgi::executeScript() {
-	char**							argv, CGIEnvp;
-	vector<string>					vecArgv, vecEnvp;
-	// map<string, string>	mapEnvp;
-	// prepearingCgiEnvVars(req, mapEnvp);
-	// for(const auto& it: mapEnvp) {
-	// 	if (!it.second.empty())
-	// 		vecEnvp.push_back(it.first + "=" + it.second);
-	// }
-	// while(*ncHomeEnvp) {
+	char			**CGIEnvp, **argv;
+	vector<string>	vecArgv, vecEnvp;
+
+	for(map<string, string>::iterator it = scriptEnvs.begin(); it != scriptEnvs.end(); ++it) {
+		vecEnvp.push_back(it->first + "=" + it->second);
+	}
+	// while(*ncHomeEnvp) { // is it needed for me to add home envp
 	// 	vecEnvp.push_back(*ncHomeEnvp);
 	// 	++ncHomeEnvp;
 	// }
-	// CGIEnvp = transformVectorToChar(vecEnvp);
-	//exec
 	if (!infos.exec.empty())
 		vecArgv.push_back(infos.exec);
 	vecArgv.push_back(infos.scriptUri);
 	argv = transformVectorToChar(vecArgv);
-	if (execve(argv[0], argv, NULL) == -1) {
+	CGIEnvp = transformVectorToChar(vecEnvp);
+	if (execve(argv[0], argv, CGIEnvp) == -1) {
 		for (size_t i = 0; argv[i]; ++i) {
 			delete argv[i];
 		}
 		delete []argv;
-		perror("execve failed(cgi.cpp 102)"); exit(-1);
+		for (size_t i = 0; CGIEnvp[i]; ++i) {
+			delete CGIEnvp[i];
+		}
+		delete []CGIEnvp;
+		perror("execve failed(cgi.cpp 102)");
+		throw(statusCodeException(500, "Internal Server Error"));
 	}
 }
 

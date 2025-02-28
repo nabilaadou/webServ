@@ -29,8 +29,10 @@ static int	openFile(const string& value, const string& path) {
 		throw(statusCodeException(501, "Not Implemented"));
 	keyvalue[1].erase(keyvalue[1].begin());
 	keyvalue[1].erase(keyvalue[1].end()-1);
-	if ((fd = open((path + "/" + keyvalue[1]).c_str(), O_CREAT | O_WRONLY, 0644)) < 0)
+	if ((fd = open((path + "/" + keyvalue[1]).c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
+		perror("open failed");
 		throw(statusCodeException(500, "Internal Server Error"));
+	}
 	return fd;
 }
 
@@ -53,6 +55,7 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 						try {
 							length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
 						} catch (...) {
+							perror("stoi failed");
 							throw(statusCodeException(500, "Internal Server Error"));//not really an internall error
 						}
 					}
