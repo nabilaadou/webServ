@@ -50,22 +50,6 @@ enum e_requestStat {
 	body,
 };
 
-// struct componentlength {
-// 	size_t	s_method;
-// 	size_t	s_uri;
-// 	size_t	s_httpversion;
-// 	size_t	s_starterlineNl;
-// 	size_t	s_headerfields;
-// 	size_t	s_field;
-// 	size_t	s_headersEnd;
-// 	size_t	s_bodyLine;
-
-// 	componentlength() : 
-// 		s_method(0), s_uri(0), s_httpversion(0)
-// 		, s_starterlineNl(0), s_headerfields(0)
-// 		, s_field(0) , s_headersEnd(0), s_bodyLine(0) {}
-// };
-
 class httpSession {
 private:
 	e_sstat				sstat;
@@ -91,7 +75,7 @@ public:
 		int				parseStarterLine(const bstring& buffer);
 		int				parseFields(const bstring& buffer, size_t pos, map<string, string>& headers);
 		void			parseBody(const bstring& buffer, size_t pos);
-		// void			isCGI();
+		void			isCGI();
 		void			reconstructUri();
 	public:
 		void			readfromsock(const int clientFd);
@@ -110,8 +94,8 @@ public:
 		void			sendCgiStarterLine(const int);
 		void			sendCgiOutput(const int);
 	public:
-		Response(httpSession& session);
 		void			sendResponse(const int clientFd);
+		Response(httpSession& session);
 	};
 
 	Request			req;

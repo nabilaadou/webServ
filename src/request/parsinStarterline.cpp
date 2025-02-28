@@ -1,35 +1,34 @@
 #include "httpSession.hpp"
 
-// void	httpSession::Request::isCGI() {
-// 	size_t		pos = 0;
-// 	cgiInfo		cgiVars;
-// 	bool		foundAMatch = false;
+void	httpSession::Request::isCGI() {
+	size_t		pos = 0;
+	cgiInfo		cgiVars;
+	bool		foundAMatch = false;
 
-// 	while (1) {
-// 		pos = s.path.find('/', pos);
-// 		string subUri = s.path.substr(0, pos);
-// 		// if (subUri == s.rules->alias || (subUri + '/') == loc->uri)
-// 		// 	subUri += '/' + loc->index;
-// 		size_t	dotPos = subUri.rfind('.');
-// 		string subUriExt = "";
-// 		if (dotPos != string::npos)
-// 			subUriExt = subUri.substr(dotPos);
-// 		if (s.rules->cgis.find(subUriExt) != s.rules->cgis.end() && !access(("." + subUri).c_str() ,F_OK)) {
-// 			cgiVars.scriptUri = w_realpath(("." + subUri).c_str());
-// 			size_t barPos = subUri.rfind('/');
-// 			cgiVars.scriptName = subUri.substr(barPos+1);
-// 			cgiVars.exec = s.rules->cgis[subUriExt];
-// 			if (s.path.size() > subUri.size()+1)
-// 				cgiVars.path = s.path.substr(pos);
-// 			cgiVars.query = s.query;
-// 			foundAMatch = true;
-// 		}
-// 		if (pos++ == string::npos)
-// 			break;
-// 	}
-// 	if (foundAMatch == true)
-// 		s.cgi = new Cgi(cgiVars);
-// }
+	while (1) {
+		pos = s.path.find('/', pos);
+		string subUri = s.path.substr(0, pos);
+		size_t	dotPos = subUri.rfind('.');
+		string subUriExt;
+		if (dotPos != string::npos) {
+			subUriExt = subUri.substr(dotPos);
+			if (s.rules->cgis.find(subUriExt) != s.rules->cgis.end() && !access(subUri.c_str() ,F_OK)) {
+				cgiVars.scriptUri = w_realpath(subUri.c_str());
+				size_t barPos = subUri.rfind('/');
+				cgiVars.scriptName = subUri.substr(barPos+1);
+				cgiVars.exec = s.rules->cgis[subUriExt];
+				if (s.path.size() > subUri.size()+1)
+					cgiVars.path = s.path.substr(pos);
+				cgiVars.query = s.query;
+				foundAMatch = true;
+			}
+		}
+		if (pos++ == string::npos)
+			break;
+	}
+	if (foundAMatch == true)
+		s.cgi = new Cgi(cgiVars);
+}
 
 void	httpSession::Request::reconstructUri() {
 	struct stat pathStat;
@@ -45,8 +44,15 @@ void	httpSession::Request::reconstructUri() {
 			//adding the location header to the response with the new path;
 			return ;
 		} else {
-			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size()-1);
+			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size());
 			s.path = s.rules->reconfigurer + s.path;
+		}
+		s.path = w_realpath(("." + s.path).c_str());
+		stat(s.path.c_str(), &pathStat);
+		if (S_ISDIR(pathStat.st_mode)) {
+			s.path += "/" + s.rules->index;
+			if (stat(s.path.c_str(), &pathStat))
+				throw(statusCodeException(404, "Not Found"));
 		}
 		break;
 	}
@@ -59,7 +65,7 @@ void	httpSession::Request::reconstructUri() {
 				throw(statusCodeException(403, "Forbidden"));
 		} else
 			throw(statusCodeException(403, "Forbidden"));
-		return ;
+		break;
 	}
 	case DELETE: {
 		if (!s.rules->uploads.empty()) {
@@ -69,14 +75,7 @@ void	httpSession::Request::reconstructUri() {
 			throw(statusCodeException(403, "Forbidden"));
 	}
 	}
-	s.path = w_realpath(("." + s.path).c_str());
-    stat(s.path.c_str(), &pathStat);
-	if (S_ISDIR(pathStat.st_mode)) {//&& s->path == location
-		s.path += "/" + s.rules->index;
-		if (stat(s.path.c_str(), &pathStat))
-			throw(statusCodeException(404, "Not Found"));
-	}
-	// isCGI();
+	isCGI();
 }
 
 int	httpSession::Request::parseStarterLine(const bstring& buffer) {
@@ -156,18 +155,18 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				break;
 			}
 			case ' ': {
-				if (s.rules == NULL)
-					throw(statusCodeException(404, "Not Found"));
 				if (s.path.empty()) {
 					s.path = buffer.substr(i-len, len).cppstring();
 					if (s.path[s.path.size()-1] != '/') {
 						s.path += '/';
 						if (s.config->locations.find(s.path) != s.config->locations.end())
-							s.rules = &(s.config->locations.at(s.path));
+						s.rules = &(s.config->locations.at(s.path));
 					}
 				}
 				else
 					s.query = buffer.substr(i-len+1, len).cppstring();
+				if (s.rules == NULL)
+					throw(statusCodeException(404, "Not Found"));
 				s.path.erase(s.path.end()-1);
 				reconstructUri();
 				s.sstat = e_sstat::httpversion;
