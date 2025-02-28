@@ -40,8 +40,6 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 	size_t				size = buffer.size();
 	char				ch;
 	map<string, string>	contentHeaders;
-	cerr << "SIZE -->" << size << endl;
-	cerr << "starting pos -->" << pos << endl;
 
 	while (pos < size) {
 		ch = buffer[pos];
@@ -64,42 +62,37 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 					throw(statusCodeException(501, "Not Implemented"));
 		}
 		case e_sstat::contentLengthBased: {
-			switch (ch)
-			{
-				case '\n': {
-					bool	crInLine = false;
-					if (buffer[pos-1] == '\r')
-						crInLine = true;
-					if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
-						if (fd != -1) {
-							++len;//including pre boundary nl
-							if (buffer[pos-len-1] == '\r')
-								++len;//includin the CR if it exist
-							write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-						}
-						s.sstat = e_sstat::emptyline;
-						if ((pos = parseFields(buffer, pos+1, contentHeaders)) < 0) {
-							cerr << "headers not done" << endl;
-							exit(0);
-						}
-						cerr << "pos after parsin headers -->" << pos << endl;
-						s.sstat = e_sstat::contentLengthBased;
-						contentStartinPos = pos;
-						fd = openFile(contentHeaders["content-disposition"], s.path);
-					}
-					else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+			if (ch == '\n') {
+				bool	crInLine = false;
+
+				if (buffer[pos-1] == '\r')
+					crInLine = true;
+				if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
+					if (fd != -1) {
 						++len;//including pre boundary nl
 						if (buffer[pos-len-1] == '\r')
-							++len;
-						cerr << "len end: " << pos-contentStartinPos-len << endl;
+							++len;//includin the CR if it exist
 						write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-						// cerr << "end" << endl;
+					}
+					s.sstat = e_sstat::emptyline;
+					if ((pos = parseFields(buffer, pos+1, contentHeaders)) < 0) {
+						cerr << "headers not done" << endl;
 						exit(0);
 					}
-					len = 0;
-					++pos;
-					continue;
+					s.sstat = e_sstat::contentLengthBased;
+					contentStartinPos = pos;
+					fd = openFile(contentHeaders["content-disposition"], s.path);
 				}
+				else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+					++len;//including pre boundary nl
+					if (buffer[pos-len-1] == '\r')
+						++len;
+					write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+					exit(0);
+				}
+				len = 0;
+				++pos;
+				continue;
 			}
 			++len;
 		}
@@ -114,17 +107,14 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 		check the lenght of len if its higher the boundary then just write everythinh and no need to save anything but if its less
 		there's a possibility of it being the unfinished line of the boundary
 	*/
-	if (len <= boundary.size()+2) {
+	remainingBody = NULL;
+	if (len <= boundary.size()+2) {//check if the line is smaller than the boundary
+		// ++len;
+		// if (pos-len-1 == '\r')
+		// 	++len;
 		remainingBody = buffer.substr(pos-len);
-		// cerr << "subs start: " << pos-len << endl;
-		// cerr << "size: " << size << endl;
-		// cerr << remainingBody << endl;
-	}
-	if (contentStartinPos < size) {
-		cerr << "len: " << pos-contentStartinPos-len << endl;
-		cerr << "index: " << contentStartinPos << endl;
 		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+	} else {
+		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos);
 	}
-	else
-		cerr << "whar" << endl;
-} 
+}  

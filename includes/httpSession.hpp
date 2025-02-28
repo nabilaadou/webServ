@@ -93,8 +93,6 @@ public:
 		void			parseBody(const bstring& buffer, size_t pos);
 		// void			isCGI();
 		void			reconstructUri();
-		void			getConfigFileRules();
-		void			extractPathQuery(const bstring& rawUri);
 	public:
 		void			readfromsock(const int clientFd);
 		Request(httpSession& session);

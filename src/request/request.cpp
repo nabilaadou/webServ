@@ -1,6 +1,8 @@
 #include "httpSession.hpp"
 
-httpSession::Request::Request(httpSession& session) : s(session), fd(-1), requestStat(e_requestStat::headers) {}
+httpSession::Request::Request(httpSession& session) : s(session), fd(-1), requestStat(e_requestStat::headers) {
+	remainingBody = NULL;
+}
 
 void	httpSession::Request::readfromsock(const int clientFd) {
 	char	buffer[BUFFER_SIZE];
@@ -12,8 +14,6 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);
-	cerr << "byte read -->" << byteread << endl;
-	// cerr << "---------------" << endl;
 	switch (requestStat)
 	{
 	case e_requestStat::headers: {
@@ -27,14 +27,8 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 	}
 	case e_requestStat::body: {
 		bbuffer = remainingBody + bbuffer;
-		remainingBody = NULL;
-		parseBody(bbuffer, bufferPos);
+		if (bufferPos < bbuffer.size())
+			parseBody(bbuffer, bufferPos);
 	}
 	}
-	
-	 
-	// cerr << "m: " << s.method << endl;
-	// cerr << "uri: " << s.path << endl;
-	// for (const auto& it : s.headers)
-	// 	cerr << it.first << ": " << it.second << endl; 
 }
