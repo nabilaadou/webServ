@@ -44,7 +44,7 @@ void	httpSession::Request::reconstructUri() {
 			//adding the location header to the response with the new path;
 			return ;
 		} else {
-			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size());
+			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size()-1);
 			s.path = s.rules->reconfigurer + s.path;
 		}
 		s.path = w_realpath(("." + s.path).c_str());
@@ -85,6 +85,7 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 
 	for (size_t i = 0; i < size; ++i) {
 		ch = buffer[i];
+		cerr << ch << endl;
 		switch (s.sstat)
 		{
 		case e_sstat::method: {
@@ -171,6 +172,7 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				reconstructUri();
 				s.sstat = e_sstat::httpversion;
 				len = 0;
+				// cerr << s.path << endl;
 				continue;
 			}
 			case '-': case '.': case '_': case '~':
@@ -224,46 +226,3 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 	}
 	return -1;
 }
-	// 	case e_sstat::bodyFormat: {
-	// 		if (bodyFormat != -1) {
-	// 			s.sstat = (bodyFormat == 1) ? s.sstat = e_sstat::contentLengthBased : s.sstat = e_sstat::transferEncodingChunkedBased;
-	// 			fd = openFile(s.headers["content-disposition"]);
-	// 		}
-	// 		else if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
-	// 			boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
-	// 			if (s.headers.find("content-length") != s.headers.end()) {
-	// 				s.sstat = e_sstat::contentLengthBased;
-	// 				length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
-	// 				bodyFormat = 1;
-	// 			} else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked") {
-	// 				s.sstat = e_sstat::contentLengthBased;
-	// 				bodyFormat = 2;
-	// 			}
-	// 		}
-	// 		else
-	// 			throw(statusCodeException(501, "Not Implemented"));
-	// 	}
-	// 	case e_sstat::contentLengthBased: {
-	// 		switch (ch)
-	// 		{
-	// 			case '\n': {
-	// 				if (buffer[i-1] == '\r')
-	// 					--xlength.s_bodyLine;
-	// 				if (!buffer.ncmp(boundary.c_str(), xlength.s_bodyLine+1, i-xlength.s_bodyLine))
-	// 					s.sstat = e_sstat::emptyLine;
-	// 				// else if (!buffer.ncmp((boundary+"--").c_str(), xlength.s_bodyLine+1, i-xlength.s_bodyLine))
-	// 				// 	//end
-	// 				// else
-	// 				// 	//write to the file
-	// 				xlength.s_bodyLine = 0;
-	// 				continue;
-	// 			}
-	// 		}
-	// 		++xlength.s_bodyLine;
-	// 		break;
-	// 	}
-	// 	}
-	// 	if (xlength.s_headerfields > HEADER_FIELD_MAXSIZE)
-	// 		throw(statusCodeException(431, "Request Header Fields Too Large"));
-	// }
-

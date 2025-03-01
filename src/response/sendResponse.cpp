@@ -148,8 +148,10 @@ void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
 }
 
 void    httpSession::Response::sendCgiOutput(const int clientFd) {
-    char    buff[BUFFER_SIZE+1] = {0};
+    char    buff[BUFFER_SIZE];
     int     byteRead;
+    int     status;
+
     if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));
@@ -160,7 +162,7 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
 			s.sstat = CCLOSEDCON;
 			return ;
 		}
-    } else {
+    } else if (waitpid(s.cgi->ppid(), &status, WNOHANG) > 0){
         s.sstat = done;
 		close(s.cgi->rFd());
     }

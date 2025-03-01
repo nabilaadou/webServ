@@ -35,15 +35,17 @@ void	Cgi::getHeaders(const map<string, string>& headers) {
 void	Cgi::prepearingCgiEnvVars(const map<string, string>& headers) {
 	scriptEnvs["GATEWAY_INTERFACE"] = "CGI/1.1";
 	scriptEnvs["SERVER_PROTOCOL"] = "http/1.1";
-	scriptEnvs["SERVER_NAME"] = "localhost";
-	// scriptEnvs["REMOTE_METHODE"] = req.getMethod();
+	scriptEnvs["SERVER_NAME"] = "127.0.0.2";
+	scriptEnvs["REMOTE_METHODE"] = "GET";
 	scriptEnvs["PATH_INFO"] = infos.path;
 	scriptEnvs["QUERY_STRING"] = infos.query;
 	scriptEnvs["SCRIPT_NAME"] = infos.scriptName;
+	scriptEnvs["SCRIPT_FILENAME"] = infos.scriptUri;
+	scriptEnvs["REDIRECT_STATUS"] = "200";
 	getHeaders(headers);
 	// scriptEnvs["PATH_TRANSLATED"] = "";//idk
-	for (const auto& it : scriptEnvs)
-		cerr << it.first << ": " << it.second << endl;
+	// for (const auto& it : scriptEnvs)
+	// 	cerr << it.first << ": " << it.second << endl;
 }
 
 static char**	transformVectorToChar(vector<string>& vec) {
@@ -73,18 +75,17 @@ void	Cgi::executeScript() {
 	vecArgv.push_back(infos.scriptUri);
 	argv = transformVectorToChar(vecArgv);
 	CGIEnvp = transformVectorToChar(vecEnvp);
-	if (execve(argv[0], argv, CGIEnvp) == -1) {
-		for (size_t i = 0; argv[i]; ++i) {
-			delete argv[i];
-		}
-		delete []argv;
-		for (size_t i = 0; CGIEnvp[i]; ++i) {
-			delete CGIEnvp[i];
-		}
-		delete []CGIEnvp;
-		perror("execve failed(cgi.cpp 102)");
-		throw(statusCodeException(500, "Internal Server Error"));
+	execve(argv[0], argv, CGIEnvp);
+	for (size_t i = 0; argv[i]; ++i) {
+		delete argv[i];
 	}
+	delete []argv;
+	for (size_t i = 0; CGIEnvp[i]; ++i) {
+		delete CGIEnvp[i];
+	}
+	delete []CGIEnvp;
+	perror("execve failed(cgi.cpp 102)");
+	throw(statusCodeException(500, "Internal Server Errorrr"));
 }
 
 void	Cgi::setupCGIProcess() {
@@ -106,7 +107,7 @@ void	Cgi::setupCGIProcess() {
 		close(wPipe[0]);
 		executeScript();
 	}
-	wait(0);//use waitpid and read from the pipe to free space for the write
 	close(rPipe[1]);
 	close(wPipe[0]);
+	// close(wPipe[1]);
 }

@@ -29,6 +29,8 @@ static int	openFile(const string& value, const string& path) {
 		throw(statusCodeException(501, "Not Implemented"));
 	keyvalue[1].erase(keyvalue[1].begin());
 	keyvalue[1].erase(keyvalue[1].end()-1);
+	if (keyvalue[1].empty())
+		throw(statusCodeException(422, "Unprocessable Entity"));
 	if ((fd = open((path + "/" + keyvalue[1]).c_str(), O_CREAT | O_WRONLY, 0644)) < 0) {
 		perror("open failed");
 		throw(statusCodeException(500, "Internal Server Error"));
