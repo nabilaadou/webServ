@@ -67,13 +67,14 @@ string httpSession::Response::getSupportedeExtensions(const string& key) {
 }
 
 string	httpSession::Response::contentTypeHeader() const {
+    //by default application/octet-stream
 	size_t pos = s.path.rfind(".");
-	if (pos == string::npos)
-		throw(statusCodeException(501, "Not Implemented"));
+	// if (pos == string::npos)
+	// 	throw(statusCodeException(501, "Not Implemented"));
 	string ext = s.path.substr(pos);
 	string contentTypeValue = getSupportedeExtensions(ext);
-	if (contentTypeValue.empty())
-		throw(statusCodeException(501, "Not Implemented"));//check this before begining to write in the sock
+	// if (contentTypeValue.empty())
+	// 	throw(statusCodeException(501, "Not Implemented"));
 	return ("Content-Type: " + contentTypeValue + "\r\n");
 }
 
@@ -81,26 +82,27 @@ void	httpSession::Response::sendHeader(const int clientFd) {
 	string header;
 
 	header += "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (s.method != POST) {
-	    header += contentTypeHeader();
-	    header += "Transfer-Encoding: chunked\r\n";
-    } else
+    if (s.method == POST)
         header += "Content-Length: 0\r\n";
-	header += "Connection: keep-alive\r\n";
+    else {
+        header += contentTypeHeader();
+        header += "Transfer-Encoding: chunked\r\n";
+    }
+	header += "Connection: keep-alive\r\n";//incase clinet has decided to close the connection i ll have to close it too
 	header += "Server: bngn/0.1\r\n";
 	header += "\r\n";
-	if (write(clientFd, header.c_str(), header.size()) <= 0) {
-		perror("write failed(sendResponse.cpp 24)");
+	if (send(clientFd, header.c_str(), header.size(), MSG_DONTWAIT) <= 0) {
+		perror("send failed(sendResponse.cpp 24)");
 		s.sstat = CCLOSEDCON;
 		return ;
 	}
 }
 
 void	httpSession::Response::sendBody(const int clientFd) {
-	char buff[BUFFER_SIZE+1] = {0};
+	char buff[BUFFER_SIZE];
 
 	if (contentFd == -1) {
-		if ((contentFd = open(s.path.c_str(), O_RDONLY, 0644)) == -1) {
+		if ((contentFd = open(s.path.c_str(), O_RDONLY, 0644)) == -1) {//read about permissions again you FORGOT (0644???)
 			perror("open failed(sendresponse.cpp 37)");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
@@ -111,26 +113,22 @@ void	httpSession::Response::sendBody(const int clientFd) {
 		throw(statusCodeException(500, "Internal Server Error"));
 	}
 	if (sizeRead > 0) {
-		ostringstream chunkSize;
+        bstring         chunkedResponse;
+		ostringstream   chunkSize;
+
 		chunkSize << hex << sizeRead << "\r\n";
-		if (write(clientFd, chunkSize.str().c_str(), chunkSize.str().size()) <= 0) {//not good wrapper good
-			perror("write failed(sendResponse.cpp 50)");
+        chunkedResponse += chunkSize.str().c_str();
+        bstring tmpBuffer(buff, sizeRead);
+        chunkedResponse += tmpBuffer;
+        chunkedResponse += "\r\n";
+        if (send(clientFd, chunkedResponse.c_str(), chunkedResponse.size(), MSG_DONTWAIT) <= 0) {
+            perror("send failed(sendResponse.cpp 50)");
 			s.sstat = CCLOSEDCON;
 			return ;
-		}
-		if (write(clientFd, buff, sizeRead) <= 0) {
-			perror("write failed(sendResponse.cpp 50)");
-			s.sstat = CCLOSEDCON;
-			return ;
-		}
-		if (write(clientFd, "\r\n", 2) <= 0) {
-			perror("write failed(sendResponse.cpp 50)");
-			s.sstat = CCLOSEDCON;
-			return ;
-		}
+        }
 	} else {
-		if (write(clientFd, "0\r\n\r\n", 5) <= 0) {
-			perror("write failed(sendResponse.cpp 56)");
+		if (send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT) <= 0) {
+			perror("end failed(sendResponse.cpp 56)");
 			s.sstat = CCLOSEDCON;
 			return ;
 		}
@@ -141,10 +139,33 @@ void	httpSession::Response::sendBody(const int clientFd) {
 
 void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
     string starterLine = "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (write(clientFd, starterLine.c_str(), starterLine.size()) <= 0) {
+    if (send(clientFd, starterLine.c_str(), starterLine.size(), MSG_DONTWAIT) <= 0) {
 		perror("write failed(sendResponse.cpp 143)");
 		s.sstat = CCLOSEDCON;
 	}
+}
+
+static bstring    tweakAndCheckHeaders(map<string, string>& headers) {
+    bstring bheaders;
+
+    if (headers.find("content-type") == headers.end())
+        headers["content-type"] = "text/plain";
+    if (headers.find("content-length") != headers.end())
+        headers.erase("content-length");
+    if (headers.find("transfer-encoding") != headers.end())
+        headers.erase("transfer-encoding");
+    headers["transfer-encoding"] = "chunked";
+    if (headers.find("connection") == headers.end()) {
+        headers["connection"] = "close";
+    } else {
+        if (headers["connection"] != "close" || headers["connection"] != "keep-alive")
+            headers["connection"] = "close";
+    }
+    for (map<string, string>::iterator it = headers.begin(); it != headers.end(); ++it) {
+        bheaders += (it->first + ": " + it->second + "\r\n").c_str();
+    }
+    bheaders += "\r\n";
+    return bheaders;
 }
 
 void    httpSession::Response::sendCgiOutput(const int clientFd) {
@@ -156,14 +177,48 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
         perror("read failed(sendResponse.cpp 152)");
         throw(statusCodeException(500, "Internal Server Error"));
     }
+    bstring bbuffer(buff, byteRead);
     if (byteRead > 0) {
-        if (write(clientFd, buff, byteRead) <= 0) {
-			perror("write failed(sendResponse.cpp 157)");
+        bstring         chunkedResponse;
+		ostringstream   chunkSize;
+    
+        if (cgiHeadersParsed == false) {
+            map<string, string>	cgiHeaders;
+            size_t  bodyStartPos = 0;
+
+            s.sstat = e_sstat::emptyline;
+            try {
+                if ((bodyStartPos = s.parseFields(bbuffer, 0, cgiHeaders)) < 0) { // i might use a buffer here in case of incomplete fields
+                    perror("write failed(sendResponse.cpp 143)");
+		            s.sstat = CCLOSEDCON;
+                    return;
+                }
+            } catch (...) {
+                s.sstat = CCLOSEDCON;
+                return;
+            }
+            s.sstat = e_sstat::sBody;
+            chunkedResponse += tweakAndCheckHeaders(cgiHeaders);
+            bbuffer = bbuffer.substr(bodyStartPos);
+            cgiHeadersParsed = true;
+        }
+		chunkSize << hex << bbuffer.size() << "\r\n";
+        chunkedResponse += chunkSize.str().c_str();
+        chunkedResponse += bbuffer;
+        chunkedResponse += "\r\n";
+        if (send(clientFd, chunkedResponse.c_str(), chunkedResponse.size(), MSG_DONTWAIT) <= 0) {
+            perror("send failed(sendResponse.cpp 50)");
+			s.sstat = CCLOSEDCON;
+			return ;
+        }
+    } else if (waitpid(s.cgi->ppid(), &status, WNOHANG) > 0) {
+        if (send(clientFd, "0\r\n\r\n", 5, MSG_DONTWAIT) <= 0) {
+			perror("write failed(sendResponse.cpp 56)");
 			s.sstat = CCLOSEDCON;
 			return ;
 		}
-    } else if (waitpid(s.cgi->ppid(), &status, WNOHANG) > 0){
         s.sstat = done;
 		close(s.cgi->rFd());
+		close(s.cgi->wFd());
     }
 }

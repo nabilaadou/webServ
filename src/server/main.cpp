@@ -15,8 +15,8 @@ int main(int ac, char **av) {
         epollFd = createSockets(config, servrSocks);
         multiplexerSytm(servrSocks, epollFd, config);
     }
-    catch (...) {
-        cerr << "ERROR" << endl;
+    catch (const exception& msg) {
+        cerr << msg.what() << endl;
         return -1;
     }
     return 0;

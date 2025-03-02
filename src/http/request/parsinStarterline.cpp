@@ -85,7 +85,6 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 
 	for (size_t i = 0; i < size; ++i) {
 		ch = buffer[i];
-		cerr << ch << endl;
 		switch (s.sstat)
 		{
 		case e_sstat::method: {

@@ -14,13 +14,13 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);
-	cerr << bbuffer << endl;
+	// cerr << bbuffer << endl;
 	switch (requestStat)
 	{
 	case e_requestStat::headers: {
 		if ((bufferPos = parseStarterLine(bbuffer)) < 0)
 			throw(statusCodeException(400, "Bad Request"));
-		if ((bufferPos = parseFields(bbuffer, bufferPos, s.headers)) < 0)
+		if ((bufferPos = s.parseFields(bbuffer, bufferPos, s.headers)) < 0)
 			throw(statusCodeException(400, "Bad Request"));
 		if (s.cgi)
 			s.cgi->prepearingCgiEnvVars(s.headers);

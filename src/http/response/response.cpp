@@ -1,6 +1,6 @@
 #include "httpSession.hpp"
 
-httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1) {}
+httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1), cgiHeadersParsed(false) {}
 
 void	httpSession::Response::sendResponse(const int clientFd) {
 	if(s.cgi) {

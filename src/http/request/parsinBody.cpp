@@ -66,7 +66,7 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 				} else
 					throw(statusCodeException(501, "Not Implemented"));
 		}
-		case e_sstat::contentLengthBased: {
+		case e_sstat::contentLengthBased: { //use length to determine the end of the body and end boundary
 			if (ch == '\n') {
 				bool	crInLine = false;
 
@@ -83,7 +83,7 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 						write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
 					}
 					s.sstat = e_sstat::emptyline;
-					if ((newPos = parseFields(buffer, pos+1, contentHeaders)) < 0) {
+					if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
 						remainingBody = buffer.substr(boundaryStartinIndex);
 						fd = -1;
 						return;

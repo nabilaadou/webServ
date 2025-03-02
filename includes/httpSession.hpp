@@ -73,7 +73,6 @@ public:
 		int				fd;
 
 		int				parseStarterLine(const bstring& buffer);
-		int				parseFields(const bstring& buffer, size_t pos, map<string, string>& headers);
 		void			parseBody(const bstring& buffer, size_t pos);
 		void			isCGI();
 		void			reconstructUri();
@@ -84,8 +83,9 @@ public:
 
 	class Response {
 	private:
-		httpSession&	s;
-		int				contentFd;
+		httpSession&		s;
+		int					contentFd;
+		bool				cgiHeadersParsed;
 		
 		static string	getSupportedeExtensions(const string&);
 		string			contentTypeHeader() const;
@@ -101,6 +101,7 @@ public:
 	Request			req;
 	Response		res;
 
+	int				parseFields(const bstring& buffer, size_t pos, map<string, string>& headers);
 	const e_sstat&	status() const;
 	void			reSetPath(const string& newPath);
 	httpSession(int clientFd, configuration* confi);
