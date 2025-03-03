@@ -14,7 +14,7 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);
-	// cerr << bbuffer << endl;
+	cerr << buffer << endl;
 	switch (requestStat)
 	{
 	case e_requestStat::headers: {

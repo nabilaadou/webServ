@@ -104,7 +104,6 @@ int httpSession::parseFields(const bstring& buffer, size_t pos, map<string, stri
 					default:
 						sstat = e_sstat::sHeader;
 				}
-				// cerr << "hahaha: " << pos+1 << endl;
 				return pos+1;
 			}
 			default: {

@@ -80,8 +80,8 @@ void	httpSession::Request::reconstructUri() {
 
 int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 	char			ch;
-	size_t			size = buffer.size();
 	size_t			len = 0;
+	size_t			size = buffer.size();
 
 	for (size_t i = 0; i < size; ++i) {
 		ch = buffer[i];
@@ -171,7 +171,6 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 				reconstructUri();
 				s.sstat = e_sstat::httpversion;
 				len = 0;
-				// cerr << s.path << endl;
 				continue;
 			}
 			case '-': case '.': case '_': case '~':

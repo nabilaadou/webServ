@@ -50,23 +50,26 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 		switch (s.sstat)
 		{
 		case e_sstat::bodyFormat: {
-				if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
-					boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
-					if (s.headers.find("content-length") != s.headers.end()) {
-						s.sstat = e_sstat::contentLengthBased;
-						try {
-							length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
-						} catch (...) {
-							perror("stoi failed");
-							throw(statusCodeException(500, "Internal Server Error"));//not really an internall error
-						}
+			if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
+				boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
+				if (s.headers.find("content-length") != s.headers.end()) {
+					s.sstat = e_sstat::contentLengthBased;
+					try {
+						length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
+					} catch (...) {
+						perror("stoi failed");
+						throw(statusCodeException(400, "Bad Request"));
 					}
-					else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
-						s.sstat = e_sstat::transferEncodingChunkedBased;
-				} else
-					throw(statusCodeException(501, "Not Implemented"));
+				}
+				else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
+					s.sstat = e_sstat::transferEncodingChunkedBased;
+			} else
+				throw(statusCodeException(501, "Not Implemented"));
+			cerr << "buffer size: " << buffer.size() << endl;
+			cerr << "body starttin pos: " << pos << endl;
+			cerr << "content-length: " << length << endl;
 		}
-		case e_sstat::contentLengthBased: { //use length to determine the end of the body and end boundary
+		case e_sstat::contentLengthBased: {
 			if (ch == '\n') {
 				bool	crInLine = false;
 
@@ -85,25 +88,32 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 					s.sstat = e_sstat::emptyline;
 					if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
 						remainingBody = buffer.substr(boundaryStartinIndex);
+						length += remainingBody.size();
 						fd = -1;
 						return;
 					}
-					pos = newPos;
 					s.sstat = e_sstat::contentLengthBased;
+					length -= newPos - pos;
+					pos = newPos;
 					contentStartinPos = pos;
 					fd = openFile(contentHeaders["content-disposition"], s.path);
-				}
-				else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+				} else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
 					++len;//including pre boundary nl
 					if (pos && buffer[pos-len-1] == '\r')
 						++len;
 					write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-					s.sstat = e_sstat::sHeader;
-					return;
+					if (length - 1)
+						throw(statusCodeException(400, "Bad Request"));
 				}
 				len = 0;
+				if (--length == 0) {
+					s.sstat = e_sstat::sHeader; return;
+				}
 				++pos;
 				continue;
+			}
+			if (--length == 0) {
+				s.sstat = e_sstat::sHeader; return;
 			}
 			++len;
 		}
@@ -124,6 +134,7 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 		if (pos && pos-len-1 == '\r')
 			++len;
 		remainingBody = buffer.substr(pos-len);
+		length += remainingBody.size();
 		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
 	} else {
 		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos);
