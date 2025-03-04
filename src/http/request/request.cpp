@@ -1,6 +1,6 @@
 #include "httpSession.hpp"
 
-httpSession::Request::Request(httpSession& session) : s(session), fd(-1), requestStat(e_requestStat::headers) {
+httpSession::Request::Request(httpSession& session) : s(session), fd(-1), length(0), requestStat(e_requestStat::headers) {
 	remainingBody = NULL;
 }
 
@@ -15,6 +15,7 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 	}
 	bstring bbuffer(buffer, byteread);
 	cerr << buffer << endl;
+	cerr << "---" << endl;
 	switch (requestStat)
 	{
 	case e_requestStat::headers: {
@@ -22,8 +23,9 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 			throw(statusCodeException(400, "Bad Request"));
 		if ((bufferPos = s.parseFields(bbuffer, bufferPos, s.headers)) < 0)
 			throw(statusCodeException(400, "Bad Request"));
-		if (s.cgi)
+		if (s.cgi) {
 			s.cgi->prepearingCgiEnvVars(s.headers);
+		}
 		if (s.sstat == e_sstat::sHeader)
 			break;
 		requestStat = e_requestStat::body;
@@ -35,3 +37,12 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 	}
 	}
 }
+
+/*
+	- body
+	- header -> content-length or chunked
+	- cgi -> in case of chunked unchunk the body
+
+	body;
+	
+*/

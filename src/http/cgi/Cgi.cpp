@@ -41,7 +41,7 @@ void	Cgi::prepearingCgiEnvVars(const map<string, string>& headers) {
 	scriptEnvs["QUERY_STRING"] = infos.query;
 	scriptEnvs["SCRIPT_NAME"] = infos.scriptName;
 	scriptEnvs["SCRIPT_FILENAME"] = infos.scriptUri;
-	scriptEnvs["REDIRECT_STATUS"] = "200";
+	scriptEnvs["REDIRECT_STATUS"] = "1";
 	getHeaders(headers);
 	// scriptEnvs["PATH_TRANSLATED"] = "";//idk
 	// for (const auto& it : scriptEnvs)

@@ -50,24 +50,25 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 		switch (s.sstat)
 		{
 		case e_sstat::bodyFormat: {
-			if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
+			if (s.cgi) {
+				if (s.headers.find("content-length") != s.headers.end()) {
+					s.sstat = e_sstat::writeToCgiStdin;
+					length = w_stoi(s.headers["content-length"]);
+				}
+				else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
+					s.sstat = e_sstat::unchunkBody;
+			}
+			else if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
 				boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
 				if (s.headers.find("content-length") != s.headers.end()) {
 					s.sstat = e_sstat::contentLengthBased;
-					try {
-						length = stoi(s.headers["content-length"]);//it will throw incase of invalid arg
-					} catch (...) {
-						perror("stoi failed");
-						throw(statusCodeException(400, "Bad Request"));
-					}
+					length = w_stoi(s.headers["content-length"]);
 				}
 				else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
 					s.sstat = e_sstat::transferEncodingChunkedBased;
 			} else
 				throw(statusCodeException(501, "Not Implemented"));
-			cerr << "buffer size: " << buffer.size() << endl;
-			cerr << "body starttin pos: " << pos << endl;
-			cerr << "content-length: " << length << endl;
+			continue;
 		}
 		case e_sstat::contentLengthBased: {
 			if (ch == '\n') {
@@ -96,7 +97,7 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 					length -= newPos - pos;
 					pos = newPos;
 					contentStartinPos = pos;
-					fd = openFile(contentHeaders["content-disposition"], s.path);
+					fd = openFile(contentHeaders["content-disposition"], s.rules->uploads);
 				} else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
 					++len;//including pre boundary nl
 					if (pos && buffer[pos-len-1] == '\r')
@@ -116,14 +117,39 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 				s.sstat = e_sstat::sHeader; return;
 			}
 			++len;
+			break;
 		}
-		// case e_sstat::transferEncodingChunkedBased:
-		// default:
-		// 	break;
-		// }
+		case e_sstat::transferEncodingChunkedBased: {
+			cerr << "CHUNKEED IS CURRENTLY NOT AVAILABLE";
+			exit(0);
+			break;
+		}
+		case e_sstat::unchunkBody: {
+			stringstream	ss;
+			bool			crInLine = false;
+
+			size_t nlPos = buffer.find('\n', pos);
+			if (buffer[nlPos-1] == '\r')
+				crInLine = true;
+			string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();
+			cerr << "hex len: " << hexLength << endl;
+			ss << hex << hexLength;
+			ss >> length;
+			remainingBody += buffer.substr(nlPos+1, length);
+			cerr << "buffff" << endl;
+			cerr << remainingBody << endl;
+			pos = nlPos+1+length;//so i can start next iteration from the line that has the content
+			cerr << buffer[pos+2] << endl;
+			exit(0);
+			break;
+		}
+		case e_sstat::writeToCgiStdin: {
+
+		}
+		}
 		++pos;
-		}
 	}
+	//10\r\n
 	/* 
 		check the lenght of len if its higher the boundary then just write everythinh and no need to save anything but if its less
 		there's a possibility of it being the unfinished line of the boundary

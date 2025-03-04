@@ -39,6 +39,8 @@ enum e_sstat {//session stat
 	bodyFormat,
 	contentLengthBased,
 	transferEncodingChunkedBased,
+	unchunkBody,
+	writeToCgiStdin,
 	sHeader,
 	sBody,
 	done,

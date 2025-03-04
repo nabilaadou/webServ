@@ -1,5 +1,7 @@
 #include "httpSession.hpp"
 
+//add inline function
+
 void	httpSession::Request::isCGI() {
 	size_t		pos = 0;
 	cgiInfo		cgiVars;
@@ -7,7 +9,7 @@ void	httpSession::Request::isCGI() {
 
 	while (1) {
 		pos = s.path.find('/', pos);
-		string subUri = s.path.substr(0, pos);
+		string subUri = s.path.substr(0, (pos != string::npos) ? pos+1 : pos);
 		size_t	dotPos = subUri.rfind('.');
 		string subUriExt;
 		if (dotPos != string::npos) {
@@ -35,19 +37,19 @@ void	httpSession::Request::reconstructUri() {
 
 	if (find(s.rules->methods.begin(), s.rules->methods.end(), s.method) == s.rules->methods.end())
 		throw(statusCodeException(405, "Method Not Allowed"));
+	if (s.rules->redirection) {
+		s.statusCode = 301;
+		s.codeMeaning = "Moved Permanently";
+		//adding the location header to the response with the new path;
+		return ;
+	} else {
+		s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size()-1);
+		s.path = s.rules->reconfigurer + s.path;
+		s.path = w_realpath(("." + s.path).c_str());
+	}
 	switch (s.method)
 	{
 	case GET: {
-		if (s.rules->redirection) {
-			s.statusCode = 301;
-			s.codeMeaning = "Moved Permanently";
-			//adding the location header to the response with the new path;
-			return ;
-		} else {
-			s.path.erase(s.path.begin(), s.path.begin()+s.rules->uri.size()-1);
-			s.path = s.rules->reconfigurer + s.path;
-		}
-		s.path = w_realpath(("." + s.path).c_str());
 		stat(s.path.c_str(), &pathStat);
 		if (S_ISDIR(pathStat.st_mode)) {
 			s.path += "/" + s.rules->index;
@@ -58,10 +60,9 @@ void	httpSession::Request::reconstructUri() {
 	}
 	case POST: {
 		if (!s.rules->uploads.empty()) {
-			s.path = s.rules->uploads;
-			s.path.erase(s.path.end()-1);
-			s.path = w_realpath(("." + s.path).c_str());
-			if (stat(s.path.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
+			s.rules->uploads.erase(s.rules->uploads.end()-1);
+			s.rules->uploads = w_realpath(("." + s.rules->uploads).c_str());
+			if (stat(s.rules->uploads.c_str(), &pathStat) && !S_ISDIR(pathStat.st_mode))
 				throw(statusCodeException(403, "Forbidden"));
 		} else
 			throw(statusCodeException(403, "Forbidden"));
