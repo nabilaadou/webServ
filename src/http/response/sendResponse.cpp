@@ -175,7 +175,18 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
 
     if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
         perror("read failed(sendResponse.cpp 152)");
-        throw(statusCodeException(500, "Internal Server Error"));
+        s.sstat = CCLOSEDCON;
+        return;
+    }
+    if (!s.unchunkedBody.empty()) {
+        int     byteWrite;
+
+        if ((byteWrite = write(s.cgi->wFd(), s.unchunkedBody.c_str(), s.unchunkedBody.size())) < 0) {
+            perror("write failed(sendResponse.cpp 185)");
+            s.sstat = CCLOSEDCON;
+            return;
+        }
+        s.unchunkedBody.erase(0, byteWrite);
     }
     bstring bbuffer(buff, byteRead);
     if (byteRead > 0) {

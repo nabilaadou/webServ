@@ -47,10 +47,8 @@ int httpSession::parseFields(const bstring& buffer, size_t pos, map<string, stri
 				++pos;
 				continue;
 			}
-			case ' ':
-			case '\t':
-			case '\f':
-			case '\v':
+			case ' ': case '\t':
+			case '\f': case '\v':
 				break;
 			default: {
 				sstat = e_sstat::filedName;
@@ -104,6 +102,10 @@ int httpSession::parseFields(const bstring& buffer, size_t pos, map<string, stri
 					default:
 						sstat = e_sstat::sHeader;
 				}
+				cerr << "----headers----" << endl;
+				for (const auto& it : headers)
+					cerr << it.first << ": " << it.second << endl;
+				cerr << "----headers----" << endl;
 				return pos+1;
 			}
 			default: {

@@ -62,6 +62,7 @@ private:
 	int					statusCode;
 	string				codeMeaning;
 	Cgi*				cgi;
+	bstring				unchunkedBody;
 	location*			rules;
 	configuration*		config;
 public:

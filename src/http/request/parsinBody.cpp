@@ -129,18 +129,34 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 			bool			crInLine = false;
 
 			size_t nlPos = buffer.find('\n', pos);
-			if (buffer[nlPos-1] == '\r')
-				crInLine = true;
-			string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();
-			cerr << "hex len: " << hexLength << endl;
-			ss << hex << hexLength;
-			ss >> length;
-			remainingBody += buffer.substr(nlPos+1, length);
-			cerr << "buffff" << endl;
-			cerr << remainingBody << endl;
-			pos = nlPos+1+length;//so i can start next iteration from the line that has the content
-			cerr << buffer[pos+2] << endl;
-			exit(0);
+			if (nlPos != string::npos) {
+				if (nlPos && buffer[nlPos-1] == '\r')
+					crInLine = true;
+				string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();
+				if (hexLength == "0") {
+					s.headers["content-length"] = s.unchunkedBody.size();
+					s.headers.erase(s.headers.find("transfer-encoding"));
+					s.sstat = e_sstat::sHeader;
+					cerr << "unchunked body" << endl;
+					cerr << s.unchunkedBody << endl;
+					cerr << "------------------------------------" << endl;
+					return ;
+				}
+				ss << hex << hexLength;
+				ss >> length;
+			} else {
+				remainingBody = buffer.substr(pos);
+				return;
+			}
+			pos = nlPos;
+			nlPos = buffer.find('\n', pos+1+length);
+			if (nlPos != string::npos) {
+				s.unchunkedBody += buffer.substr(pos+1, length);
+				pos = nlPos;//so i can start next iteration from the line that has the content
+			} else {
+				remainingBody = buffer.substr(pos+1);
+				return;
+			}
 			break;
 		}
 		case e_sstat::writeToCgiStdin: {

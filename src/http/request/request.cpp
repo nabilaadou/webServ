@@ -1,8 +1,6 @@
 #include "httpSession.hpp"
 
-httpSession::Request::Request(httpSession& session) : s(session), fd(-1), length(0), requestStat(e_requestStat::headers) {
-	remainingBody = NULL;
-}
+httpSession::Request::Request(httpSession& session) : s(session), fd(-1), length(0), requestStat(e_requestStat::headers), remainingBody(NULL, 0) {}
 
 void	httpSession::Request::readfromsock(const int clientFd) {
 	char	buffer[BUFFER_SIZE];
@@ -14,7 +12,7 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 		return ;
 	}
 	bstring bbuffer(buffer, byteread);
-	cerr << buffer << endl;
+	cerr << bbuffer << endl;
 	cerr << "---" << endl;
 	switch (requestStat)
 	{
@@ -23,9 +21,8 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 			throw(statusCodeException(400, "Bad Request"));
 		if ((bufferPos = s.parseFields(bbuffer, bufferPos, s.headers)) < 0)
 			throw(statusCodeException(400, "Bad Request"));
-		if (s.cgi) {
+		if (s.cgi)
 			s.cgi->prepearingCgiEnvVars(s.headers);
-		}
 		if (s.sstat == e_sstat::sHeader)
 			break;
 		requestStat = e_requestStat::body;
