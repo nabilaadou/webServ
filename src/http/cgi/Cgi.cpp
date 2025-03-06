@@ -44,8 +44,10 @@ void	Cgi::prepearingCgiEnvVars(const map<string, string>& headers) {
 	scriptEnvs["REDIRECT_STATUS"] = "1";
 	getHeaders(headers);
 	// scriptEnvs["PATH_TRANSLATED"] = "";//idk
-	// for (const auto& it : scriptEnvs)
-	// 	cerr << it.first << ": " << it.second << endl;
+	cerr << "CGI headers" << endl;
+	for (const auto& it : scriptEnvs)
+		cerr << it.first << ": " << it.second << endl;
+	cerr << "------" << endl;
 }
 
 static char**	transformVectorToChar(vector<string>& vec) {

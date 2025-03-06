@@ -134,12 +134,13 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 					crInLine = true;
 				string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();
 				if (hexLength == "0") {
-					s.headers["content-length"] = s.unchunkedBody.size();
+					s.headers["content-length"] = to_string(s.unchunkedBody.size());
 					s.headers.erase(s.headers.find("transfer-encoding"));
 					s.sstat = e_sstat::sHeader;
 					cerr << "unchunked body" << endl;
 					cerr << s.unchunkedBody << endl;
 					cerr << "------------------------------------" << endl;
+					s.cgi->prepearingCgiEnvVars(s.headers);
 					return ;
 				}
 				ss << hex << hexLength;

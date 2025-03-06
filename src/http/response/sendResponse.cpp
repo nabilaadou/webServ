@@ -137,13 +137,13 @@ void	httpSession::Response::sendBody(const int clientFd) {
 	}
 }
 
-void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
-    string starterLine = "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (send(clientFd, starterLine.c_str(), starterLine.size(), MSG_DONTWAIT) <= 0) {
-		perror("write failed(sendResponse.cpp 143)");
-		s.sstat = CCLOSEDCON;
-	}
-}
+// void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
+//     string starterLine = "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
+//     if (send(clientFd, starterLine.c_str(), starterLine.size(), MSG_DONTWAIT) <= 0) {
+// 		perror("write failed(sendResponse.cpp 143)");
+// 		s.sstat = CCLOSEDCON;
+// 	}
+// }
 
 static bstring    tweakAndCheckHeaders(map<string, string>& headers) {
     bstring bheaders;
@@ -170,14 +170,9 @@ static bstring    tweakAndCheckHeaders(map<string, string>& headers) {
 
 void    httpSession::Response::sendCgiOutput(const int clientFd) {
     char    buff[BUFFER_SIZE];
-    int     byteRead;
+    int     byteRead = 0;
     int     status;
 
-    if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
-        perror("read failed(sendResponse.cpp 152)");
-        s.sstat = CCLOSEDCON;
-        return;
-    }
     if (!s.unchunkedBody.empty()) {
         int     byteWrite;
 
@@ -186,7 +181,15 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
             s.sstat = CCLOSEDCON;
             return;
         }
+        cerr << "byte write: " << byteWrite << endl;
         s.unchunkedBody.erase(0, byteWrite);
+        if (s.unchunkedBody.empty())
+            cerr << "done writing the vody to the script" << endl;
+    }
+    else if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
+        perror("read failed(sendResponse.cpp 152)");
+        s.sstat = CCLOSEDCON;
+        return;
     }
     bstring bbuffer(buff, byteRead);
     if (byteRead > 0) {
@@ -209,6 +212,7 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
                 return;
             }
             s.sstat = e_sstat::sBody;
+            chunkedResponse += ("HTTP/1.1 " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n").c_str();
             chunkedResponse += tweakAndCheckHeaders(cgiHeaders);
             bbuffer = bbuffer.substr(bodyStartPos);
             cgiHeadersParsed = true;
@@ -217,6 +221,9 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
         chunkedResponse += chunkSize.str().c_str();
         chunkedResponse += bbuffer;
         chunkedResponse += "\r\n";
+        cerr << "cgi response ->>>>>>" << endl;
+        cerr << chunkedResponse << endl;
+        cerr << "-------------" << endl;
         if (send(clientFd, chunkedResponse.c_str(), chunkedResponse.size(), MSG_DONTWAIT) <= 0) {
             perror("send failed(sendResponse.cpp 50)");
 			s.sstat = CCLOSEDCON;
