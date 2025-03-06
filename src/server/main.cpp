@@ -13,7 +13,10 @@ int main(int ac, char **av) {
         config = confi.parseFile();
         // confi.printprint();
         epollFd = createSockets(config, servrSocks);
-        multiplexerSytm(servrSocks, epollFd, config);
+        while (1) { //this loop is here if epoll fd somehow got closed and epoll wait fails and i have to create and instance of epoll fd;
+            multiplexerSytm(servrSocks, epollFd, config);
+            epollFd = startEpoll(servrSocks);
+        }
     }
     catch (const exception& msg) {
         cerr << msg.what() << endl;

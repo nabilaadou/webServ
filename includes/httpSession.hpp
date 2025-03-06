@@ -54,17 +54,18 @@ enum e_requestStat {
 
 class httpSession {
 private:
+	const int			clientFd;
 	e_sstat				sstat;
 	e_methods			method;
 	string				path;
 	string				query;
 	map<string, string>	headers;
+	configuration*		config;
+	location*			rules;
+	Cgi*				cgi;
+	bstring				cgiBody;
 	int					statusCode;
 	string				codeMeaning;
-	Cgi*				cgi;
-	bstring				body;
-	location*			rules;
-	configuration*		config;
 public:
 	class Request {
 	private:
@@ -84,7 +85,7 @@ public:
 		void			isCGI();
 		void			reconstructUri();
 	public:
-		void			readfromsock(const int clientFd);
+		void			readfromsock();
 		Request(httpSession& session);
 	};
 
@@ -107,7 +108,10 @@ public:
 	Request			req;
 	Response		res;
 
+
 	int				parseFields(const bstring& buffer, size_t pos, map<string, string>& headers);
+	configuration*	clientConfiguration() const;
+	int				fd() const;
 	const e_sstat&	status() const;
 	void			reSetPath(const string& newPath);
 	httpSession(int clientFd, configuration* confi);

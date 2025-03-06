@@ -230,5 +230,6 @@ int	httpSession::Request::parseStarterLine(const bstring& buffer) {
 		}
 		}
 	}
-	return -1;
+	throw(statusCodeException(400, "Bad Request"));
+	return(-1);
 }

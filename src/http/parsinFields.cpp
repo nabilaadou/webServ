@@ -124,5 +124,6 @@ int httpSession::parseFields(const bstring& buffer, size_t pos, map<string, stri
 		if (++headerFieldsLen > HEADER_FIELD_MAXSIZE)
 			throw(statusCodeException(431, "Request Header Fields Too Large"));
 	}
+	throw(statusCodeException(400, "Bad Request"));
 	return -1;
 }
