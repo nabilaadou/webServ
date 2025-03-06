@@ -38,139 +38,63 @@ static int	openFile(const string& value, const string& path) {
 	return fd;
 }
 
-void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
-	size_t				len = 0;
-	size_t				contentStartinPos = pos;
-	size_t				size = buffer.size();
-	char				ch;
-	map<string, string>	contentHeaders;
-
+void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
+	size_t	len = 0;
+	size_t	contentStartinPos = pos;
+	size_t	size = buffer.size();
+	char	ch;
+	
 	while (pos < size) {
 		ch = buffer[pos];
-		switch (s.sstat)
-		{
-		case e_sstat::bodyFormat: {
-			if (s.cgi) {
-				if (s.headers.find("content-length") != s.headers.end()) {
-					s.sstat = e_sstat::writeToCgiStdin;
-					length = w_stoi(s.headers["content-length"]);
-				}
-				else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
-					s.sstat = e_sstat::unchunkBody;
-			}
-			else if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
-				boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
-				if (s.headers.find("content-length") != s.headers.end()) {
-					s.sstat = e_sstat::contentLengthBased;
-					length = w_stoi(s.headers["content-length"]);
-				}
-				else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
-					s.sstat = e_sstat::transferEncodingChunkedBased;
-			} else
-				throw(statusCodeException(501, "Not Implemented"));
-			continue;
-		}
-		case e_sstat::contentLengthBased: {
-			if (ch == '\n') {
-				bool	crInLine = false;
+		if (ch == '\n') {
+			bool	crInLine = false;
 
-				if (pos && buffer[pos-1] == '\r')
-					crInLine = true;
-				if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
-					size_t	newPos;
-					size_t	boundaryStartinIndex = pos-len;
+			if (pos && buffer[pos-1] == '\r')
+				crInLine = true;
+			if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
+				size_t				newPos;
+				size_t				boundaryStartinIndex = pos-len;
+				map<string, string>	contentHeaders;
 
-					if (fd != -1) {
-						++len;//including pre boundary nl
-						if (pos && buffer[pos-len-1] == '\r')
-							++len;//includin the CR if it exist
-						write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-					}
-					s.sstat = e_sstat::emptyline;
-					if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
-						remainingBody = buffer.substr(boundaryStartinIndex);
-						length += remainingBody.size();
-						fd = -1;
-						return;
-					}
-					s.sstat = e_sstat::contentLengthBased;
-					length -= newPos - pos;
-					pos = newPos;
-					contentStartinPos = pos;
-					fd = openFile(contentHeaders["content-disposition"], s.rules->uploads);
-				} else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+				if (fd != -1) {
 					++len;//including pre boundary nl
 					if (pos && buffer[pos-len-1] == '\r')
-						++len;
+						++len;//includin the CR if it exist
 					write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-					if (length - 1)
-						throw(statusCodeException(400, "Bad Request"));
 				}
-				len = 0;
-				if (--length == 0) {
-					s.sstat = e_sstat::sHeader; return;
+				s.sstat = e_sstat::emptyline;
+				if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
+					remainingBody = buffer.substr(boundaryStartinIndex);
+					length += remainingBody.size();
+					fd = -1;
+					return;
 				}
-				++pos;
-				continue;
+				s.sstat = e_sstat::body;
+				length -= newPos - pos;
+				pos = newPos;
+				contentStartinPos = pos;
+				fd = openFile(contentHeaders["content-disposition"], s.rules->uploads);
+			} else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
+				++len;//including pre boundary nl
+				if (pos && buffer[pos-len-1] == '\r')
+					++len;
+				write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+				if (length - 1)
+					throw(statusCodeException(400, "Bad Request"));
 			}
+			len = 0;
 			if (--length == 0) {
 				s.sstat = e_sstat::sHeader; return;
 			}
-			++len;
-			break;
+			++pos;
+			continue;
 		}
-		case e_sstat::transferEncodingChunkedBased: {
-			cerr << "CHUNKEED IS CURRENTLY NOT AVAILABLE";
-			exit(0);
-			break;
+		if (--length == 0) {
+			s.sstat = e_sstat::sHeader; return;
 		}
-		case e_sstat::unchunkBody: {
-			stringstream	ss;
-			bool			crInLine = false;
-
-			size_t nlPos = buffer.find('\n', pos);
-			if (nlPos != string::npos) {
-				if (nlPos && buffer[nlPos-1] == '\r')
-					crInLine = true;
-				string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();
-				if (hexLength == "0") {
-					s.headers["content-length"] = to_string(s.unchunkedBody.size());
-					s.headers.erase(s.headers.find("transfer-encoding"));
-					s.sstat = e_sstat::sHeader;
-					cerr << "unchunked body" << endl;
-					cerr << s.unchunkedBody << endl;
-					cerr << "------------------------------------" << endl;
-					s.cgi->prepearingCgiEnvVars(s.headers);
-					return ;
-				}
-				ss << hex << hexLength;
-				ss >> length;
-			} else {
-				remainingBody = buffer.substr(pos);
-				return;
-			}
-			pos = nlPos;
-			nlPos = buffer.find('\n', pos+1+length);
-			if (nlPos != string::npos) {
-				s.unchunkedBody += buffer.substr(pos+1, length);
-				pos = nlPos;//so i can start next iteration from the line that has the content
-			} else {
-				remainingBody = buffer.substr(pos+1);
-				return;
-			}
-			break;
-		}
-		case e_sstat::writeToCgiStdin: {
-
-		}
-		}
+		++len;
 		++pos;
 	}
-	//10\r\n
-	/* 
-		check the lenght of len if its higher the boundary then just write everythinh and no need to save anything but if its less
-		there's a possibility of it being the unfinished line of the boundary
-	*/
 	remainingBody = NULL;
 	if (len <= boundary.size()+2) {//check if the line is smaller than the boundary
 		++len;
@@ -182,4 +106,86 @@ void	httpSession::Request::parseBody(const bstring& buffer, size_t pos) {
 	} else {
 		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos);
 	}
-}  
+}
+
+void	httpSession::Request::unchunkBody(const bstring& buffer, size_t pos) {
+	size_t size = buffer.size();
+
+	while (pos < size) {
+		stringstream	ss;
+		bool			crInLine = false;
+		size_t			nlPos;
+	
+		// if (length == 0) {//dones;t wrk
+			nlPos = buffer.find('\n', pos);
+			if (nlPos != string::npos) {
+				if (nlPos && buffer[nlPos-1] == '\r')
+					crInLine = true;
+				string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();//incase of unvalid number then whatttttttttt;
+				if (hexLength == "0") {
+					s.headers["content-length"] = to_string(s.body.size());
+					s.headers.erase(s.headers.find("transfer-encoding"));
+					s.sstat = e_sstat::sHeader;
+					cerr << "unchunked body" << endl;
+					cerr << s.body << endl;
+					cerr << "------------------------------------" << endl;
+					return ;
+				}
+				ss << hex << hexLength;
+				ss >> length;
+			} else {
+				remainingBody = buffer.substr(pos);
+				return;
+			}
+			pos = nlPos+1;
+		// }
+		nlPos = buffer.find('\n', pos+length);
+		if (nlPos != string::npos) {
+			s.body += buffer.substr(pos, length);
+			// length = 0;
+			pos = nlPos;//so i can start next iteration from the line that has the content
+		} else {
+			remainingBody = buffer.substr(pos+1);
+			return;
+		}
+		++pos;
+	}
+}
+
+void	httpSession::Request::bufferTheBody(const bstring& buffer, size_t pos) {
+	if (length) {
+		cerr << length << endl;
+		s.body += buffer.substr(pos);
+		length -= buffer.size()-pos;
+		cerr << length << endl;
+	}
+	if (length == 0) {
+		cerr << "cgi's body" << endl;
+		cerr << s.body << endl;
+		s.sstat = e_sstat::sHeader;
+		cerr << "--------" << endl;
+	}
+}
+
+void	httpSession::Request::bodyFormat() {
+	if (s.cgi) {
+		if (s.headers.find("content-length") != s.headers.end()) {
+			length = w_stoi(s.headers["content-length"]);
+			bodyHandlerFunc = &Request::bufferTheBody;
+			// (this->*bodyHandlerFunc)(bstring("aaa", 3), 0);
+			cerr << "here" << endl;
+		}
+		else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
+			bodyHandlerFunc = &Request::unchunkBody;
+	}
+	else if (s.headers.find("content-type") != s.headers.end() && isMultipartFormData(s.headers["content-type"])) {
+		boundary = "--" + s.headers["content-type"].substr(s.headers["content-type"].rfind('=')+1);
+		if (s.headers.find("content-length") != s.headers.end()) {
+			length = w_stoi(s.headers["content-length"]);
+			bodyHandlerFunc = &Request::contentlength;
+		}
+		// else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
+		// 	bodyHandlerFunc = &Request::contentlength;
+	} else
+		throw(statusCodeException(501, "Not Implemented"));
+}

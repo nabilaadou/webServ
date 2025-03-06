@@ -5,9 +5,7 @@ httpSession::Response::Response(httpSession& session) : s(session), contentFd(-1
 void	httpSession::Response::sendResponse(const int clientFd) {
 	if(s.cgi) {
 		if (s.sstat == sHeader) {
-			// sendCgiStarterLine(clientFd);
-			// if (s.sstat == CCLOSEDCON)
-			// 	return ;
+			s.cgi->prepearingCgiEnvVars(s.headers);
 			s.cgi->setupCGIProcess();
 			s.sstat = sBody;
 		}

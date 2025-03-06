@@ -21,26 +21,18 @@ void	httpSession::Request::readfromsock(const int clientFd) {
 			throw(statusCodeException(400, "Bad Request"));
 		if ((bufferPos = s.parseFields(bbuffer, bufferPos, s.headers)) < 0)
 			throw(statusCodeException(400, "Bad Request"));
-		if (s.sstat == e_sstat::sHeader) {
-			if (s.cgi)
-				s.cgi->prepearingCgiEnvVars(s.headers);
+		if (s.sstat == e_sstat::sHeader)
 			break;
-		}
-		requestStat = e_requestStat::body;
+		requestStat = e_requestStat::bodyFormat;
 	}
-	case e_requestStat::body: {
+	case e_requestStat::bodyFormat: {
+		bodyFormat();
+		requestStat = e_requestStat::handleBody;
+	}
+	case e_requestStat::handleBody: {
 		bbuffer = remainingBody + bbuffer;
 		if (bufferPos < bbuffer.size())
-			parseBody(bbuffer, bufferPos);
+			(this->*bodyHandlerFunc)(bbuffer, bufferPos);
 	}
 	}
 }
-
-/*
-	- body
-	- header -> content-length or chunked
-	- cgi -> in case of chunked unchunk the body
-
-	body;
-	
-*/

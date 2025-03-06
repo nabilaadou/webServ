@@ -137,14 +137,6 @@ void	httpSession::Response::sendBody(const int clientFd) {
 	}
 }
 
-// void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
-//     string starterLine = "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-//     if (send(clientFd, starterLine.c_str(), starterLine.size(), MSG_DONTWAIT) <= 0) {
-// 		perror("write failed(sendResponse.cpp 143)");
-// 		s.sstat = CCLOSEDCON;
-// 	}
-// }
-
 static bstring    tweakAndCheckHeaders(map<string, string>& headers) {
     bstring bheaders;
 
@@ -173,17 +165,17 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
     int     byteRead = 0;
     int     status;
 
-    if (!s.unchunkedBody.empty()) {
+    if (!s.body.empty()) {
         int     byteWrite;
 
-        if ((byteWrite = write(s.cgi->wFd(), s.unchunkedBody.c_str(), s.unchunkedBody.size())) < 0) {
+        if ((byteWrite = write(s.cgi->wFd(), s.body.c_str(), s.body.size())) < 0) {
             perror("write failed(sendResponse.cpp 185)");
             s.sstat = CCLOSEDCON;
             return;
         }
         cerr << "byte write: " << byteWrite << endl;
-        s.unchunkedBody.erase(0, byteWrite);
-        if (s.unchunkedBody.empty())
+        s.body.erase(0, byteWrite);
+        if (s.body.empty())
             cerr << "done writing the vody to the script" << endl;
     }
     else if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {

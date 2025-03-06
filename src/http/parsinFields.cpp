@@ -96,7 +96,7 @@ int httpSession::parseFields(const bstring& buffer, size_t pos, map<string, stri
 				switch (method)
 				{
 					case POST: {
-						sstat = e_sstat::bodyFormat;
+						sstat = e_sstat::body;
 						break;
 					}
 					default:

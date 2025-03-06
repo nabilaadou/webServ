@@ -36,11 +36,10 @@ enum e_sstat {//session stat
 	filedName,
 	fieldNl,
 	emptyline,
-	bodyFormat,
-	contentLengthBased,
-	transferEncodingChunkedBased,
-	unchunkBody,
-	writeToCgiStdin,
+	body,
+	// contentLengthBased,
+	// transferEncodingChunkedBased,
+	// unchunkBody,
 	sHeader,
 	sBody,
 	done,
@@ -49,7 +48,8 @@ enum e_sstat {//session stat
 
 enum e_requestStat {
 	headers,
-	body,
+	bodyFormat,
+	handleBody,
 };
 
 class httpSession {
@@ -62,7 +62,7 @@ private:
 	int					statusCode;
 	string				codeMeaning;
 	Cgi*				cgi;
-	bstring				unchunkedBody;
+	bstring				body;
 	location*			rules;
 	configuration*		config;
 public:
@@ -70,13 +70,17 @@ public:
 	private:
 		httpSession&	s;
 		e_requestStat	requestStat;
+		void			(httpSession::Request::*bodyHandlerFunc)(const bstring&, size_t);
 		bstring			remainingBody;
 		string			boundary;
 		size_t			length;
 		int				fd;
 
 		int				parseStarterLine(const bstring& buffer);
-		void			parseBody(const bstring& buffer, size_t pos);
+		void			contentlength(const bstring&, size_t);
+		void			unchunkBody(const bstring&, size_t);
+		void			bufferTheBody(const bstring&, size_t);
+		void			bodyFormat();
 		void			isCGI();
 		void			reconstructUri();
 	public:
@@ -94,7 +98,6 @@ public:
 		string			contentTypeHeader() const;
 		void			sendHeader(const int);
 		void			sendBody(const int);
-		void			sendCgiStarterLine(const int);
 		void			sendCgiOutput(const int);
 	public:
 		void			sendResponse(const int clientFd);
