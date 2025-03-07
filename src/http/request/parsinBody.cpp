@@ -39,7 +39,7 @@ static int	openFile(const string& value, const string& path) {
 }
 
 void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
-	size_t	len = 0;
+	ssize_t	len = 0;
 	size_t	contentStartinPos = pos;
 	size_t	size = buffer.size();
 	char	ch;
@@ -51,7 +51,18 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 
 			if (pos && buffer[pos-1] == '\r')
 				crInLine = true;
-			if (!buffer.ncmp(boundary.c_str(), len-crInLine, pos-len)) {
+			if (!buffer.ncmp((boundary+"--").c_str(), boundary.size()+2, pos-len)) {
+				cerr << "found end boundary" << endl;
+				++len;//including pre boundary nl
+				if (pos && buffer[pos-len-1] == '\r')
+					++len;
+				write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+				if (length - 1)
+					throw(statusCodeException(400, "Bad Request6"));
+			}
+			else if (!buffer.ncmp(boundary.c_str(), boundary.size(), pos-len)) {
+				cerr << "------found boundary------" << endl;
+				cerr << buffer.substr(pos-len, boundary.size());
 				size_t				newPos;
 				size_t				boundaryStartinIndex = pos-len;
 				map<string, string>	contentHeaders;
@@ -64,6 +75,7 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 				}
 				s.sstat = e_sstat::emptyline;
 				if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
+					cerr << "unfinished body headers" << endl;
 					remainingBody = buffer.substr(boundaryStartinIndex);
 					length += remainingBody.size();
 					fd = -1;
@@ -72,22 +84,10 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 				s.sstat = e_sstat::body;
 				length -= newPos - pos;
 				pos = newPos;
-				contentStartinPos = pos;
+				contentStartinPos = newPos;
 				fd = openFile(contentHeaders["content-disposition"], s.rules->uploads);
-			} else if (!buffer.ncmp((boundary+"--").c_str(), len-crInLine, pos-len)) {
-				++len;//including pre boundary nl
-				if (pos && buffer[pos-len-1] == '\r')
-					++len;
-				write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-				if (length - 1)
-					throw(statusCodeException(400, "Bad Request"));
 			}
-			len = 0;
-			if (--length == 0) {
-				s.sstat = e_sstat::sHeader; return;
-			}
-			++pos;
-			continue;
+			len = -1;
 		}
 		if (--length == 0) {
 			s.sstat = e_sstat::sHeader; return;
@@ -95,10 +95,10 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 		++len;
 		++pos;
 	}
-	remainingBody = NULL;
 	if (len <= boundary.size()+2) {//check if the line is smaller than the boundary
-		++len;
-		if (pos && pos-len-1 == '\r')
+		// cerr << "a potentiel unfinished boundary line" << endl;
+		++len;//buggyyyyyyyyyyyyyy
+		if (pos-len && pos-len-1 == '\r')
 			++len;
 		remainingBody = buffer.substr(pos-len);
 		length += remainingBody.size();
@@ -123,11 +123,11 @@ void	httpSession::Request::unchunkBody(const bstring& buffer, size_t pos) {
 					crInLine = true;
 				string hexLength = buffer.substr(pos, nlPos-pos-crInLine).cppstring();//incase of unvalid number then whatttttttttt;
 				if (hexLength == "0") {
-					s.headers["content-length"] = to_string(s.body.size());
+					s.headers["content-length"] = to_string(s.cgiBody.size());
 					s.headers.erase(s.headers.find("transfer-encoding"));
 					s.sstat = e_sstat::sHeader;
-					cerr << "unchunked body" << endl;
-					cerr << s.body << endl;
+					cerr << "cgi's body(unchunked)" << endl;
+					cerr << s.cgiBody << endl;
 					cerr << "------------------------------------" << endl;
 					return ;
 				}
@@ -141,7 +141,7 @@ void	httpSession::Request::unchunkBody(const bstring& buffer, size_t pos) {
 		// }
 		nlPos = buffer.find('\n', pos+length);
 		if (nlPos != string::npos) {
-			s.body += buffer.substr(pos, length);
+			s.cgiBody += buffer.substr(pos, length);
 			// length = 0;
 			pos = nlPos;//so i can start next iteration from the line that has the content
 		} else {
@@ -154,14 +154,12 @@ void	httpSession::Request::unchunkBody(const bstring& buffer, size_t pos) {
 
 void	httpSession::Request::bufferTheBody(const bstring& buffer, size_t pos) {
 	if (length) {
-		cerr << length << endl;
-		s.body += buffer.substr(pos);
+		s.cgiBody += buffer.substr(pos);
 		length -= buffer.size()-pos;
-		cerr << length << endl;
 	}
 	if (length == 0) {
 		cerr << "cgi's body" << endl;
-		cerr << s.body << endl;
+		cerr << s.cgiBody << endl;
 		s.sstat = e_sstat::sHeader;
 		cerr << "--------" << endl;
 	}
@@ -172,8 +170,6 @@ void	httpSession::Request::bodyFormat() {
 		if (s.headers.find("content-length") != s.headers.end()) {
 			length = w_stoi(s.headers["content-length"]);
 			bodyHandlerFunc = &Request::bufferTheBody;
-			// (this->*bodyHandlerFunc)(bstring("aaa", 3), 0);
-			cerr << "here" << endl;
 		}
 		else if (s.headers.find("transfer-encoding") != s.headers.end() && s.headers["transfer-encoding"] == "chunked")
 			bodyHandlerFunc = &Request::unchunkBody;

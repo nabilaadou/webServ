@@ -7,19 +7,15 @@ void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 		cerr << "done sending the response" << endl;
 		ev.events = EPOLLIN;
 		ev.data.fd = clientFd;
-		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));
-		}
+		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1)
+			perror("epoll_ctl failed");
 		delete s[clientFd];
 		s.erase(s.find(clientFd));
 	}
 	else if (status == CCLOSEDCON) {
 		cerr << "client closed the connection" << endl;
-		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
-		}
+		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1)
+			perror("epoll_ctl failed");
 		close(clientFd);
 		delete s[clientFd];
 		s.erase(s.find(clientFd));
@@ -33,16 +29,14 @@ void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSess
 		ev.events = EPOLLOUT;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
+			perror("epoll_ctl failed");
 			throw(statusCodeException(500, "Internal Server Error"));
 		}
 	}
 	else if (status == CCLOSEDCON) {
 		cerr << "client closed the connection" << endl;
-		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
-		}
+		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1)
+			perror("epoll_ctl failed");
 		close(clientFd);
 		delete s[clientFd];
 		s.erase(s.find(clientFd));
@@ -61,6 +55,7 @@ void	acceptNewClient(const int& epollFd, const int& serverFd) {
 	ev.data.fd = clientFd;
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
 		perror("epoll_ctl faield");
+		close(clientFd);
 		return;
 	}
 	cerr << "--------------new client added--------------" << endl;
@@ -72,11 +67,11 @@ void	multiplexerSytm(const vector<int>& servrSocks, const int epollFd, map<strin
 	int nfds;
 
 	while (1) {
-		cerr << "waiting for requests..." << endl;
+		// cerr << "waiting for requests..." << endl;
 		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
 			perror("epoll_wait failed");
 			if (errno == EBADF || errno == ENOMEM) {
-				//send internal error to all clients and close connectiona and reopen epollfd
+				// close all client's connections
 				// for (map<int, httpSession*>::iterator it = sessions.begin(); it != sessions.end(); ++it) {
 
 				// }
@@ -91,7 +86,7 @@ void	multiplexerSytm(const vector<int>& servrSocks, const int epollFd, map<strin
 				if (find(servrSocks.begin(), servrSocks.end(), fd) != servrSocks.end())
 					acceptNewClient(epollFd, fd);
 				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, new httpSession(fd, &(config[getsockname(fd)])));
+					sessions.try_emplace(fd, new httpSession(fd, &(config[getsockname(fd)])));//not valid in c++98
 					sessions[fd]->req.readfromsock();
 					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->status());
 				}

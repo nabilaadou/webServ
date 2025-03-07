@@ -1,5 +1,5 @@
 NAME = webserv
-CPP = g++
+CPP = c++
 INC = -I ./includes
 SRC = $(wildcard src/*.cpp src/http/cgi/*.cpp src/exceptions/*.cpp src/confi/*.cpp\
         src/http/*.cpp src/http/request/*.cpp src/http/response/*.cpp src/server/*.cpp src/bstring/*.cpp)
@@ -14,6 +14,8 @@ all: $(NAME)
 $(NAME): $(OBJ)
 	$(CPP) $(CPPFLAGS) $(OBJ) -o $(NAME)
 	clear
+
+d_upload:
 	rm www/uploads/*
 	clear
 
@@ -22,8 +24,6 @@ clean:
 
 fclean: clean
 	rm -rf $(NAME)
-	clear
-	rm www/uploads/*
 	clear
 
 re: fclean all

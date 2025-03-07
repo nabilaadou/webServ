@@ -70,7 +70,7 @@ vector<bstring>	bstring::split(const char* seperator) const {
 bstring	bstring::substr(size_t start, size_t len) const {
 	size_t	i = 0;
 
-	if (__string == NULL || start >= stringsize || len == start)
+	if (__string == NULL || start >= stringsize)
 		return bstring();//default constructer just like returning NULL;
 	if (len > stringsize - start || len == std::string::npos)
 		len = stringsize - start;

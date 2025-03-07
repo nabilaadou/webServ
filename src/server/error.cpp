@@ -28,26 +28,25 @@ int	errorResponse(const int epollFd, const statusCodeException& exception, httpS
 	int	clientFd = session->fd();
 
 	if (config->errorPages.find(exception.code()) != config->errorPages.end()) {
-		session->reSetPath(w_realpath(("." + config->errorPages.at(exception.code())).c_str()));
+		session->reSetPath(w_realpath(("." + config->errorPages.at(exception.code())).c_str()));//use syscall realpath and not the wrapper
 		ev.events = EPOLLOUT;
 		ev.data.fd = clientFd;
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-			perror("epoll_ctl faield(setUpserver.cpp): ");
-			exit(-1);
+			perror("epoll_ctl faield");
+			close(clientFd);
 		}
 	} else {
 		sendError(clientFd, exception.code(), exception.meaning());
-		if (exception.code() < 500) {
+		if (exception.code() < 400) {
 			ev.events = EPOLLIN;
 			ev.data.fd = clientFd;
 			if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-				perror("epoll_ctl faield(setUpserver.cpp): ");
-				exit(-1);
+				perror("epoll_ctl faield");
+				close(clientFd);
 			}
 		} else {
 			if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
-				perror("epoll_ctl failed: ");
-				throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
+				perror("epoll_ctl failed");
 			}
 			close(clientFd);
 		}

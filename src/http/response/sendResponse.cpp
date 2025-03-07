@@ -165,17 +165,17 @@ void    httpSession::Response::sendCgiOutput(const int clientFd) {
     int     byteRead = 0;
     int     status;
 
-    if (!s.body.empty()) {
+    if (!s.cgiBody.empty()) {
         int     byteWrite;
 
-        if ((byteWrite = write(s.cgi->wFd(), s.body.c_str(), s.body.size())) < 0) {
+        if ((byteWrite = write(s.cgi->wFd(), s.cgiBody.c_str(), s.cgiBody.size())) < 0) {
             perror("write failed(sendResponse.cpp 185)");
             s.sstat = CCLOSEDCON;
             return;
         }
         cerr << "byte write: " << byteWrite << endl;
-        s.body.erase(0, byteWrite);
-        if (s.body.empty())
+        s.cgiBody.erase(0, byteWrite);
+        if (s.cgiBody.empty())
             cerr << "done writing the vody to the script" << endl;
     }
     else if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
