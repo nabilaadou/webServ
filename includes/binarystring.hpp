@@ -31,7 +31,7 @@ public:
 	const char*		c_str() const;
 	bstring			substr(size_t start, size_t len=std::string::npos) const;
 	vector<bstring>	split(const char* seperator = " ") const;
-	bool			getheaderline(bstring&);
+	// bool			getheaderline(bstring&);
 	bool			getline(bstring&);
 	void			erase(const size_t start, size_t n);
 	size_t			find(const char*, const size_t startpos = 0) const;
@@ -42,7 +42,6 @@ public:
 	// bstring			trim() const;
 	bool			cmp(const char* str) const;
 	bool			ncmp(const char* str1, const size_t n, const size_t startpos = 0) const;
-	// bool			ncmp(const bstring& str1, const size_t n, const size_t startpos = 0) const;
 	bool			empty() const;
 	const char* 	operator=(const char*);
 	const bstring& 	operator=(const bstring&);

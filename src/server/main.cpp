@@ -1,6 +1,7 @@
 #include "server.h"
 
 int main(int ac, char **av) {
+    signal(SIGPIPE, SIG_IGN);
     if (ac != 2) {
         cerr << "invalid number of argument" << endl;
         return -1;

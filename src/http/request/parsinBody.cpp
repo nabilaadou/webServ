@@ -38,73 +38,82 @@ static int	openFile(const string& value, const string& path) {
 	return fd;
 }
 
-void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
-	ssize_t	len = 0;
-	size_t	contentStartinPos = pos;
-	size_t	size = buffer.size();
+static bool	roundedByNl(const bstring& buffer, const size_t start, const size_t len) {
+	// cerr << "is correct boundary" << endl;
 	char	ch;
-	
-	while (pos < size) {
-		ch = buffer[pos];
-		if (ch == '\n') {
-			bool	crInLine = false;
 
-			if (pos && buffer[pos-1] == '\r')
-				crInLine = true;
-			if (!buffer.ncmp((boundary+"--").c_str(), boundary.size()+2, pos-len)) {
-				cerr << "found end boundary" << endl;
-				++len;//including pre boundary nl
-				if (pos && buffer[pos-len-1] == '\r')
-					++len;
-				write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-				if (length - 1)
-					throw(statusCodeException(400, "Bad Request6"));
-			}
-			else if (!buffer.ncmp(boundary.c_str(), boundary.size(), pos-len)) {
-				cerr << "------found boundary------" << endl;
-				cerr << buffer.substr(pos-len, boundary.size());
-				size_t				newPos;
-				size_t				boundaryStartinIndex = pos-len;
+	if (start && buffer[start-1] != '\n')
+		return false;
+	for (size_t i = start+len; i < buffer.size(); ++i) {
+		ch = buffer[i];
+		// cerr << (int)ch << endl;
+		switch (ch)
+		{
+		case '\r': {
+			if (i != start+len)
+				return false;
+			break;
+		}
+		case '\n':
+			return i+1;
+		default:
+			return false;
+		}
+	}
+	return true;
+}
+
+void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
+	size_t	contentStartinPos = pos;
+
+	while (true) {
+		size_t	boundaryStartinPos = buffer.find(boundary.c_str(), pos);
+		int		sepBoundary = 0;
+
+		//checking the type of boundary;
+		if (boundaryStartinPos == string::npos)
+			break;
+		if(!buffer.ncmp((boundary+"--").c_str(), boundary.size()+2, boundaryStartinPos)) {
+			sepBoundary = 2;
+		}
+		//check if boundary is rounded by newlines;
+		if (roundedByNl(buffer, boundaryStartinPos, boundary.size()+sepBoundary)) {
+			if (boundaryStartinPos)
+				--boundaryStartinPos;//starttin from nl before boundary//i can safely dec without worrying about goin out of bound;
+			if (boundaryStartinPos && buffer[boundaryStartinPos-1] == '\r')
+				--boundaryStartinPos;
+			if (sepBoundary == 0) {
 				map<string, string>	contentHeaders;
-
-				if (fd != -1) {
-					++len;//including pre boundary nl
-					if (pos && buffer[pos-len-1] == '\r')
-						++len;//includin the CR if it exist
-					write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
-				}
+				if (fd != -1)
+					write(fd, &(buffer[contentStartinPos]), boundaryStartinPos-contentStartinPos);
 				s.sstat = e_sstat::emptyline;
-				if ((newPos = s.parseFields(buffer, pos+1, contentHeaders)) < 0) {
+				if ((contentStartinPos = s.parseFields(buffer, buffer.find('\n', boundaryStartinPos+boundary.size())+1, contentHeaders)) < 0) {
 					cerr << "unfinished body headers" << endl;
-					remainingBody = buffer.substr(boundaryStartinIndex);
-					length += remainingBody.size();
+					remainingBody = buffer.substr(boundaryStartinPos);
+					// length += remainingBody.size();
 					fd = -1;
 					return;
 				}
 				s.sstat = e_sstat::body;
-				length -= newPos - pos;
-				pos = newPos;
-				contentStartinPos = newPos;
 				fd = openFile(contentHeaders["content-disposition"], s.rules->uploads);
+			} else {
+				cerr << "end boundary" << endl;
+				write(fd, &(buffer[contentStartinPos]), boundaryStartinPos-contentStartinPos);
+				// if (length - 1)
+				// 	throw(statusCodeException(400, "Bad Request"));
+				exit(0);
 			}
-			len = -1;
 		}
-		if (--length == 0) {
-			s.sstat = e_sstat::sHeader; return;
-		}
-		++len;
-		++pos;
+		pos = boundaryStartinPos+boundary.size();
 	}
-	if (len <= boundary.size()+2) {//check if the line is smaller than the boundary
-		// cerr << "a potentiel unfinished boundary line" << endl;
-		++len;//buggyyyyyyyyyyyyyy
-		if (pos-len && pos-len-1 == '\r')
-			++len;
-		remainingBody = buffer.substr(pos-len);
-		length += remainingBody.size();
-		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos-len);
+	size_t lastlinePos = buffer.rfind('\n');
+	if (buffer.size()-lastlinePos <= boundary.size()+2) {
+		if (lastlinePos && buffer[lastlinePos-1] == '\r')
+			--pos;
+		remainingBody = buffer.substr(lastlinePos);
+		write(fd, &(buffer[contentStartinPos]), lastlinePos);
 	} else {
-		write(fd, &(buffer[contentStartinPos]), pos-contentStartinPos);
+		write(fd, &(buffer[contentStartinPos]), buffer.size()-contentStartinPos);
 	}
 }
 

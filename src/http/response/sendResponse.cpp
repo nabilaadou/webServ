@@ -22,7 +22,7 @@ string httpSession::Response::getSupportedeExtensions(const string& key) {
         ext[".ico"]   = "image/x-icon";
         ext[".iso"]   = "application/octet-stream";
         ext[".js"]    = "text/javascript";
-        ext[".jpg"]   = "images/jpeg";
+        ext[".jpg"]   = "image/jpg";
         ext[".jpeg"]  = "image/jpeg";
         ext[".json"]  = "application/json";
         ext[".java"]  = "text/x-java-source";
