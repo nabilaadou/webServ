@@ -66,6 +66,14 @@ static bool	roundedByNl(const bstring& buffer, const size_t start, const size_t 
 void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 	size_t	contentStartinPos = pos;
 
+	if (length >= buffer.size())
+		length -= buffer.size();
+	else {
+		cerr << "more content than content length" << endl;
+		buffer.substr(0, length);
+		length = 0;
+	}
+	cerr << length << endl;
 	while (true) {
 		size_t	boundaryStartinPos = buffer.find(boundary.c_str(), pos);
 		int		sepBoundary = 0;
@@ -79,7 +87,7 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 		//check if boundary is rounded by newlines;
 		if (roundedByNl(buffer, boundaryStartinPos, boundary.size()+sepBoundary)) {
 			if (boundaryStartinPos)
-				--boundaryStartinPos;//starttin from nl before boundary//i can safely dec without worrying about goin out of bound;
+				--boundaryStartinPos;
 			if (boundaryStartinPos && buffer[boundaryStartinPos-1] == '\r')
 				--boundaryStartinPos;
 			if (sepBoundary == 0) {
@@ -90,7 +98,7 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 				if ((contentStartinPos = s.parseFields(buffer, buffer.find('\n', boundaryStartinPos+boundary.size())+1, contentHeaders)) < 0) {
 					cerr << "unfinished body headers" << endl;
 					remainingBody = buffer.substr(boundaryStartinPos);
-					// length += remainingBody.size();
+					length += remainingBody.size();
 					fd = -1;
 					return;
 				}
@@ -99,18 +107,20 @@ void	httpSession::Request::contentlength(const bstring& buffer, size_t pos) {
 			} else {
 				cerr << "end boundary" << endl;
 				write(fd, &(buffer[contentStartinPos]), boundaryStartinPos-contentStartinPos);
-				// if (length - 1)
-				// 	throw(statusCodeException(400, "Bad Request"));
-				exit(0);
+				if (length)
+					throw(statusCodeException(400, "Bad Request"));
 			}
 		}
 		pos = boundaryStartinPos+boundary.size();
 	}
 	size_t lastlinePos = buffer.rfind('\n');
-	if (buffer.size()-lastlinePos <= boundary.size()+2) {
+	if (length == 0)
+		s.sstat = e_sstat::sHeader;
+	else if (buffer.size()-lastlinePos <= boundary.size()+2) {
 		if (lastlinePos && buffer[lastlinePos-1] == '\r')
 			--pos;
 		remainingBody = buffer.substr(lastlinePos);
+		length += remainingBody.size();
 		write(fd, &(buffer[contentStartinPos]), lastlinePos);
 	} else {
 		write(fd, &(buffer[contentStartinPos]), buffer.size()-contentStartinPos);
@@ -193,4 +203,6 @@ void	httpSession::Request::bodyFormat() {
 		// 	bodyHandlerFunc = &Request::contentlength;
 	} else
 		throw(statusCodeException(501, "Not Implemented"));
+	s.statusCode = 204;
+	s.codeMeaning = "No Content";
 }

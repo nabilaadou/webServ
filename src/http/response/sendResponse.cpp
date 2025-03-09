@@ -81,10 +81,8 @@ string	httpSession::Response::contentTypeHeader() const {
 void	httpSession::Response::sendHeader(const int clientFd) {
 	string header;
 
-	header += "HTTP/1.1" + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (s.method == POST)
-        header += "Content-Length: 0\r\n";
-    else {
+	header += "HTTP/1.1 " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
+    if (s.method == GET) {
         header += contentTypeHeader();
         header += "Transfer-Encoding: chunked\r\n";
     }
@@ -92,7 +90,7 @@ void	httpSession::Response::sendHeader(const int clientFd) {
 	header += "Server: bngn/0.1\r\n";
 	header += "\r\n";
 	if (send(clientFd, header.c_str(), header.size(), MSG_DONTWAIT) <= 0) {
-		perror("send failed(sendResponse.cpp 24)");
+		perror("send failed");
 		s.sstat = CCLOSEDCON;
 		return ;
 	}

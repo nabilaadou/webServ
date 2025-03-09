@@ -36,7 +36,7 @@ int main(int ac, char **av) {
 	while(true) {
 		string line;
 		getline(cin, line);
-		if (line != "zbi") {
+		if (line != "END") {
 			ss += line + "\r\n";
 		}
 		else {
