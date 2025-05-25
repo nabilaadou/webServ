@@ -1,144 +1,199 @@
 #include "server.h"
 
-httpSession::httpSession(int clientFd, configuration* config) : config(config), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+void	cleanCgiRessources(int epollFd, int clientFd, bool& isCgi) {
+	map<int, epollPtr>&				monitor = getEpollMonitor();
 
-httpSession::httpSession() : config(NULL), req(Request(*this)), res(Response(*this)), cgi(NULL), statusCode(200), codeMeaning("OK") {}
+	if (monitor[clientFd].cgiInfo.pid != -1) {
+		cerr << "freing cgi ressources" << endl;
+		monitor[clientFd].cgiInfo.pid = -1;
+		int& readPipe = monitor[clientFd].cgiInfo.readPipe;
+		int& writePipe = monitor[clientFd].cgiInfo.writePipe;
 
-void	httpSession::reSetPath(const string& newPath) {
-	path = newPath;
-}
-
-void	sendError(const int clientFd, const int statusCode, const string codeMeaning) {
-	string msg;
-	msg += "HTTP/1.1 " + to_string(statusCode) + " " + codeMeaning + "\r\n"; 
-	msg += "Content-type: text/html\r\n";
-	msg += "Transfer-Encoding: chunked\r\n";
-	msg += "Connection: keep-alive\r\n";
-	msg += "Server: bngn/0.1\r\n";
-	msg += "\r\n";
-	write(clientFd, msg.c_str(), msg.size());
-	string body = "<!DOCTYPE html><html><body><h1>" + codeMeaning + "</h1></body></html>";
-	ostringstream chunkSize;
-	chunkSize << hex << body.size() << "\r\n";
-	write(clientFd, chunkSize.str().c_str(), chunkSize.str().size());
-	write(clientFd, body.c_str(), body.size());
-	write(clientFd, "\r\n", 2);
-	write(clientFd, "0\r\n\r\n", 5);
-}
-
-
-void	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
-	struct epoll_event	ev;
-
-	if (status == DONE) {
-		ev.events = EPOLLIN;
-		ev.data.fd = clientFd;
-		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));
+		if (readPipe != -1) {
+			if (epoll_ctl(epollFd, EPOLL_CTL_DEL, readPipe, NULL) == -1)
+				cerr << "epoll_ctl failed" << endl;
+			monitor.erase(readPipe);
 		}
-		delete s[clientFd];
-		s.erase(s.find(clientFd));
+		if (writePipe != -1) {
+			if (epoll_ctl(epollFd, EPOLL_CTL_DEL, writePipe, NULL) == -1)
+				cerr << "epoll_ctl failed" << endl;
+			monitor.erase(writePipe);
+		}
+		close(readPipe);
+		close(writePipe);
+		monitor[clientFd].cgiInfo.pid = -1;
+		readPipe = -1;
+		writePipe = -1;
+		isCgi = true;
 	}
-	else if (status == CCLOSEDCON) {
-		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
+}
+
+static bool	resSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const e_sstat& status) {
+	struct epoll_event				ev;
+	map<int, epollPtr>&				monitor = getEpollMonitor();
+	bool							isCgi = false;
+
+	if (status == ss_done) {
+		cleanCgiRessources(epollFd, clientFd, isCgi);
+		map<string, vector<string> > headers = s[clientFd].getHeaders();
+		if (headers.find("connection") == headers.end() || getHeaderValue(headers, "connection") != "keep-alive") {
+			if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, NULL) == -1)
+				cerr << "epoll_ctl failed" << endl;
+			monitor.erase(clientFd);
+			close(clientFd);
+		} else {
+			ev.events = EPOLLIN;
+			monitor[clientFd].timer = 0;
+			ev.data.ptr = &monitor[clientFd];
+			if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
+				cerr << "epoll_ctl failed" << endl;
+				monitor.erase(clientFd);
+				close(clientFd);
+			}
 		}
+		s.erase(clientFd);
+	}
+	else if (status == ss_cclosedcon) {
+		if (monitor[clientFd].cgiInfo.pid != -1)
+			kill(monitor[clientFd].cgiInfo.pid, 9);
+		cleanCgiRessources(epollFd, clientFd, isCgi);
+		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, NULL) == -1)
+			perror("epoll_ctl failed");
+		monitor.erase(clientFd);
+		s.erase(clientFd);
 		close(clientFd);
-		delete s[clientFd];
-		s.erase(s.find(clientFd));
 	}
+	return isCgi;
 }
 
-void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession*>& s, const t_state& status) {
+static void	reqSessionStatus(const int& epollFd, const int& clientFd, map<int, httpSession>& s, const e_sstat& status) {
 	struct epoll_event	ev;
+	map<int, epollPtr>&	monitor = getEpollMonitor();
 
-	if (status == DONE) {
+	if (status == ss_sHeader) {
 		ev.events = EPOLLOUT;
-		ev.data.fd = clientFd;
+		ev.data.ptr = &monitor[clientFd];
 		if (epoll_ctl(epollFd, EPOLL_CTL_MOD, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));
+			cerr << "epoll_ctl failed" << endl;
+			s.erase(clientFd);
+			monitor.erase(clientFd);
+			close(clientFd);
 		}
 	}
-	else if (status == CCLOSEDCON) {
-		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1) {
-			perror("epoll_ctl failed: ");
-			throw(statusCodeException(500, "Internal Server Error"));//this throw is not supposed to be here
-		}
+	else if (status == ss_cclosedcon) {
+		if (epoll_ctl(epollFd, EPOLL_CTL_DEL, clientFd, &ev) == -1)
+			cerr <<"epoll_ctl failed" << endl;
+		s.erase(clientFd);
+		monitor.erase(clientFd);
 		close(clientFd);
-		delete s[clientFd];
-		s.erase(s.find(clientFd));
 	}
 }
 
-void	acceptNewClient(const int& epollFd, const int& serverFd, const t_sockaddr& addrsInfo) {
+static void	acceptNewClient(const int& epollFd, const int& serverFd) {
 	struct epoll_event	ev;
 	int					clientFd;
-	socklen_t			addrsLen = sizeof(addrsInfo);
+	map<int, epollPtr>&	monitor = getEpollMonitor();
 
-	if ((clientFd = accept(serverFd, (struct sockaddr*)&addrsInfo, &addrsLen)) < 0) {
-		perror("accept faield: ");
-        throw(statusCodeException(500, "Internal Server Error"));//i can't send the error page//no fd to send to
+	if ((clientFd = accept(serverFd, NULL, NULL)) < 0) {
+		cerr << "accept failed" << endl;
+		return;
     }
+	monitor[clientFd].fd = clientFd;
+	monitor[clientFd].type = clientSock;
 	ev.events = EPOLLIN;
-	ev.data.fd = clientFd;
+	ev.data.ptr = &monitor[clientFd];
 	if (epoll_ctl(epollFd, EPOLL_CTL_ADD, clientFd, &ev) == -1) {
-		perror("epoll_ctl faield(setUpserver.cpp): ");
-		throw(statusCodeException(500, "Internal Server Error"));
+		cerr << "epoll_ctl failed" << endl;
+		map<int, epollPtr>::iterator	position = monitor.find(clientFd);
+		close(clientFd);
+		if (position != monitor.end())
+			monitor.erase(position);
+		return;
 	}
-	cerr << "-------new client added-------" << endl;
+	cerr << "new client added, its fd is -> " << clientFd << endl;
 }
 
-void	multiplexerSytm(map<int, t_sockaddr>& servrSocks, const int& epollFd, configuration& config) {
-	struct epoll_event		events[MAX_EVENTS];
-	map<int, httpSession*>	sessions;//change httpSession to a pointer so i can be able to free it
+void checkTimeOutForEachUsr(const int& epollFd, map<int, httpSession>& sessions) {
+	map<int, epollPtr>& monitor = getEpollMonitor();
+	map<int, epollPtr>::iterator			it;
 
-	while (1) {
-		int nfds;
-		// cerr << "waiting for requests..." << endl;
-		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, -1)) == -1) {
-			//send the internal error page to all current clients
-			//close all connections and start over
-			perror("epoll_wait failed(setUpserver.cpp): ");
+	for (it = monitor.begin(); it != monitor.end(); ++it) {
+		if (it->second.type == serverSock || it->second.type == cgiPipe) {
+			continue;
 		}
-		for (size_t i = 0; i < nfds; ++i) {
-			const int fd = events[i].data.fd;
-			try {
-				if (servrSocks.find(fd) != servrSocks.end())
-					acceptNewClient(epollFd, fd, servrSocks[fd]);
-				else if (events[i].events & EPOLLIN) {
-					sessions.try_emplace(fd, new httpSession(fd, &config));
-					sessions[fd]->req.parseMessage(fd);
-					reqSessionStatus(epollFd, fd, sessions, sessions[fd]->req.status());
+		if (it->second.timer != 0 && time(NULL) - it->second.timer >= T) {
+			bool				isCgi;
+
+			cout << "Client " << it->first << " TIMED OUT" << endl;
+			if (it->second.wroteInsock == false)
+				errorResponse(epollFd, it->first, sessions, statusCodeException(408, "Timeout"));
+			else {
+				if (it->second.cgiInfo.pid != -1)
+					kill(it->second.cgiInfo.pid, 9);
+				cleanCgiRessources(epollFd, it->first, isCgi);
+				if (epoll_ctl(epollFd, EPOLL_CTL_DEL, it->first, NULL) == -1)
+					perror("epoll_ctl failed");
+				close(it->first);
+				sessions.erase(it->first);
+				monitor.erase(it->first);
+			}
+			return;
+		}
+	}
+}
+
+
+void	multiplexerSytm(const int& epollFd, map<string, configuration>& config) {
+	struct epoll_event					events[MAX_EVENTS];
+	map<int, httpSession>				sessions;
+	int									nfds;
+
+	while (true) {
+		if (shouldStop(0) == false)
+			break;
+		if ((nfds = epoll_wait(epollFd, events, MAX_EVENTS, 0)) == -1) {
+			cerr << "epoll_wait failed" << endl;
+        	if (errno == ENOMEM) {
+				//ENOMEM is set when there'snt enough memory left in device
+        	    for (map<int, httpSession>::iterator it = sessions.begin(); it != sessions.end(); ++it) {
+					close(it->first);
 				}
-				else if (events[i].events & EPOLLOUT) {
-					sessions[fd]->res.sendResponse(fd);
-					resSessionStatus(epollFd, fd, sessions, sessions[fd]->res.status());
+        	    close(epollFd);
+        	    return;
+    	    }
+			continue;
+		}
+		for (int i = 0; i < nfds; ++i) {
+			epollPtr	*ptr = static_cast<epollPtr*>(events[i].data.ptr);
+			const int 	fd = ptr->fd;
+			try {
+				if (ptr->type == serverSock)
+					acceptNewClient(epollFd, fd);
+				else if (events[i].events & EPOLLIN) {
+					if (ptr->type == cgiPipe) {
+						readCgiOutput(ptr);
+					} else if (ptr->type == clientSock) {
+						if (sessions.find(fd) == sessions.end()) {
+							pair<int, httpSession> newclient(fd, httpSession(fd, config[ft_getsockname(fd)]));
+							sessions.insert(newclient);
+						}
+						sessions[fd].req.readfromsock();
+						reqSessionStatus(epollFd, fd, sessions, sessions[fd].status());
+					}
+				} else if (events[i].events & EPOLLOUT) {
+					if (ptr->type == cgiPipe) {
+						writeBodyToCgi(ptr);
+					} else if (ptr->type == clientSock) {
+						sessions[fd].res.handelClientRes(epollFd);
+						if (resSessionStatus(epollFd, fd, sessions, sessions[fd].status()) == true)
+							break;
+					}
 				}
 			}
 			catch (const statusCodeException& exception) {
-				struct epoll_event	ev;
-				cerr << "code--> " << exception.code() << endl;
-				cerr << "reason--> " << exception.meaning() << endl;
-				if (config.errorPages.find(exception.code()) != config.errorPages.end()) {
-					sessions[fd]->reSetPath(w_realpath(("." + config.errorPages.at(exception.code())).c_str()));
-					ev.events = EPOLLOUT;
-					ev.data.fd = fd;
-					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
-					}
-				} else {
-					sendError(fd, exception.code(), exception.meaning());
-					ev.events = EPOLLIN;
-					ev.data.fd = fd;
-					if (epoll_ctl(epollFd, EPOLL_CTL_MOD, fd, &ev) == -1) {
-						perror("epoll_ctl faield(setUpserver.cpp): "); exit(-1);
-					}
-					sessions.erase(sessions.find(fd));
-				}
+				errorResponse(epollFd, fd, sessions, exception);
 			}
 		}
+		checkTimeOutForEachUsr(epollFd, sessions);
 	}
 }

@@ -6,119 +6,124 @@
 #include "cgi.hpp"
 #include <fcntl.h>
 #include <sstream>
-#include <fstream>
 #include <iostream>
 #include <unistd.h>
 #include <string.h>
 #include <algorithm>
 #include <sys/stat.h>
 #include "wrappers.h"
-#include <sys/socket.h>
+#include "confiClass.hpp"
 #include "binarystring.hpp"
-#include "stringManipulation.h"
 #include "statusCodeException.hpp"
-// echo -e "GET / HTTP/1.1\r\nHost: localhost\r\nConnection: close\r\n\r\n" | nc localhost 8080
-
-#define BUFFER_SIZE 8192
+#include <ctime>
 
 using namespace std;
 
-enum e_methods {
-	GET,
-	POST,
-	DELETE,
-};
+#define BUFFER_SIZE 8192
+#define URI_MAXSIZE 1024
+#define HEADER_FIELD_MAXSIZE 5120
+#define T 2
 
-struct location {
-	string				uri;
-    vector<e_methods>		methods;
-    string				redirection;
-    string				alias;
-	string				upload;
-    string				index;
-	map<string, string>	cgi;
-    bool				autoIndex;
-	location() : index("index.html") {}
-};
+string	getHeaderValue(map<string, vector<string> >& mp, const string& key);
 
-struct configuration {
-    int						bodySize;
-    map<int, string>		errorPages;
-    map<string, location>	locations;
+enum e_sstat {
+	ss_method=0,
+	ss_uri,
+	ss_httpversion,
+	ss_starterlineNl,
+	ss_fieldLine,
+	ss_wssBeforeFieldName,
+	ss_filedName,
+	ss_fieldNl,
+	ss_emptyline,
+	ss_body,
+	ss_sHeader,
+	ss_CgiResponse,
+	ss_sBody,
+	ss_sBodyAutoindex,
+	ss_done,
+	ss_cclosedcon,
 };
 
 class httpSession {
 private:
-	e_methods				method;
-	string				path;
-	string				query;
-	string				httpProtocole;
-	map<string, string>	headers;
-	int					statusCode;
-	string				codeMeaning;
-	Cgi*				cgi;
-	configuration*		config;
+	const int						clientFd;
+	e_sstat							sstat;
+	e_methods						method;
+	string							path;
+	string							query;
+	map<string, vector<string> >	headers;
+	configuration					config;
+	location*						rules;
+	Cgi*							cgi;
+	bstring							cgiBody;
+	string							rawUri;
+	string							returnedLocation;
+	bool							showDirFiles;
+	int								statusCode;
+	string							codeMeaning;
 public:
 	class Request {
 	private:
-		httpSession&						s;
-		string								prvsFieldName;
-		string								prvsContentFieldName;
-		queue<bool(Request::*)(bstring&)>	parseFunctions;
-		queue<bool(Request::*)(bstring&)>	bodyParseFunctions;
-		map<string, string>					contentHeaders;
-		int									length;
-		ofstream							fd;
-		string								boundaryValue;
-		bstring								remainingBuffer;
-		t_state								state;
+		httpSession&	s;
+		void			(httpSession::Request::*bodyHandlerFunc)(const bstring&, size_t);
+		bstring			remainingBody;
+		string			boundary;
+		off64_t			length;
+		ofstream		outputFile;
 
-		void								isCGI(location*);
-		void								reconstructUri(location* rules);
-		void								isProtocole(bstring& httpVersion);
-		void								extractPathQuery(bstring& uri);
-		void								isTarget(bstring& target);
-		void								isMethod(bstring& method);
-		location*							getConfigFileRules();
-		bool								parseStartLine(bstring&);
-		bool								validFieldName(string& str) const;
-		bool								parseFileds(bstring&);
-		void								openTargetFile(const string& filename, ofstream& fd) const;
-		bool								boundary(bstring&);
-		bool								fileHeaders(bstring&);
-		bool								fileContent(bstring&);
-		bool								contentLengthBased(bstring&);
-		bool								transferEncodingChunkedBased(bstring&);
-		bool								parseBody(bstring&);
+		int				parseStarterLine(const bstring& buffer);
+		bool			fileExistence();
+		void			contentlength(const bstring&, size_t);
+		void			unchunkBody(const bstring&, size_t);
+		void			bufferTheBody(const bstring&, size_t);
+		void			bodyFormat();
+		void			isCGI();
+		void			reconstructUri();
 	public:
 		Request(httpSession& session);
-		void								parseMessage(const int clientFd);
-		const t_state&						status() const;
+		Request(const Request& other);
+		~Request();
+		void			readfromsock();
 	};
 
 	class Response {
 	private:
-		httpSession&	s;
-		int				contentFd;
-		t_state			state;
-		
-		static string	getSupportedeExtensions(const string&);
-		string			contentTypeHeader() const;
-		void			sendHeader(const int);
-		void			sendBody(const int);
-		void			sendCgiStarterLine(const int);
-		void			sendCgiOutput(const int);
+		httpSession&		s;
+		ifstream			inputFile;
+		bstring				cgiBuffer;
+		bool				addChunkedWhenSendingCgiBody;
+		bool				cgiHeadersParsed;
+
+		static string		getSupportedeExtensions(const string&);
+		void				sendCgiOutput();
+		void				sendHeader();
+		string				contentTypeHeader() const;
+		void				sendBody();
+		void				generateHtml();
+		void				deleteContent();
 	public:
 		Response(httpSession& session);
-		void			sendResponse(const int clientFd);
-		const t_state&	status() const;
+		Response(const Response& other);
+		~Response();
+		void				handelClientRes(const int);
+		void				storeCgiResponse(const bstring&);
 	};
-
 	Request		req;
 	Response	res;
 
-	httpSession(int clientFd, configuration* confi);
+	httpSession(int clientFd, configuration& confi);
+	httpSession(const httpSession& other);
 	httpSession();
-	void		reSetPath(const string& newPath);
+	~httpSession();
 
+	int								parseFields(const bstring& buffer, size_t pos, map<string, vector<string> >& headers);
+	void							resetForSendingErrorPage(const string& errorPagePath, int statusCode, string meaning);
+	configuration					clientConfiguration() const;
+	int								fd() const;
+	const e_sstat&					status() const;
+	void							closeCon();
+	map<string, vector<string> >	getHeaders();
+	bstring&						getCgiBody();
+	Cgi* getCgi();
 };

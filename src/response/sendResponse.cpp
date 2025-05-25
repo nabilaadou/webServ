@@ -4,167 +4,156 @@ string httpSession::Response::getSupportedeExtensions(const string& key) {
     static map<string, string> ext;
     
     if (ext.empty()) {
-        ext[".7z"]    = "application/x-7z-compressed";
-        ext[".avi"]   = "video/x-msvideo";
-        ext[".bat"]   = "application/x-msdownload";
-        ext[".bin"]   = "application/octet-stream";
-        ext[".bmp"]   = "image/bmp";
-        ext[".css"]   = "text/css";
-        ext[".csv"]   = "text/csv";
-        ext[".doc"]   = "application/msword";
-        ext[".docx"]  = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-        ext[".dll"]   = "application/octet-stream";
-        ext[".exe"]   = "application/octet-stream";
-        ext[".eot"]   = "application/vnd.ms-fontobject";
-        ext[".gif"]   = "image/gif";
-        ext[".gz"]    = "application/gzip";
-        ext[".html"]  = "text/html";
-        ext[".ico"]   = "image/x-icon";
-        ext[".iso"]   = "application/octet-stream";
-        ext[".js"]    = "text/javascript";
-        ext[".jpg"]   = "images/jpeg";
-        ext[".jpeg"]  = "image/jpeg";
-        ext[".json"]  = "application/json";
-        ext[".java"]  = "text/x-java-source";
-        ext[".mjs"]   = "text/javascript";
-        ext[".mp3"]   = "audio/mpeg";
-        ext[".mp4"]   = "video/mp4";
-        ext[".mov"]   = "video/quicktime";
-        ext[".mkv"]   = "video/x-matroska";
-        ext[".ogg"]   = "audio/ogg";
-        ext[".odt"]   = "application/vnd.oasis->opendocument.text";
-        ext[".ods"]   = "application/vnd.oasis->opendocument.spreadsheet";
-        ext[".odp"]   = "application/vnd.oasis->opendocument.presentation";
-        ext[".otf"]   = "font/otf";
-        ext[".png"]   = "images/png";
-        ext[".pdf"]   = "application/pdf";
-        ext[".ppt"]   = "application/vnd.ms-powerpoint";
-        ext[".pptx"]  = "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-        ext[".php"]   = "application/x-httpd-php";
-        ext[".py"]    = "text/x-python";
-        ext[".rar"]   = "application/x-rar-compressed";
-        ext[".rtf"]   = "application/rtf";
-        ext[".svg"]   = "image/svg+xml";
-        ext[".sh"]    = "application/x-sh";
-        ext[".sfnt"]  = "font/sfnt";
-        ext[".txt"]   = "text/plain";
-        ext[".tiff"]  = "image/tiff";
-        ext[".tar"]   = "application/x-tar";
-        ext[".ttf"]   = "font/ttf";
-        ext[".webp"]  = "image/webp";
-        ext[".wav"]   = "audio/wav";
-        ext[".webm"]  = "video/webm";
-        ext[".woff"]  = "font/woff";
-        ext[".woff2"] = "font/woff2";
-        ext[".xml"]   = "application/xml";
-        ext[".xls"]   = "application/vnd.ms-excel";
-        ext[".xlsx"]  = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-        ext[".zip"]   = "application/zip";
+        ext[".7z"]    = "Content-Type: application/x-7z-compressed\r\n";
+        ext[".avi"]   = "Content-Type: video/x-msvideo\r\n";
+        ext[".bat"]   = "Content-Type: application/x-msdownload\r\n";
+        ext[".bin"]   = "Content-Type: application/octet-stream\r\n";
+        ext[".bmp"]   = "Content-Type: image/bmp\r\n";
+        ext[".css"]   = "Content-Type: text/css\r\n";
+        ext[".csv"]   = "Content-Type: text/csv\r\n";
+        ext[".doc"]   = "Content-Type: application/msword\r\n";
+        ext[".docx"]  = "Content-Type: application/vnd.openxmlformats-officedocument.wordprocessingml.document\r\n";
+        ext[".dll"]   = "Content-Type: application/octet-stream\r\n";
+        ext[".exe"]   = "Content-Type: application/octet-stream\r\n";
+        ext[".eot"]   = "Content-Type: application/vnd.ms-fontobject\r\n";
+        ext[".gif"]   = "Content-Type: image/gif\r\n";
+        ext[".gz"]    = "Content-Type: application/gzip\r\n";
+        ext[".html"]  = "Content-Type: text/html\r\n";
+        ext[".ico"]   = "Content-Type: image/x-icon\r\n";
+        ext[".iso"]   = "Content-Type: application/octet-stream\r\n";
+        ext[".jpg"]   = "Content-Type: image/jpeg\r\n";
+        ext[".jpeg"]  = "Content-Type: image/jpeg\r\n";
+        ext[".json"]  = "Content-Type: application/json\r\n";
+        ext[".mjs"]   = "Content-Type: text/javascript\r\n";
+        ext[".mp3"]   = "Content-Type: audio/mpeg\r\n";
+        ext[".mp4"]   = "Content-Type: video/mp4\r\n";
+        ext[".mov"]   = "Content-Type: video/quicktime\r\n";
+        ext[".mkv"]   = "Content-Type: video/x-matroska\r\n";
+        ext[".ogg"]   = "Content-Type: audio/ogg\r\n";
+        ext[".otf"]   = "Content-Type: font/otf\r\n";
+        ext[".png"]   = "Content-Type: image/png\r\n";
+        ext[".pdf"]   = "Content-Type: application/pdf\r\n";
+        ext[".ppt"]   = "Content-Type: application/vnd.ms-powerpoint\r\n";
+        ext[".pptx"]  = "Content-Type: application/vnd.openxmlformats-officedocument.presentationml.presentation\r\n";
+        ext[".php"]   = "Content-Type: application/x-httpd-php\r\n";
+        ext[".py"]    = "Content-Type: text/x-python\r\n";
+        ext[".rar"]   = "Content-Type: application/x-rar-compressed\r\n";
+        ext[".rtf"]   = "Content-Type: application/rtf\r\n";
+        ext[".svg"]   = "Content-Type: image/svg+xml\r\n";
+        ext[".sh"]    = "Content-Type: application/x-sh\r\n";
+        ext[".sfnt"]  = "Content-Type: font/sfnt\r\n";
+        ext[".webm"]  = "Content-Type: video/webm\r\n";
+        ext[".woff"]  = "Content-Type: font/woff\r\n";
+        ext[".woff2"] = "Content-Type: font/woff2\r\n";
+        ext[".xml"]   = "Content-Type: application/xml\r\n";
+        ext[".xls"]   = "Content-Type: application/vnd.ms-excel\r\n";
+        ext[".xlsx"]  = "Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet\r\n";
+        ext[".zip"]   = "Content-Type: application/zip\r\n";
+        ext[".odt"]   = "Content-Type: application/vnd.oasis.opendocument.text\r\n";
+        ext[".ods"]   = "Content-Type: application/vnd.oasis.opendocument.spreadsheet\r\n";
+        ext[".odp"]   = "Content-Type: application/vnd.oasis.opendocument.presentation\r\n";
+        ext[".txt"]   = "Content-Type: text/plain\r\n";
+        ext[".js"]    = "Content-Type: application/javascript\r\n";
+        ext[".java"]  = "Content-Type: text/java\r\n";
     }
-    if (ext.find(key) != ext.end())
+    if (ext.find(key) != ext.end()) {
         return ext[key];
-    return "";
+    }
+    return "Content-Type: application/octet-stream\r\n";
+}
+
+static bool ft_send(int __fd, const void *__buf, size_t __n, e_sstat& status) {
+    if (send(__fd, __buf, __n, MSG_DONTWAIT | MSG_NOSIGNAL) <= 0) {
+        cerr << "send failed" << endl;
+        status = ss_cclosedcon;
+        return false;
+    }
+    return true;
 }
 
 string	httpSession::Response::contentTypeHeader() const {
+    if (s.showDirFiles == true) {
+        return ("Content-Type: text/html\r\n");
+    }
 	size_t pos = s.path.rfind(".");
 	if (pos == string::npos)
-		throw(statusCodeException(501, "Not Implemented"));
+        return ("Content-Type: application/octet-stream\r\n");
 	string ext = s.path.substr(pos);
 	string contentTypeValue = getSupportedeExtensions(ext);
-	if (contentTypeValue.empty())
-		throw(statusCodeException(501, "Not Implemented"));//check this before begining to write in the sock
-	return ("Content-Type: " + contentTypeValue + "\r\n");
+	return (contentTypeValue);
 }
 
-void	httpSession::Response::sendHeader(const int clientFd) {
+void	httpSession::Response::sendHeader() {
 	string header;
 
-	header += s.httpProtocole + " " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (s.method != POST) {
-	    header += contentTypeHeader();
-	    header += "Transfer-Encoding: chunked\r\n";
-    } else
-        header += "Content-Length: 0\r\n";
-	header += "Connection: keep-alive\r\n";
-	header += "Server: bngn/0.1\r\n";
+	header += "HTTP/1.1 " + toString(s.statusCode) + " " + s.codeMeaning + "\r\n";
+	switch (s.method) {
+    case GET: 
+    {
+        if (s.returnedLocation.empty()) {
+            header += contentTypeHeader();
+	        header += "Transfer-Encoding: chunked\r\n";
+        }
+        s.sstat = ss_sBody;
+        break;
+    }
+    case DELETE:
+    {
+        deleteContent();
+        s.sstat = ss_done;
+        break;
+    }
+    case POST: {
+        s.sstat = ss_done;
+        break;
+    }
+    default:
+        break;
+    }
+    if (s.showDirFiles == true)
+        s.sstat = ss_sBodyAutoindex;
+    if (getHeaderValue(s.headers, "connection") == "keep-alive")
+	    header += "Connection: keep-alive\r\n";
+    else
+	    header += "Connection: close\r\n";
+    if (!s.returnedLocation.empty()) {
+        header += "Location: " + s.returnedLocation +"\r\n";
+        s.sstat = ss_done;
+    }
 	header += "\r\n";
-	if (write(clientFd, header.c_str(), header.size()) <= 0) {
-		perror("write failed(sendResponse.cpp 24)");
-		state = CCLOSEDCON;
-		return ;
-	}
+	ft_send(s.clientFd, header.c_str(), header.size(), s.sstat);
 }
 
-void	httpSession::Response::sendBody(const int clientFd) {
-	char buff[BUFFER_SIZE+1] = {0};
-
-	if (contentFd == -1) {
-		if ((contentFd = open(s.path.c_str(), O_RDONLY, 0644)) == -1) {
-			perror("open failed(sendresponse.cpp 37)");
-			throw(statusCodeException(500, "Internal Server Error"));
-		}
+void	httpSession::Response::sendBody() {
+	char        buff[BUFFER_SIZE] = {0};
+    streamsize sizeRead;
+	
+    if (inputFile.is_open() == false) {
+        inputFile.open(s.path.c_str(), ios::binary);
+        if (inputFile.is_open() == false) {
+            cerr << "open failed" << endl;
+            s.sstat = ss_cclosedcon;
+            return;
+        }
 	}
-	int sizeRead;
-	if((sizeRead = read(contentFd, buff, BUFFER_SIZE)) < 0) {
-		perror("read failed(sendresponse.cpp 43)");
-		throw(statusCodeException(500, "Internal Server Error"));
-	}
-	if (sizeRead > 0) {
+    inputFile.read(buff, BUFFER_SIZE);
+    sizeRead =  inputFile.gcount();
+    if (sizeRead > 0) {
 		ostringstream chunkSize;
 		chunkSize << hex << sizeRead << "\r\n";
-		if (write(clientFd, chunkSize.str().c_str(), chunkSize.str().size()) <= 0) {//not good wrapper good
-			perror("write failed(sendResponse.cpp 50)");
-			state = CCLOSEDCON;
+		if ( ft_send(s.clientFd, chunkSize.str().c_str(), chunkSize.str().size(), s.sstat) == false ||
+             ft_send(s.clientFd, buff, sizeRead, s.sstat) == false ||
+             ft_send(s.clientFd, "\r\n", 2, s.sstat) == false ) {
 			return ;
 		}
-		if (write(clientFd, buff, sizeRead) <= 0) {
-			perror("write failed(sendResponse.cpp 50)");
-			state = CCLOSEDCON;
+	} else if (sizeRead == 0) {
+		if (ft_send(s.clientFd, "0\r\n\r\n", 5, s.sstat) == false) {
 			return ;
 		}
-		if (write(clientFd, "\r\n", 2) <= 0) {
-			perror("write failed(sendResponse.cpp 50)");
-			state = CCLOSEDCON;
-			return ;
-		}
-	} else {
-		if (write(clientFd, "0\r\n\r\n", 5) <= 0) {
-			perror("write failed(sendResponse.cpp 56)");
-			state = CCLOSEDCON;
-			return ;
-		}
-		state = DONE;
-		close(contentFd);
-		cerr << "done sending response" << endl;
+        inputFile.close();
+		s.sstat = ss_done;
 	}
-}
-
-void    httpSession::Response::sendCgiStarterLine(const int clientFd) {
-    string starterLine = s.httpProtocole + " " + to_string(s.statusCode) + " " + s.codeMeaning + "\r\n";
-    if (write(clientFd, starterLine.c_str(), starterLine.size()) <= 0) {
-		perror("write failed(sendResponse.cpp 143)");
-		state = CCLOSEDCON;
-	}
-}
-
-void    httpSession::Response::sendCgiOutput(const int clientFd) {
-    char    buff[BUFFER_SIZE+1] = {0};
-    int     byteRead;
-    if ((byteRead = read(s.cgi->rFd(), buff, BUFFER_SIZE)) < 0) {
-        perror("read failed(sendResponse.cpp 152)");
-        throw(statusCodeException(500, "Internal Server Error"));
-    }
-    cerr << buff << endl;
-    if (byteRead > 0) {
-        if (write(clientFd, buff, byteRead) <= 0) {
-			perror("write failed(sendResponse.cpp 157)");
-			state = CCLOSEDCON;
-			return ;
-		}
-    } else {
-        state = DONE;
-		close(s.cgi->rFd());
-		cerr << "done sending response cgi" << endl;
+    else {
+        s.sstat = ss_cclosedcon;
     }
 }

@@ -2,16 +2,18 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <cerrno>
 #include <fcntl.h>
 #include <iostream>
 #include <string.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include "wrappers.h"
 #include "statusCodeException.hpp"
 
 using namespace std;
 
-//https://www.ibm.com/docs/en/netcoolomnibus/8.1?topic=scripts-environment-variables-in-cgi-script
+#define DOCUMENT_ROOT "./www/"
 
 struct cgiInfo {
 	string	scriptUri;
@@ -19,21 +21,27 @@ struct cgiInfo {
 	string	exec;
 	string	path;
 	string	query;
+	string	method;
 };
 
 class Cgi {
 	private:
-		const cgiInfo	infos;
-		int				wPipe[2];
-		int				rPipe[2];
+		const cgiInfo		infos;
+		pid_t				pid;
+		int					rPipe[2];
+		int					wPipe[2];
+		map<string, string>	scriptEnvs;
 
 		void	createPipes();
 		void	executeScript();
-		// void    prepearingCgiEnvVars(Request, map<string, string>&);
+		void	getHeaders(const map<string, vector<string> >& headers);
+		Cgi();
 	public:
 		Cgi(const cgiInfo& infos);
 		~Cgi();
 		void	setupCGIProcess();
+		void    prepearingCgiEnvVars(const map<string, vector<string> >& headers);
 		int		wFd();
 		int		rFd();
+		int		ppid();
 };

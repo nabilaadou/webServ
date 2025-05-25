@@ -15,7 +15,6 @@ bstring::bstring(const char* str, const size_t size) : stringsize(size) {
 }
 
 bstring::bstring(const bstring& other) {
-	// cerr << "bstring::copy constructer called" << endl;
 	if (other.empty() == false) {
 		stringsize = other.size();
 		__string = new char[stringsize];
@@ -29,7 +28,6 @@ bstring::bstring(const bstring& other) {
 }
 
 bstring::~bstring() {
-	// cerr << "bstring::destructor called" << endl;
 	if (__string)
 		delete []__string;
 }
@@ -45,7 +43,7 @@ const string	bstring::cppstring() const {
 	return s;
 }
 
-const char*	bstring::c_str() const {//add \0 in the end
+const char*	bstring::c_str() const {
 	return __string;
 }
 
@@ -70,7 +68,7 @@ vector<bstring>	bstring::split(const char* seperator) const {
 bstring	bstring::substr(size_t start, size_t len) const {
 	size_t	i = 0;
 
-	if (__string == NULL || start >= stringsize || len == start)
+	if (__string == NULL || start >= stringsize)
 		return bstring();//default constructer just like returning NULL;
 	if (len > stringsize - start || len == std::string::npos)
 		len = stringsize - start;
@@ -80,39 +78,6 @@ bstring	bstring::substr(size_t start, size_t len) const {
 		i++;
 	}
 	return bstring(substring, len);
-}
-
-bool	bstring::getheaderline(bstring& line) {
-	char	ch;
-	bool	br = false;
-	for (size_t i = 0; i < stringsize; ++i) {
-		ch = __string[i];
-		switch (static_cast<int>(ch))
-		{
-		case 10: {
-			if (br == true)
-				line = substr(0, i-1);
-			else
-				line = substr(0, i);
-			erase(0, i+1);
-			return true;
-		}
-		case 13: {
-			if (br == false) {
-				br = true;
-				break;
-			}
-		}
-		default:
-			if (br) {
-				cerr << "www" << endl;
-				// throw(statusCodeException(400, "Bad Request"));
-			}
-		}
-	}
-	line = substr(0);
-	erase(0, std::string::npos);
-	return false;
 }
 
 bool	bstring::getline(bstring& line) {
@@ -215,7 +180,7 @@ bool	bstring::cmp(const char* str) const {
 }
 
 bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) const {
-	int i = 0;
+	size_t	i = 0;
 
 	if (startpos >= stringsize)
 		return true;
@@ -227,21 +192,6 @@ bool	bstring::ncmp(const char* str1, const size_t n, const size_t startpos) cons
 		++i;
 	return str1[i] - str2[i];
 }
-
-// bool	bstring::ncmp(const bstring& str1, const size_t n, const size_t startpos) const {
-// 	int i = 0;
-
-// 	if (startpos >= stringsize)
-// 		return true;
-// 	const char* str2 = &(__string[startpos]);
-// 	size_t str2size = stringsize - startpos;
-// 	if (n > str2size)
-// 		return true;
-// 	while (i < n && i+1 < str2size && i+1 < str1.size() && str2[i] == str1[i])
-// 		++i;
-// 	return str1[i] - str2[i];
-// }
-
 
 bool	bstring::empty() const {
 	if (__string == NULL)
@@ -280,8 +230,8 @@ const char*	bstring::operator=(const char* newstring) {
 	return __string;
 }
 
-const char&	bstring::operator[](const int index) const{
-	if (index < 0 || index >= stringsize)
+const char&	bstring::operator[](const size_t index) const{
+	if (index >= stringsize)
 		throw(bstringExceptions("index out of range"));
 	return __string[index];
 }
@@ -305,7 +255,8 @@ const bstring&	bstring::operator+=(const bstring& buff) {
 		newstring[newstringpos] = buff[i];
 		++newstringpos;
 	}
-	delete[] __string;
+	if (__string)
+		delete[] __string;
 	__string = newstring;
 	stringsize += buff.size();
 	return *this;
@@ -343,5 +294,7 @@ const bstring	bstring::operator+(const bstring& buff) {
 		newstring[newstringpos] = buff[i];
 		++newstringpos;
 	}
-	return bstring(newstring, stringsize+buff.size());
+	const bstring joinedBstring = bstring(newstring, stringsize+buff.size());
+	delete[]newstring;
+	return joinedBstring;
 }
